@@ -173,7 +173,7 @@ class Router {
     public function addRoute($route, $params = []) {
         // Convert the route to a regular expression for matching
         $route = preg_replace('/\//', '\\/', $route);
-        $route = preg_replace('/\{([a-z]+)\}/', '(?P<\1>[a-z-]+)', $route);
+        $route = preg_replace('/\{([a-z]+)\}/', '(?P<\1>[a-z0-9-]+)', $route);
         $route = preg_replace('/\{([a-z]+):([^\}]+)\}/', '(?P<\1>\2)', $route);
         $route = '/^' . $route . '$/i';
         
@@ -197,13 +197,13 @@ class Router {
                     }
                 }
                 
-                // Store numeric matches as numeric parameters
-                // This is for routes like 'admin/pages/edit/([0-9]+)'
-                // where the ID is captured as a numeric parameter
-                if (count($matches) > 1) {
-                    // Skip the first match (which is the full string)
-                    for ($i = 1; $i < count($matches); $i++) {
-                        $params[$i - 1] = $matches[$i];
+                // Store purely numeric capture groups (unnamed groups from patterns like ([0-9]+)).
+                // Named groups already handled above; count only integer-keyed entries to avoid
+                // going out of bounds (preg_match puts named groups at both string and int keys).
+                $numericMatches = array_filter($matches, 'is_int', ARRAY_FILTER_USE_KEY);
+                if (count($numericMatches) > 1) {
+                    foreach (array_slice(array_values($numericMatches), 1) as $idx => $val) {
+                        $params[$idx] = $val;
                     }
                 }
 

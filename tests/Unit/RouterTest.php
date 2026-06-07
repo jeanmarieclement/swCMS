@@ -19,11 +19,11 @@ class RouterTest extends TestCase
         parent::setUp();
         
         // Include the Router class if it's not autoloaded
-        if (!class_exists('Router')) {
-            require_once APP_PATH . '/Core/Router.php';
+        if (!class_exists('App\\Core\\Router')) {
+            require_once APP_PATH . '/core/Router.php';
         }
-        
-        $this->router = new \Router();
+
+        $this->router = new \App\Core\Router();
     }
     
     /**
@@ -129,21 +129,19 @@ class RouterTest extends TestCase
         $reflection = new \ReflectionClass($this->router);
         $getUrlMethod = $reflection->getMethod('getUrl');
         $getUrlMethod->setAccessible(true);
-        
-        // Mock $_SERVER
-        $_SERVER['QUERY_STRING'] = 'test/url';
-        
-        // Test getUrl method
+
+        // getUrl() uses REQUEST_URI (not QUERY_STRING)
+        $_SERVER['REQUEST_URI'] = '/test/url';
         $url = $getUrlMethod->invoke($this->router);
         $this->assertEquals('test/url', $url);
-        
+
         // Test with trailing slash
-        $_SERVER['QUERY_STRING'] = 'test/url/';
+        $_SERVER['REQUEST_URI'] = '/test/url/';
         $url = $getUrlMethod->invoke($this->router);
         $this->assertEquals('test/url', $url);
-        
-        // Test with query parameters
-        $_SERVER['QUERY_STRING'] = 'test/url&param=value';
+
+        // Test with query string suffix (only path part is returned)
+        $_SERVER['REQUEST_URI'] = '/test/url?param=value';
         $url = $getUrlMethod->invoke($this->router);
         $this->assertEquals('test/url', $url);
     }
