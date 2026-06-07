@@ -1,0 +1,28 @@
+RewriteEngine On
+RewriteBase /
+
+# Redirect to HTTPS (uncomment in production)
+# RewriteCond %{HTTPS} off
+# RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# Handle plugin assets through PHP
+RewriteRule ^plugins/([^/]+)/assets/(.+)$ plugin-assets.php?plugin=$1&asset=$2 [L,QSA]
+
+# Handle front controller
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^(.*)$ index.php?$1 [L,QSA]
+
+# Prevent access to sensitive files
+<FilesMatch "^\.">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# PHP settings
+php_flag display_errors On
+php_value max_execution_time 300
+php_value max_input_time 300
+php_value upload_max_filesize 8M
+php_value post_max_size 8M
+php_value memory_limit 128M

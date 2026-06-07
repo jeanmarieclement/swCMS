@@ -1,0 +1,54 @@
+
+# WARNING: Example credentials for local development only.
+# Change ALL passwords before any production deployment.
+services:
+  # PHP Application with Apache
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: swcms_app
+    volumes:
+      - .:/var/www/html
+    ports:
+      - "80:80"
+    depends_on:
+      - db
+    environment:
+      - DB_HOST=db
+      - DB_NAME=swcms
+      - DB_USER=swcms_user
+      - DB_PASS=swcms_password
+      - DEBUG_MODE=true
+
+  # MySQL Database
+  db:
+    image: mysql:8.0
+    container_name: swcms_db
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./docker/mysql/init:/docker-entrypoint-initdb.d
+    environment:
+      - MYSQL_DATABASE=swcms
+      - MYSQL_USER=swcms_user
+      - MYSQL_PASSWORD=swcms_password
+      - MYSQL_ROOT_PASSWORD=root_password
+    ports:
+      - "3306:3306"
+
+  # phpMyAdmin for database management
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: swcms_phpmyadmin
+    depends_on:
+      - db
+    ports:
+      - "8081:80"
+    environment:
+      - PMA_HOST=db
+      - PMA_USER=root
+      - PMA_PASSWORD=root_password
+
+
+volumes:
+  mysql_data:
