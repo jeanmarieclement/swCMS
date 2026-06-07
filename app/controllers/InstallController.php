@@ -376,9 +376,10 @@ class InstallController
                 );
                 $pdo = new \PDO($dsn, RequestHelper::post('db_user', ''), RequestHelper::post('db_pass', '', 'raw'));
 
-                // Test if database exists, create if not
-                $pdo->exec("CREATE DATABASE IF NOT EXISTS `" . RequestHelper::post('db_name', '') . "`");
-                $pdo->exec("USE `" . RequestHelper::post('db_name', '') . "`");
+                // Test if database exists, create if not (db_name already validated in validateDatabaseConfig)
+                $dbName = $this->config['database']['name'] ?? '';
+                $pdo->exec("CREATE DATABASE IF NOT EXISTS `{$dbName}`");
+                $pdo->exec("USE `{$dbName}`");
 
             } elseif ($driver === 'sqlite') {
                 $sqlitePath = RequestHelper::post('db_sqlite_path', DATA_PATH . '/database.sqlite');
@@ -410,6 +411,10 @@ class InstallController
         if ($driver === 'mysql') {
             if (empty(RequestHelper::post('db_host')) || empty(RequestHelper::post('db_name')) || empty(RequestHelper::post('db_user'))) {
                 $this->errors[] = 'Please fill in all required database fields.';
+                return false;
+            }
+            if (!preg_match('/^[A-Za-z0-9_]{1,64}$/', RequestHelper::post('db_name', '', 'raw'))) {
+                $this->errors[] = 'Database name may only contain letters, numbers, and underscores (max 64 chars).';
                 return false;
             }
         } elseif ($driver === 'sqlite') {
@@ -531,10 +536,14 @@ class InstallController
     {
         $envContent = $this->generateEnvContent();
         $envPath = ROOT_PATH . '/.env';
-        
-        if (!file_put_contents($envPath, $envContent)) {
+
+        $fh = fopen($envPath, 'w');
+        if (!$fh) {
             throw new Exception('Could not create .env file');
         }
+        chmod($envPath, 0600);
+        fwrite($fh, $envContent);
+        fclose($fh);
     }
 
     /**
