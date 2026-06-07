@@ -7,19 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
-- Open source release preparation
-- Comprehensive documentation
-- MIT License
-- Contributing guidelines
+## [1.0.1] - 2026-06-07
+
+### Security
+- Fix SQL injection in InstallController: validate `db_name` against `/^[A-Za-z0-9_]{1,64}$/` before SQL interpolation
+- Fix insecure `.env` file permissions: use `fopen`/`chmod(0600)`/`fwrite` instead of `file_put_contents`
 
 ### Changed
-- Enhanced README with professional documentation
-- Improved project structure organization
+- Add `namespace App\Helpers` to `PaginationHelper`; update imports in ArticleController and PageController
+- Unify flash message API in `MenuController`: replace `setValue('flash_success/error')` with `setFlashMessage()`
+- Consolidate `generateSlug()` into base `Model` class; remove duplicate implementations from `Post` and `Page` models
+- Replace obsolete Router TODO with accurate comment about `PluginRoutesManager`
 
 ### Removed
-- Internal development files and documentation
-- Test databases and backup files
+- Internal development audit reports and planning documents from repository
+- Dead code: `AdminController::editContentAction()` (unrouted test method)
 
 ## [1.0.0] - 2026-06-07
 
