@@ -11,16 +11,9 @@
                 </a>
             </div>
 
-            {if isset($smarty.session.flash_success)}
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    {$smarty.session.flash_success}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            {/if}
-
-            {if isset($smarty.session.flash_error)}
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    {$smarty.session.flash_error}
+            {if isset($smarty.session.flash_message)}
+                <div class="alert alert-{if $smarty.session.flash_message.type == 'error'}danger{else}{$smarty.session.flash_message.type}{/if} alert-dismissible fade show" role="alert">
+                    {$smarty.session.flash_message.message}
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
             {/if}

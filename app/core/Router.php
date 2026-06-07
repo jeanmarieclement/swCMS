@@ -161,7 +161,7 @@ class Router {
         $this->addRoute('article/([a-zA-Z0-9\-]+)', ['controller' => 'Article', 'action' => 'show']);
         $this->addRoute('page/([a-zA-Z0-9\-]+)', ['controller' => 'Page', 'action' => 'show']);
         
-        // TODO: Load additional routes from configuration or plugins
+        // Plugin routes are loaded dynamically via PluginRoutesManager (app/services/PluginRoutesManager.php)
     }
     
     /**

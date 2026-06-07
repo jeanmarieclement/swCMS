@@ -1,7 +1,10 @@
 <?php
+
+namespace App\Helpers;
+
 /**
  * Pagination Helper
- * 
+ *
  * A helper class to standardize pagination across the CMS
  */
 class PaginationHelper {

@@ -102,9 +102,9 @@ class MenuController extends AdminController {
         }
 
         if ($this->menuModel->createMenu($data)) {
-            SessionHelper::setValue('flash_success', 'Menu creato con successo.');
+            SessionHelper::setFlashMessage('Menu creato con successo.', 'success');
         } else {
-            SessionHelper::setValue('flash_error', 'Errore durante la creazione del menu.');
+            SessionHelper::setFlashMessage('Errore durante la creazione del menu.', 'error');
         }
 
         $this->redirect('/admin/menus');
@@ -125,7 +125,7 @@ class MenuController extends AdminController {
         $menu = $this->menuModel->getMenuById($id);
 
         if (!$menu) {
-            SessionHelper::setValue('flash_error', 'Menu non trovato.');
+            SessionHelper::setFlashMessage('Menu non trovato.', 'error');
             $this->redirect('/admin/menus');
             return;
         }
@@ -174,7 +174,7 @@ class MenuController extends AdminController {
 
         $menu = $this->menuModel->getMenuById($id);
         if (!$menu) {
-            SessionHelper::setValue('flash_error', 'Menu non trovato.');
+            SessionHelper::setFlashMessage('Menu non trovato.', 'error');
             $this->redirect('/admin/menus');
             return;
         }
@@ -215,9 +215,9 @@ class MenuController extends AdminController {
         }
 
         if ($this->menuModel->updateMenu($id, $data)) {
-            SessionHelper::setValue('flash_success', 'Menu aggiornato con successo.');
+            SessionHelper::setFlashMessage('Menu aggiornato con successo.', 'success');
         } else {
-            SessionHelper::setValue('flash_error', 'Errore durante l\'aggiornamento del menu.');
+            SessionHelper::setFlashMessage('Errore durante l\'aggiornamento del menu.', 'error');
         }
 
         $this->redirect('/admin/menus');
@@ -237,15 +237,15 @@ class MenuController extends AdminController {
         $menu = $this->menuModel->getMenuById($id);
 
         if (!$menu) {
-            SessionHelper::setValue('flash_error', 'Menu non trovato.');
+            SessionHelper::setFlashMessage('Menu non trovato.', 'error');
             $this->redirect('/admin/menus');
             return;
         }
 
         if ($this->menuModel->deleteMenu($id)) {
-            SessionHelper::setValue('flash_success', 'Menu eliminato con successo.');
+            SessionHelper::setFlashMessage('Menu eliminato con successo.', 'success');
         } else {
-            SessionHelper::setValue('flash_error', 'Errore durante l\'eliminazione del menu.');
+            SessionHelper::setFlashMessage('Errore durante l\'eliminazione del menu.', 'error');
         }
 
         $this->redirect('/admin/menus');

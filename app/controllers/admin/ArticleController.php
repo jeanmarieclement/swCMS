@@ -3,7 +3,7 @@ namespace App\Controllers\Admin;
 
 use App\Helpers\LogHelper;
 use App\Models\Post;
-use PaginationHelper;
+use App\Helpers\PaginationHelper;
 use App\Models\Category;
 use App\Helpers\SessionHelper;
 use App\Helpers\TinyMCEHelper;

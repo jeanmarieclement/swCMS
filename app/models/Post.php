@@ -207,49 +207,6 @@ class Post extends Model {
      * @param int $excludeId Post ID to exclude from uniqueness check
      * @return string The generated slug
      */
-    protected function generateSlug($title, $excludeId = null) {
-        // Convert to lowercase and replace spaces with hyphens
-        $slug = strtolower(trim(preg_replace('/[^a-zA-Z0-9]+/', '-', $title), '-'));
-        
-        // Check if slug exists
-        $sql = "SELECT COUNT(*) FROM {$this->table} WHERE slug = :slug";
-        $params = [':slug' => $slug];
-        
-        if ($excludeId) {
-            $sql .= " AND id != :id";
-            $params[':id'] = $excludeId;
-        }
-        
-        $stmt = $this->query($sql, $params);
-        
-        $count = (int)$stmt->fetchColumn();
-        
-        // If slug exists, append a number
-        if ($count > 0) {
-            $i = 1;
-            do {
-                $newSlug = $slug . '-' . $i;
-                
-                $sql = "SELECT COUNT(*) FROM {$this->table} WHERE slug = :slug";
-                $params = [':slug' => $newSlug];
-                
-                if ($excludeId) {
-                    $sql .= " AND id != :id";
-                    $params[':id'] = $excludeId;
-                }
-                
-                $stmt = $this->query($sql, $params);
-                
-                $count = (int)$stmt->fetchColumn();
-                $i++;
-            } while ($count > 0);
-            
-            $slug = $newSlug;
-        }
-        
-        return $slug;
-    }
-    
     /**
      * Get categories for a post
      * 

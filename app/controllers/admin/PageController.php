@@ -2,7 +2,7 @@
 namespace App\Controllers\Admin;
 
 use App\Models\Page;
-use PaginationHelper;
+use App\Helpers\PaginationHelper;
 use App\Helpers\LogHelper;
 use App\Helpers\SessionHelper;
 use App\Helpers\TinyMCEHelper;

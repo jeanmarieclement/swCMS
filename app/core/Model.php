@@ -440,4 +440,36 @@ abstract class Model {
     public function exists($conditions) {
         return $this->count($conditions) > 0;
     }
+
+    protected function generateSlug(string $title, ?int $excludeId = null): string {
+        $slug = strtolower(trim(preg_replace('/[^a-zA-Z0-9]+/', '-', $title), '-'));
+
+        $sql = "SELECT COUNT(*) FROM {$this->table} WHERE slug = :slug";
+        $params = [':slug' => $slug];
+
+        if ($excludeId) {
+            $sql .= " AND id != :id";
+            $params[':id'] = $excludeId;
+        }
+
+        $count = (int)$this->query($sql, $params)->fetchColumn();
+
+        if ($count > 0) {
+            $i = 1;
+            do {
+                $newSlug = $slug . '-' . $i;
+                $checkSql = "SELECT COUNT(*) FROM {$this->table} WHERE slug = :slug";
+                $checkParams = [':slug' => $newSlug];
+                if ($excludeId) {
+                    $checkSql .= " AND id != :id";
+                    $checkParams[':id'] = $excludeId;
+                }
+                $count = (int)$this->query($checkSql, $checkParams)->fetchColumn();
+                $i++;
+            } while ($count > 0);
+            $slug = $newSlug;
+        }
+
+        return $slug;
+    }
 }
