@@ -2,24 +2,26 @@
 
 namespace App\Core\Database;
 
-use \PDO;
-use \PDOException;
+use PDO;
+use PDOException;
 use App\Helpers\LogHelper;
 
 /**
  * Database configuration and connection handler
  */
-class Database extends \PDO {
+class Database extends \PDO
+{
     /**
      * @var self|null
      */
     private static $instance = null;
 
-    
+
     /**
      * Costruttore privato: inizializza la connessione PDO
      */
-    private function __construct() {
+    private function __construct()
+    {
         try {
             $options = [
                 \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
@@ -38,7 +40,8 @@ class Database extends \PDO {
             }
         } catch (\PDOException $e) {
             LogHelper::critical('Database Connection Error: ' . $e->getMessage());
-            die('Database connection failed. Please check your configuration.');
+            // Generic message: never expose DSN/credentials to callers
+            throw new \RuntimeException('Database connection failed. Please check your configuration.');
         }
     }
 
@@ -57,11 +60,14 @@ class Database extends \PDO {
     /**
      * Impedisce la clonazione
      */
-    private function __clone() {}
+    private function __clone()
+    {
+    }
 
     /**
      * Impedisce l'unserialization
      */
-    public function __wakeup() {}
+    public function __wakeup()
+    {
+    }
 }
-

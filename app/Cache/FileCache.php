@@ -56,7 +56,7 @@ class FileCache implements CacheInterface
             return $default;
         }
 
-        $data = unserialize($content);
+        $data = unserialize($content, ['allowed_classes' => [\stdClass::class]]);
         if (!is_array($data) || !isset($data['value'], $data['expires'])) {
             return $default;
         }
@@ -111,7 +111,7 @@ class FileCache implements CacheInterface
             return false;
         }
 
-        $data = unserialize($content);
+        $data = unserialize($content, ['allowed_classes' => [\stdClass::class]]);
         if (!is_array($data) || !isset($data['expires'])) {
             return false;
         }
@@ -252,7 +252,7 @@ class FileCache implements CacheInterface
                 continue;
             }
 
-            $data = unserialize($content);
+            $data = unserialize($content, ['allowed_classes' => [\stdClass::class]]);
             if (!is_array($data) || !isset($data['expires'])) {
                 continue;
             }

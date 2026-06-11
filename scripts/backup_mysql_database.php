@@ -1,30 +1,40 @@
 <?php
 /**
  * Backup script to create a full MySQL database backup
- * This script creates a complete backup of the MySQL database
+ * Reads connection settings from .env (same source as app/Config/config.php)
  */
 
 echo "Creating MySQL backup...\n";
 
-// Database connection parameters
-$host = 'db';
-$dbname = 'swcms';
-$username = 'swcms_user';
-$password = 'swcms_password';
+$envFile = dirname(__DIR__) . '/.env';
+if (!is_file($envFile)) {
+    echo "Error: .env file not found at $envFile\n";
+    exit(1);
+}
 
-$backupFile = '/var/www/html/data/mysql_backup_' . date('Y-m-d_H-i-s') . '.sql';
+$env = parse_ini_file($envFile);
+$host = $env['DB_HOST'] ?? 'db';
+$dbname = $env['DB_NAME'] ?? 'swcms';
+$username = $env['DB_USER'] ?? '';
+$password = $env['DB_PASS'] ?? '';
 
-// Create mysqldump command
+if ($username === '') {
+    echo "Error: DB_USER not set in .env\n";
+    exit(1);
+}
+
+$backupFile = dirname(__DIR__) . '/data/mysql_backup_' . date('Y-m-d_H-i-s') . '.sql';
+
+// MYSQL_PWD keeps the password out of the process list (visible via `ps` with -p<pass>)
 $command = sprintf(
-    'mysqldump -h %s -u %s -p%s %s > %s 2>/dev/null',
+    'MYSQL_PWD=%s mysqldump -h %s -u %s %s > %s 2>/dev/null',
+    escapeshellarg($password),
     escapeshellarg($host),
     escapeshellarg($username),
-    escapeshellarg($password),
     escapeshellarg($dbname),
     escapeshellarg($backupFile)
 );
 
-// Execute backup
 exec($command, $output, $returnCode);
 
 if ($returnCode === 0) {
@@ -36,4 +46,3 @@ if ($returnCode === 0) {
 }
 
 echo "You can now safely use SQLite. The MySQL backup is available for rollback if needed.\n";
-?>

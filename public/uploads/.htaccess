@@ -1,0 +1,11 @@
+# Uploaded files must never be executed as code (defense in depth:
+# the upload whitelist already blocks script extensions)
+<IfModule mod_php.c>
+    php_flag engine off
+</IfModule>
+RemoveHandler .php .phtml .php3 .php4 .php5 .php7 .phps .pht .cgi .pl .py
+RemoveType .php .phtml .php3 .php4 .php5 .php7 .phps .pht
+Options -ExecCGI -Indexes
+<FilesMatch "\.(php\d?|phtml|phps|pht|cgi|pl|py)$">
+    Require all denied
+</FilesMatch>

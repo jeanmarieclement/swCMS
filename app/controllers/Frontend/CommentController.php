@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Controllers\Frontend;
 
 use App\Controllers\Frontend\BaseController;
@@ -47,13 +48,13 @@ class CommentController extends BaseController
             // Validate required fields
             if (empty($content)) {
                 SessionHelper::setFlashMessage('Il contenuto del commento è obbligatorio', 'error');
-                RedirectHelper::redirect($this->getParam('redirect_url', '/', 'POST'));
+                RedirectHelper::redirectLocal($this->getParam('redirect_url', '/', 'POST'));
                 return;
             }
 
             if (!$postId && !$pageId) {
                 SessionHelper::setFlashMessage('ID post o pagina richiesto', 'error');
-                RedirectHelper::redirect($this->getParam('redirect_url', '/', 'POST'));
+                RedirectHelper::redirectLocal($this->getParam('redirect_url', '/', 'POST'));
                 return;
             }
 
@@ -61,30 +62,30 @@ class CommentController extends BaseController
             $commentsEnabled = false;
             if ($postId) {
                 $commentsEnabled = $this->commentModel->areCommentsEnabledForPost($postId);
-            } else if ($pageId) {
+            } elseif ($pageId) {
                 $commentsEnabled = $this->commentModel->areCommentsEnabledForPage($pageId);
             }
 
             if (!$commentsEnabled) {
                 SessionHelper::setFlashMessage('I commenti sono disabilitati per questo contenuto', 'error');
-                RedirectHelper::redirect($this->getParam('redirect_url', '/', 'POST'));
+                RedirectHelper::redirectLocal($this->getParam('redirect_url', '/', 'POST'));
                 return;
             }
 
             // Check if user is logged in
             $userId = SessionHelper::getValue('user_id');
-            
+
             if (!$userId) {
                 // For non-logged users, validate name and email
                 if (empty($authorName)) {
                     SessionHelper::setFlashMessage('Il nome è obbligatorio', 'error');
-                    RedirectHelper::redirect($this->getParam('redirect_url', '/', 'POST'));
+                    RedirectHelper::redirectLocal($this->getParam('redirect_url', '/', 'POST'));
                     return;
                 }
 
                 if (empty($authorEmail) || !filter_var($authorEmail, FILTER_VALIDATE_EMAIL)) {
                     SessionHelper::setFlashMessage('Un indirizzo email valido è obbligatorio', 'error');
-                    RedirectHelper::redirect($this->getParam('redirect_url', '/', 'POST'));
+                    RedirectHelper::redirectLocal($this->getParam('redirect_url', '/', 'POST'));
                     return;
                 }
             }
@@ -115,7 +116,7 @@ class CommentController extends BaseController
                 // Get user info from session for logged users
                 $userDisplayName = SessionHelper::getValue('display_name') ?? SessionHelper::getValue('username') ?? 'Utente registrato';
                 $userEmail = SessionHelper::getValue('email');
-                
+
                 $commentData['author_name'] = $userDisplayName;
                 if ($userEmail) {
                     $commentData['author_email'] = $userEmail;
@@ -143,13 +144,12 @@ class CommentController extends BaseController
                     SessionHelper::setFlashMessage('Errore durante l\'invio del commento. Riprova.', 'error');
                 }
             }
-            
-            RedirectHelper::redirect($_POST['redirect_url'] ?? '/');
 
+            RedirectHelper::redirectLocal($_POST['redirect_url'] ?? '/');
         } catch (\Exception $e) {
             error_log('Error creating comment: ' . $e->getMessage());
             SessionHelper::setFlashMessage('Si è verificato un errore. Riprova più tardi.', 'error');
-            RedirectHelper::redirect($_POST['redirect_url'] ?? '/');
+            RedirectHelper::redirectLocal($_POST['redirect_url'] ?? '/');
         }
     }
 
@@ -159,7 +159,7 @@ class CommentController extends BaseController
     public function getCommentsAction()
     {
         header('Content-Type: application/json');
-        
+
         try {
             $postId = filter_input(INPUT_GET, 'post_id', FILTER_VALIDATE_INT);
             $pageId = filter_input(INPUT_GET, 'page_id', FILTER_VALIDATE_INT);
@@ -173,7 +173,7 @@ class CommentController extends BaseController
             }
 
             $contentId = $postId ?: $pageId;
-            
+
             // Check if comments are enabled
             $commentsEnabled = false;
             if ($postId) {
@@ -197,7 +197,6 @@ class CommentController extends BaseController
                 'current_page' => $page,
                 'total_pages' => ceil($totalComments / $limit)
             ]);
-
         } catch (\Exception $e) {
             error_log('Error getting comments: ' . $e->getMessage());
             echo json_encode(['error' => 'Internal server error']);

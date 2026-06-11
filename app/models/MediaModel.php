@@ -1,32 +1,36 @@
 <?php
+
 namespace App\Models;
 
 use App\Helpers\LogHelper;
 use App\Core\Model;
 
-class MediaModel extends Model {
-    
-
+class MediaModel extends Model
+{
     private $uploadPath = ROOT_PATH . '/public/uploads/media/';
     private $allowedTypes = [
-        'image' => ['jpg', 'jpeg', 'png', 'gif', 'webp', 'svg'],
+        // 'svg' intentionally excluded: SVG can embed scripts (stored XSS) when
+        // served inline from public/uploads
+        'image' => ['jpg', 'jpeg', 'png', 'gif', 'webp'],
         'document' => ['pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'csv'],
         'video' => ['mp4', 'webm', 'ogv'],
         'audio' => ['mp3', 'wav', 'ogg']
     ];
     private $maxFileSize = 52428800; // 50MB
-    
-    public function __construct() {
+
+    public function __construct()
+    {
         parent::__construct();
         $this->table = 'media';
     }
-    
+
     /**
      * Restituisce un messaggio di errore leggibile in base al codice di errore di upload
      * @param int $errorCode Codice di errore PHP UPLOAD_ERR_*
      * @return string Messaggio di errore descrittivo
      */
-    public function getUploadError($errorCode) {
+    public function getUploadError($errorCode)
+    {
         $errors = [
             UPLOAD_ERR_OK         => 'Nessun errore, file caricato con successo',
             UPLOAD_ERR_INI_SIZE   => 'Il file caricato supera la dimensione massima consentita dal server',
@@ -37,7 +41,7 @@ class MediaModel extends Model {
             UPLOAD_ERR_CANT_WRITE => 'Impossibile scrivere il file su disco',
             UPLOAD_ERR_EXTENSION  => 'Un\'estensione PHP ha interrotto il caricamento del file'
         ];
-        
+
         return $errors[$errorCode] ?? 'Errore sconosciuto durante il caricamento del file';
     }
 
@@ -46,7 +50,8 @@ class MediaModel extends Model {
      * @param array $file Input file array (single or multiple)
      * @return array Array of files with keys: name, type, tmp_name, error, size
      */
-    private function reformatFilesArray($file) {
+    private function reformatFilesArray($file)
+    {
         $result = [];
         if (is_array($file['name'])) {
             // Multiple files
@@ -72,14 +77,15 @@ class MediaModel extends Model {
         }
         return $result;
     }
-    
+
     /**
      * Validate uploaded file (type, extension, size)
      * @param array $file File array
      * @return array File info: name, type, extension
      * @throws \Exception If file is not valid
      */
-    private function validateFile($file) {
+    private function validateFile($file)
+    {
         // Get extension (lowercase, no dot)
         $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
         $allowedTypes = $this->allowedTypes;
@@ -111,21 +117,22 @@ class MediaModel extends Model {
      * @return array Array di oggetti media caricati
      * @throws \Exception Se si verifica un errore durante il caricamento
      */
-    public function upload($files, $userId, $extraData = []) {
-    
+    public function upload($files, $userId, $extraData = [])
+    {
+
         $uploaded = [];
-        
+
         // Verifica se è stato effettivamente caricato un file
         if (empty($files) || (is_array($files) && empty($files['name']))) {
             throw new \Exception('Nessun file selezionato per il caricamento');
         }
-        
+
         // Uniforma sempre la struttura dei file (anche per singolo file)
         $files = $this->reformatFilesArray($files);
-        
+
         foreach ($files as $file) {
             // Controllo struttura array file
-            
+
             $requiredKeys = ['name','type','tmp_name','error','size'];
             foreach ($requiredKeys as $key) {
                 if (!array_key_exists($key, $file)) {
@@ -137,7 +144,7 @@ class MediaModel extends Model {
             if (!isset($file['error']) || $file['error'] === UPLOAD_ERR_NO_FILE) {
                 continue; // Salta se nessun file è stato caricato
             }
-            
+
             if ($file['error'] !== UPLOAD_ERR_OK) {
                 throw new \Exception('Errore nel caricamento del file: ' . $this->getUploadError($file['error']));
             }
@@ -193,14 +200,17 @@ class MediaModel extends Model {
      * @param int $thumbWidth Width of the thumbnail (default 300px)
      * @return array|null Thumbnail dimensions [width, height, path] or null on failure
      */
-    private function generateThumbnail($filePath, $filename, $relativePath, $thumbWidth = 300) {
+    private function generateThumbnail($filePath, $filename, $relativePath, $thumbWidth = 300)
+    {
         $thumbDir = $this->uploadPath . $relativePath . 'thumbs/';
         if (!is_dir($thumbDir)) {
             mkdir($thumbDir, 0755, true);
         }
         $thumbPath = $thumbDir . $filename;
         $info = getimagesize($filePath);
-        if (!$info) return null;
+        if (!$info) {
+            return null;
+        }
         list($width, $height, $type) = $info;
         $ratio = $width / $height;
         $newWidth = $thumbWidth;
@@ -227,7 +237,9 @@ class MediaModel extends Model {
             default:
                 return null;
         }
-        if (!$srcImg) return null;
+        if (!$srcImg) {
+            return null;
+        }
         $thumbImg = imagecreatetruecolor($newWidth, $newHeight);
         // Handle transparency for PNG/GIF
         if (in_array($type, [IMAGETYPE_PNG, IMAGETYPE_GIF])) {
@@ -259,7 +271,8 @@ class MediaModel extends Model {
 
 
     // Ottieni un media per ID
-    public function getById($id): object {
+    public function getById($id): object
+    {
         $sql = "SELECT * FROM media WHERE id = :id LIMIT 1";
         $stmt = $this->db->prepare($sql);
         $stmt->bindValue(':id', $id, $this->db::PARAM_INT);
@@ -268,7 +281,8 @@ class MediaModel extends Model {
     }
 
     // Lista media con filtri e paginazione
-    public function getList($filters = [], $page = 1, $perPage = 24) {
+    public function getList($filters = [], $page = 1, $perPage = 24)
+    {
         try {
             // Build main query for paginated items
             $sql = "SELECT * FROM media WHERE 1";
@@ -317,14 +331,14 @@ class MediaModel extends Model {
             }
             $countStmt->execute();
             $total = (int)$countStmt->fetchColumn();
-            
-            
+
+
             // Assicuriamoci che items sia sempre un array, anche vuoto
             if ($items === false) {
                 $items = [];
                 LogHelper::warning("MediaModel::getList - Items was false, converted to empty array");
             }
-            
+
             return [
                 'items' => $items,
                 'total' => $total,
@@ -339,7 +353,7 @@ class MediaModel extends Model {
                 'line' => $e->getLine(),
                 'trace' => $e->getTraceAsString()
             ]);
-            
+
             // Restituisci un risultato vuoto ma valido in caso di errore
             return [
                 'items' => [],
@@ -356,19 +370,20 @@ class MediaModel extends Model {
      * @param string $filename Nome del file originale
      * @return string Nome file univoco con estensione
      */
-    private function generateUniqueFilename($filename) {
+    private function generateUniqueFilename($filename)
+    {
         $extension = pathinfo($filename, PATHINFO_EXTENSION);
         $basename = pathinfo($filename, PATHINFO_FILENAME);
-        
+
         // Rimuovi caratteri non alfanumerici e riduci i trattini multipli
         $basename = preg_replace('/[^a-zA-Z0-9-_]/', '-', $basename);
         $basename = preg_replace('/-+/', '-', $basename);
         $basename = trim($basename, '-');
         $basename = preg_replace('/-+/', '-', $basename);
         $basename = trim($basename, '-');
-        
+
         $unique = $basename . '_' . uniqid() . '.' . strtolower($extension);
-        
+
         return $unique;
     }
 
@@ -377,7 +392,8 @@ class MediaModel extends Model {
      * @param int $id ID del media
      * @throws \Exception
      */
-    public function deleteMedia($id) {
+    public function deleteMedia($id)
+    {
         $media = $this->getById($id);
         if (!$media) {
             throw new \Exception('Media non trovato');
@@ -406,7 +422,8 @@ class MediaModel extends Model {
      *
      * @return array List of column names allowed in ORDER BY
      */
-    protected function getAllowedOrderByColumns() {
+    protected function getAllowedOrderByColumns()
+    {
         return ['id', 'filename', 'filetype', 'filesize', 'user_id', 'created_at', 'updated_at'];
     }
 }

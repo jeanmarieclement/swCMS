@@ -18,7 +18,6 @@ use App\Exceptions\SecurityException;
  * Handles user authentication (login, logout, registration)
  */
 class AuthController extends BaseController
-
 {
     private $userModel;
 
@@ -30,7 +29,7 @@ class AuthController extends BaseController
     public function __construct($params = [])
     {
         parent::__construct($params);
-        $this->userModel = new User;
+        $this->userModel = new User();
     }
 
 
@@ -131,7 +130,8 @@ class AuthController extends BaseController
                             $redirectUrl = HookHelper::applyFilters('login_redirect_url', $defaultRedirect, $user);
 
                             LogHelper::info('Redirecting after login to: ' . $redirectUrl);
-                            RedirectHelper::redirect($redirectUrl);
+                            // redirect_after_login originates from REQUEST_URI: restrict to local paths
+                            RedirectHelper::redirectLocal($redirectUrl, '/admin');
                         }
                     } else {
                         $error = 'Invalid email or password';
@@ -150,7 +150,7 @@ class AuthController extends BaseController
         ]);
     }
 
-    
+
     /**
      * Logs out the current user and destroys the session.
      *
@@ -209,7 +209,7 @@ class AuthController extends BaseController
         RedirectHelper::redirect($logoutRedirectUrl);
     }
 
-    
+
     /**
      * Handles user registration (GET and POST).
      *
@@ -253,7 +253,7 @@ class AuthController extends BaseController
                 if (!$validationErrors['valid']) {
                     $error = 'Please fill in all required fields correctly';
                     if (!empty($validationErrors['errors'])) {
-                        $error = implode(', ', array_map(function($errors) {
+                        $error = implode(', ', array_map(function ($errors) {
                             return implode(', ', $errors);
                         }, $validationErrors['errors']));
                     }
