@@ -159,7 +159,9 @@ class MigrationRunner
         // Create instance and run migration; pass $this->pdo so migrations
         // work during install before DB constants are defined.
         $migration = new $className($this->pdo);
+        ob_start();
         $migration->up();
+        ob_end_clean();
 
         // Record migration as applied
         $stmt = $this->pdo->prepare("INSERT INTO migrations (migration) VALUES (?)");
