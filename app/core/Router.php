@@ -229,7 +229,7 @@ class Router
         $url = $this->getUrl();
         if ($this->match($url)) {
             $controller = $this->getControllerName();
-            $isAdminRoute = strpos($url, 'admin/') === 0;
+            $isAdminRoute = ($url === 'admin' || strpos($url, 'admin/') === 0);
             $frontendFile = \FRONTEND_CONTROLLERS_PATH . '/' . $controller . 'Controller.php';
             $adminFile = \ADMIN_CONTROLLERS_PATH . '/' . $controller . 'Controller.php';
 

@@ -52,9 +52,9 @@ define('UPLOADS_PATH', PUBLIC_PATH . '/uploads');
 define('LOGS_PATH', ROOT_PATH . '/logs');
 define('SERVICES_PATH', APP_PATH . '/services');
 define('FRONTEND_CONTROLLERS_PATH', CONTROLLERS_PATH . '/Frontend');
-define('ADMIN_CONTROLLERS_PATH', CONTROLLERS_PATH . '/Admin');
-define('FRONTEND_VIEWS_PATH', VIEWS_PATH . '/Frontend');
-define('ADMIN_VIEWS_PATH', VIEWS_PATH . '/Admin');
+define('ADMIN_CONTROLLERS_PATH', CONTROLLERS_PATH . '/admin');
+define('FRONTEND_VIEWS_PATH', VIEWS_PATH . '/frontend');
+define('ADMIN_VIEWS_PATH', VIEWS_PATH . '/admin');
 
 // Session configuration
 ini_set('session.cookie_httponly', 1);
