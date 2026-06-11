@@ -18,4 +18,10 @@ for dir in data logs storage/cache; do
     chmod 755 "$dir"
 done
 
+# Ensure .env is writable by www-data so the installer can create it.
+# touch is safe: creates if absent, preserves content if present.
+touch .env
+chown www-data:www-data .env
+chmod 600 .env
+
 exec apache2-foreground

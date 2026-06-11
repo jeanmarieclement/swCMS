@@ -5,6 +5,7 @@ namespace App\Controllers;
 use App\Helpers\RequestHelper;
 use App\Helpers\CSRFHelper;
 use App\Helpers\SessionHelper;
+use Exception;
 
 /**
  * InstallController handles the installation wizard for first-time setup
