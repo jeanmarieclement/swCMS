@@ -14,10 +14,9 @@ class CreateCommentsTable extends Migration
      */
     protected $db;
 
-    public function __construct()
+    public function __construct(\PDO $pdo = null)
     {
-        parent::__construct();
-        $this->db = \App\Core\Database\Database::getInstance();
+        parent::__construct($pdo);
     }
 
     /**

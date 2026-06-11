@@ -15,10 +15,9 @@ class CreateUsersTable extends Migration
      */
     protected $db;
 
-    public function __construct()
+    public function __construct(\PDO $pdo = null)
     {
-        parent::__construct();
-        $this->db = Database::getInstance();
+        parent::__construct($pdo);
     }
 
     /**
