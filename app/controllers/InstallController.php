@@ -197,7 +197,7 @@ class InstallController
             $this->createInstallationFlag();
 
             // Clear session data
-            SessionHelper::unsetValue('install_config');
+            SessionHelper::removeValue('install_config');
 
             $this->renderView('complete', ['success' => true, 'config' => $this->config]);
         } catch (Exception $e) {
