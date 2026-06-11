@@ -16,6 +16,11 @@ class MigrationRunner
     {
         $this->pdo = $pdo;
         $this->migrationsPath = $migrationsPath ?: \ROOT_PATH . '/database/migrations';
+        // Migrations check the DB_DRIVER constant; during install it is not yet
+        // defined (Config.php not loaded). Derive it from the live connection.
+        if (!defined('DB_DRIVER')) {
+            define('DB_DRIVER', $pdo->getAttribute(\PDO::ATTR_DRIVER_NAME));
+        }
     }
 
     /**
@@ -88,7 +93,7 @@ class MigrationRunner
      */
     private function createMigrationsTable()
     {
-        if (defined('DB_DRIVER') && \DB_DRIVER === 'sqlite') {
+        if ($this->pdo->getAttribute(\PDO::ATTR_DRIVER_NAME) === 'sqlite') {
             $sql = "CREATE TABLE IF NOT EXISTS migrations (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 migration TEXT NOT NULL,
@@ -217,7 +222,7 @@ class MigrationRunner
     private function getExistingTables()
     {
         try {
-            if (defined('DB_DRIVER') && \DB_DRIVER === 'sqlite') {
+            if ($this->pdo->getAttribute(\PDO::ATTR_DRIVER_NAME) === 'sqlite') {
                 $stmt = $this->pdo->query("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%'");
             } else {
                 $stmt = $this->pdo->query("SHOW TABLES");
