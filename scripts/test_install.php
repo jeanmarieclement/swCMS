@@ -37,7 +37,7 @@ if (file_exists($flagFile)) {
 echo "\n2. Testing configuration system...\n";
 try {
     // Load main config to test .env integration
-    require_once APP_PATH . '/Config/Config.php';
+    require_once APP_PATH . '/Config/config.php';
     echo "   ✓ Configuration loaded successfully\n";
     echo "   ✓ DB_DRIVER: " . DB_DRIVER . "\n";
     echo "   ✓ DB_HOST: " . DB_HOST . "\n";

@@ -34,7 +34,7 @@ if (!file_exists($installFlagFile)) {
 }
 
 // Load the configuration
-require_once APP_PATH . '/Config/Config.php';
+require_once APP_PATH . '/Config/config.php';
 
 // Load the autoloader
 require_once APP_PATH . '/core/Autoloader.php';

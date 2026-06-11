@@ -5,7 +5,7 @@ define('APP_PATH', __DIR__ . '/app');
 define('PUBLIC_PATH', __DIR__ . '/public');
 define('ROOT_PATH', __DIR__);
 
-require_once __DIR__ . '/app/Config/Config.php';
+require_once __DIR__ . '/app/Config/config.php';
 require_once __DIR__ . '/app/Core/Database/Database.php';
 require_once __DIR__ . '/app/Helpers/SystemSettingsHelper.php';
 require_once __DIR__ . '/app/Helpers/LogHelper.php';

@@ -28,7 +28,7 @@ if (file_exists($installFlag)) {
 }
 
 // Load main config to get database settings
-require_once APP_PATH . '/Config/Config.php';
+require_once APP_PATH . '/Config/config.php';
 
 // Test 2: Test Migration Runner
 echo "\n2. Testing MigrationRunner...\n";
