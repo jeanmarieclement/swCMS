@@ -24,27 +24,30 @@ class Autoloader
      */
     public static function loadClass($className)
     {
-        // First, check if it's a core class
+        // Only handle App\ classes and unnamespaced legacy classes.
+        // Third-party namespaced classes (Smarty\, PHPUnit\, etc.) must be
+        // resolved by Composer's autoloader — bail early to avoid false
+        // constants lookups that throw fatal errors on PHP 8.
+        if (strpos($className, '\\') !== false && strpos($className, 'App\\') !== 0) {
+            return false;
+        }
+
         if (self::loadCoreClass($className)) {
             return true;
         }
 
-        // Then check if it's a model
         if (self::loadModel($className)) {
             return true;
         }
 
-        // Then check if it's a controller
         if (self::loadController($className)) {
             return true;
         }
 
-        // Check if it's a helper class
         if (self::loadHelper($className)) {
             return true;
         }
 
-        // Check if it's a service class
         if (self::loadService($className)) {
             return true;
         }
@@ -54,7 +57,10 @@ class Autoloader
 
     private static function loadService($className)
     {
-        $file = SERVICES_PATH . '/' . $className . '.php';
+        if (!defined('\SERVICES_PATH')) {
+            return false;
+        }
+        $file = \SERVICES_PATH . '/' . $className . '.php';
         if (file_exists($file)) {
             require_once $file;
             return true;
@@ -147,15 +153,19 @@ class Autoloader
         }
         // Logica legacy (admin + base)
         if (substr($className, -10) === 'Controller') {
-            $adminFile = \ADMIN_CONTROLLERS_PATH . '/' . $className . '.php';
-            if (file_exists($adminFile)) {
-                require_once $adminFile;
-                return true;
+            if (defined('\ADMIN_CONTROLLERS_PATH')) {
+                $adminFile = \ADMIN_CONTROLLERS_PATH . '/' . $className . '.php';
+                if (file_exists($adminFile)) {
+                    require_once $adminFile;
+                    return true;
+                }
             }
-            $frontendFile = \FRONTEND_CONTROLLERS_PATH . '/' . $className . '.php';
-            if (file_exists($frontendFile)) {
-                require_once $frontendFile;
-                return true;
+            if (defined('\FRONTEND_CONTROLLERS_PATH')) {
+                $frontendFile = \FRONTEND_CONTROLLERS_PATH . '/' . $className . '.php';
+                if (file_exists($frontendFile)) {
+                    require_once $frontendFile;
+                    return true;
+                }
             }
             $baseFile = \CONTROLLERS_PATH . '/' . $className . '.php';
             if (file_exists($baseFile)) {
