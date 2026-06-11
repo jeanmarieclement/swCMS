@@ -17,9 +17,11 @@ abstract class Migration
      * Migration constructor
      * Uses Database::getInstance() for DB access
      */
-    public function __construct()
+    public function __construct(\PDO $pdo = null)
     {
-        $this->db = \App\Core\Database\Database::getInstance();
+        // During installation the singleton cannot be used (DB constants not yet
+        // defined), so MigrationRunner passes its own connection directly.
+        $this->db = $pdo ?? \App\Core\Database\Database::getInstance();
     }
 
     /**

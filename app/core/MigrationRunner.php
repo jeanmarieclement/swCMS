@@ -156,8 +156,9 @@ class MigrationRunner
             throw new \Exception("Class {$className} not found in {$filename}");
         }
 
-        // Create instance and run migration
-        $migration = new $className();
+        // Create instance and run migration; pass $this->pdo so migrations
+        // work during install before DB constants are defined.
+        $migration = new $className($this->pdo);
         $migration->up();
 
         // Record migration as applied
