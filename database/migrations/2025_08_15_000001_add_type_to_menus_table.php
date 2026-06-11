@@ -7,14 +7,15 @@ class AddTypeToMenusTable extends Migration {
     
     public function up() {
         $pdo = $this->db;
-        
-        // Aggiungi il campo type alla tabella menus
-        $sql = "ALTER TABLE menus ADD COLUMN type VARCHAR(20) NOT NULL DEFAULT 'custom' AFTER url";
-        $pdo->exec($sql);
-        
-        // Aggiungi anche un campo content_id per riferimenti a post/pagine
-        $sql = "ALTER TABLE menus ADD COLUMN content_id INT NULL AFTER type";
-        $pdo->exec($sql);
+
+        // SQLite does not support AFTER in ADD COLUMN; column is appended
+        if (defined('DB_DRIVER') && DB_DRIVER === 'sqlite') {
+            $pdo->exec("ALTER TABLE menus ADD COLUMN type VARCHAR(20) NOT NULL DEFAULT 'custom'");
+            $pdo->exec("ALTER TABLE menus ADD COLUMN content_id INTEGER NULL");
+        } else {
+            $pdo->exec("ALTER TABLE menus ADD COLUMN type VARCHAR(20) NOT NULL DEFAULT 'custom' AFTER url");
+            $pdo->exec("ALTER TABLE menus ADD COLUMN content_id INT NULL AFTER type");
+        }
         
         // Aggiorna i menu esistenti come tipo 'custom'
         $sql = "UPDATE menus SET type = 'custom' WHERE type = ''";

@@ -19,16 +19,15 @@ class AddActivePluginsSetting extends Migration
     public function up() {
         try {
             $this->db->beginTransaction();
-            
-            // Insert ACTIVE_PLUGINS setting if it doesn't exist
-            $stmt = $this->db->prepare("
-                INSERT IGNORE INTO settings (`key`, `value`, description, autoload, created_at, updated_at) 
-                VALUES ('ACTIVE_PLUGINS', '[]', 'JSON array of active plugin names', 1, NOW(), NOW())
-            ");
+
+            if (defined('DB_DRIVER') && DB_DRIVER === 'sqlite') {
+                $stmt = $this->db->prepare("INSERT OR IGNORE INTO settings (`key`, `value`, description, autoload, created_at, updated_at) VALUES ('ACTIVE_PLUGINS', '[]', 'JSON array of active plugin names', 1, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)");
+            } else {
+                $stmt = $this->db->prepare("INSERT IGNORE INTO settings (`key`, `value`, description, autoload, created_at, updated_at) VALUES ('ACTIVE_PLUGINS', '[]', 'JSON array of active plugin names', 1, NOW(), NOW())");
+            }
             $stmt->execute();
-            
+
             $this->db->commit();
-            echo "Added ACTIVE_PLUGINS setting to database\n";
         } catch (Exception $e) {
             $this->db->rollBack();
             throw $e;

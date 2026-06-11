@@ -7,29 +7,47 @@ class CreateMenusTable extends Migration {
     
     public function up() {
         $pdo = $this->db;
-        $sql = "CREATE TABLE IF NOT EXISTS menus (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            title VARCHAR(255) NOT NULL,
-            url VARCHAR(500) NOT NULL,
-            location VARCHAR(50) NOT NULL DEFAULT 'header',
-            position INT NOT NULL DEFAULT 0,
-            parent_id INT NULL,
-            active TINYINT(1) NOT NULL DEFAULT 1,
-            target VARCHAR(20) NOT NULL DEFAULT '_self',
-            css_class VARCHAR(255) DEFAULT '',
-            created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-            FOREIGN KEY (parent_id) REFERENCES menus(id) ON DELETE CASCADE
-        )";
-        
+
+        if (defined('DB_DRIVER') && DB_DRIVER === 'sqlite') {
+            $sql = "CREATE TABLE IF NOT EXISTS menus (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                title VARCHAR(255) NOT NULL,
+                url VARCHAR(500) NOT NULL,
+                location VARCHAR(50) NOT NULL DEFAULT 'header',
+                position INTEGER NOT NULL DEFAULT 0,
+                parent_id INTEGER NULL,
+                active INTEGER NOT NULL DEFAULT 1,
+                target VARCHAR(20) NOT NULL DEFAULT '_self',
+                css_class VARCHAR(255) DEFAULT '',
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (parent_id) REFERENCES menus(id) ON DELETE CASCADE
+            )";
+        } else {
+            $sql = "CREATE TABLE IF NOT EXISTS menus (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                title VARCHAR(255) NOT NULL,
+                url VARCHAR(500) NOT NULL,
+                location VARCHAR(50) NOT NULL DEFAULT 'header',
+                position INT NOT NULL DEFAULT 0,
+                parent_id INT NULL,
+                active TINYINT(1) NOT NULL DEFAULT 1,
+                target VARCHAR(20) NOT NULL DEFAULT '_self',
+                css_class VARCHAR(255) DEFAULT '',
+                created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                FOREIGN KEY (parent_id) REFERENCES menus(id) ON DELETE CASCADE
+            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
+        }
+
         $pdo->exec($sql);
-        
+
         // Indici per migliorare le performance
         $pdo->exec("CREATE INDEX idx_menus_location ON menus(location)");
         $pdo->exec("CREATE INDEX idx_menus_active ON menus(active)");
         $pdo->exec("CREATE INDEX idx_menus_parent_id ON menus(parent_id)");
         $pdo->exec("CREATE INDEX idx_menus_position ON menus(position)");
-        
+
         // Inserisci alcuni menu di esempio
         $defaultMenus = [
             [
@@ -73,8 +91,9 @@ class CreateMenusTable extends Migration {
                 'css_class' => ''
             ]
         ];
-        
-        $stmt = $pdo->prepare("INSERT INTO menus (title, url, location, position, parent_id, active, target, css_class, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())");
+
+        $ts = (defined('DB_DRIVER') && DB_DRIVER === 'sqlite') ? 'CURRENT_TIMESTAMP' : 'NOW()';
+        $stmt = $pdo->prepare("INSERT INTO menus (title, url, location, position, parent_id, active, target, css_class, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, $ts, $ts)");
         
         foreach ($defaultMenus as $menu) {
             $stmt->execute([
