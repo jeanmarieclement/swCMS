@@ -1,14 +1,17 @@
 <?php
+
 namespace App\Models;
 
 use App\Core\Model;
+
 /**
  * Tag Model
  * Handles database operations for tags
  */
-class Tag extends Model {
-    
-    public function __construct() {
+class Tag extends Model
+{
+    public function __construct()
+    {
         parent::__construct();
         $this->table = 'tags';
     }
@@ -17,7 +20,8 @@ class Tag extends Model {
      * Get all tags
      * @return array
      */
-    public function getAll() {
+    public function getAll()
+    {
         $sql = "SELECT * FROM {$this->table} ORDER BY name ASC";
         $stmt = $this->query($sql);
         return $stmt->fetchAll();
@@ -29,7 +33,8 @@ class Tag extends Model {
      * @param string $slug
      * @return bool
      */
-    public function slugExists($slug) {
+    public function slugExists($slug)
+    {
         $sql = "SELECT COUNT(*) FROM {$this->table} WHERE slug = :slug";
         $stmt = $this->query($sql, [':slug' => $slug]);
         return $stmt->fetchColumn() > 0;
@@ -40,7 +45,8 @@ class Tag extends Model {
      * @param array $data
      * @return int|false
      */
-    public function create($data) {
+    public function create($data)
+    {
         $stmt = $this->insert([
             ':name' => $data['name'],
             ':slug' => $data['slug'],
@@ -56,8 +62,8 @@ class Tag extends Model {
      *
      * @return array List of column names allowed in ORDER BY
      */
-    protected function getAllowedOrderByColumns() {
+    protected function getAllowedOrderByColumns()
+    {
         return ['id', 'name', 'slug', 'created_at', 'updated_at'];
     }
-
 }

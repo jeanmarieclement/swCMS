@@ -32,7 +32,7 @@ class DashboardService
 
     /**
      * Get dashboard statistics
-     * 
+     *
      * @return array Statistics data
      */
     public function getStats()
@@ -47,7 +47,7 @@ class DashboardService
 
     /**
      * Get recent content (posts and pages)
-     * 
+     *
      * @param int $limit Number of items to return
      * @return array Recent content
      */
@@ -92,7 +92,7 @@ class DashboardService
 
     /**
      * Get recent activity
-     * 
+     *
      * @param int $limit Number of activities to return
      * @return array Recent activities
      */
@@ -147,7 +147,7 @@ class DashboardService
 
     /**
      * Get system information
-     * 
+     *
      * @return array System info
      */
     public function getSystemInfo()
@@ -168,7 +168,7 @@ class DashboardService
 
     /**
      * Count comments by status
-     * 
+     *
      * @param string $status Comment status
      * @return int Comment count
      */
@@ -184,7 +184,7 @@ class DashboardService
 
     /**
      * Get database type from configuration
-     * 
+     *
      * @return string Database type
      */
     private function getDatabaseType()
@@ -193,7 +193,7 @@ class DashboardService
             // Try to detect database type by querying the connection
             $db = $this->postModel->getDb();
             $driver = $db->getAttribute(\PDO::ATTR_DRIVER_NAME);
-            
+
             switch ($driver) {
                 case 'sqlite':
                     return 'SQLite';
@@ -215,7 +215,7 @@ class DashboardService
 
     /**
      * Get database version
-     * 
+     *
      * @return string Database version
      */
     private function getDatabaseVersion()
@@ -223,12 +223,12 @@ class DashboardService
         try {
             $db = $this->postModel->getDb();
             $driver = $db->getAttribute(\PDO::ATTR_DRIVER_NAME);
-            
+
             if ($driver === 'sqlite') {
                 // SQLite version query
                 $version = $db->query('SELECT sqlite_version() as version')->fetch();
                 return $version ? $version['version'] : 'Unknown';
-            } else if ($driver === 'mysql') {
+            } elseif ($driver === 'mysql') {
                 // MySQL version query
                 $version = $db->query('SELECT VERSION() as version')->fetch();
                 return $version ? $version['version'] : 'Unknown';
@@ -244,7 +244,7 @@ class DashboardService
 
     /**
      * Get CMS version
-     * 
+     *
      * @return string CMS version
      */
     private function getCMSVersion()
@@ -255,7 +255,7 @@ class DashboardService
 
     /**
      * Format bytes to human readable format
-     * 
+     *
      * @param int $size Size in bytes
      * @param int $precision Decimal precision
      * @return string Formatted size
@@ -263,28 +263,28 @@ class DashboardService
     private function formatBytes($size, $precision = 2)
     {
         $units = ['B', 'KB', 'MB', 'GB', 'TB'];
-        
+
         for ($i = 0; $size > 1024 && $i < count($units) - 1; $i++) {
             $size /= 1024;
         }
-        
+
         return round($size, $precision) . ' ' . $units[$i];
     }
 
     /**
      * Calculate time ago from timestamp
-     * 
+     *
      * @param string $datetime DateTime string
      * @return string Time ago string
      */
     private function timeAgo($datetime)
     {
         $time = time() - strtotime($datetime);
-        
+
         if ($time < 1) {
             return 'just now';
         }
-        
+
         $condition = [
             12 * 30 * 24 * 60 * 60 => 'year',
             30 * 24 * 60 * 60      => 'month',
@@ -293,16 +293,16 @@ class DashboardService
             60                     => 'minute',
             1                      => 'second'
         ];
-        
+
         foreach ($condition as $secs => $str) {
             $d = $time / $secs;
-            
+
             if ($d >= 1) {
                 $t = round($d);
                 return $t . ' ' . $str . ($t > 1 ? 's' : '') . ' ago';
             }
         }
-        
+
         return 'just now';
     }
 }

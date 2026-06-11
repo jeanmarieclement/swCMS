@@ -85,7 +85,7 @@ class RequestHelper
      */
     public static function all(string $source = 'request'): array
     {
-        $data = match(strtolower($source)) {
+        $data = match (strtolower($source)) {
             'get' => $_GET,
             'post' => $_POST,
             'request' => $_REQUEST,
@@ -104,7 +104,7 @@ class RequestHelper
      */
     public static function has(string $key, string $source = 'request'): bool
     {
-        return match(strtolower($source)) {
+        return match (strtolower($source)) {
             'get' => isset($_GET[$key]),
             'post' => isset($_POST[$key]),
             'request' => isset($_REQUEST[$key]),

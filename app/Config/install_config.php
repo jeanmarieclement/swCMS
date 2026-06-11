@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Minimal configuration file for installation process
  */

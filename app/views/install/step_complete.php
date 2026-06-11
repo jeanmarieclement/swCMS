@@ -1,4 +1,4 @@
-<?php if (isset($success) && $success): ?>
+<?php if (isset($success) && $success) : ?>
     <h2 class="step-title">Installation Complete!</h2>
     <p class="step-description">
         Congratulations! swCMS has been successfully installed and configured.
@@ -29,7 +29,7 @@
         </div>
     </div>
     
-    <?php if (isset($config['migration_results'])): ?>
+    <?php if (isset($config['migration_results'])) : ?>
     <div class="form-group">
         <h3>Database Setup:</h3>
         <div style="background: #f0fdf4; padding: 15px; border-radius: 8px; margin-top: 15px; border-left: 4px solid #16a34a;">
@@ -41,7 +41,7 @@
             <details style="margin-top: 10px;">
                 <summary style="cursor: pointer; font-weight: bold;">View Database Details</summary>
                 <div style="margin-top: 10px; font-size: 12px;">
-                    <?php foreach ($config['migration_results']['results'] as $result): ?>
+                    <?php foreach ($config['migration_results']['results'] as $result) : ?>
                         <div style="margin: 2px 0; padding: 2px 8px; background: <?php echo $result['status'] === 'success' ? '#dcfce7' : ($result['status'] === 'error' ? '#fef2f2' : '#f3f4f6'); ?>; border-radius: 4px;">
                             <strong><?php echo $result['status'] === 'success' ? '✅' : ($result['status'] === 'error' ? '❌' : '⏭️'); ?></strong>
                             <?php echo htmlspecialchars($result['file']); ?> - <?php echo htmlspecialchars($result['message']); ?>
@@ -58,16 +58,16 @@
         <a href="<?php echo htmlspecialchars($config['site']['url'] ?? ''); ?>/admin" class="btn btn-secondary">Go to Admin Panel</a>
     </div>
 
-<?php else: ?>
+<?php else : ?>
     <h2 class="step-title">Installation Failed</h2>
     <p class="step-description">
         Unfortunately, there was an error during the installation process.
     </p>
     
-    <?php if (!empty($errors)): ?>
+    <?php if (!empty($errors)) : ?>
         <div class="error">
             <strong>Installation errors:</strong><br>
-            <?php foreach ($errors as $error): ?>
+            <?php foreach ($errors as $error) : ?>
                 <div><?php echo htmlspecialchars($error); ?></div>
             <?php endforeach; ?>
         </div>

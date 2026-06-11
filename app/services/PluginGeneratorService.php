@@ -9,27 +9,29 @@ use App\Helpers\StringHelper;
  * Plugin Generator Service
  * Generates plugin scaffolding and boilerplate code
  */
-class PluginGeneratorService {
-    
+class PluginGeneratorService
+{
     private $pluginsPath;
     private $templatesPath;
-    
-    public function __construct() {
+
+    public function __construct()
+    {
         $this->pluginsPath = __DIR__ . '/../../plugins/';
         $this->templatesPath = __DIR__ . '/../../App/Services/templates/plugin/';
-        
+
         // Create plugins directory if it doesn't exist
         if (!is_dir($this->pluginsPath)) {
             mkdir($this->pluginsPath, 0755, true);
         }
     }
-    
+
     /**
      * Generate a new plugin
      * @param array $config Plugin configuration
      * @return array Result with success status and messages
      */
-    public function generatePlugin(array $config): array {
+    public function generatePlugin(array $config): array
+    {
         try {
             // Validate configuration
             $validation = $this->validateConfig($config);
@@ -39,11 +41,11 @@ class PluginGeneratorService {
                     'errors' => $validation['errors']
                 ];
             }
-            
+
             // Sanitize plugin name
             $pluginName = $this->sanitizePluginName($config['name']);
             $pluginPath = $this->pluginsPath . $pluginName;
-            
+
             // Check if plugin already exists
             if (is_dir($pluginPath)) {
                 return [
@@ -51,121 +53,123 @@ class PluginGeneratorService {
                     'errors' => ["Plugin '$pluginName' already exists"]
                 ];
             }
-            
+
             // Create plugin directory
             mkdir($pluginPath, 0755, true);
-            
+
             // Generate plugin files
             $this->generateMainFile($pluginPath, $pluginName, $config);
-            
+
             if ($config['include_hooks']) {
                 $this->generateHooksFile($pluginPath, $pluginName, $config);
             }
-            
+
             if ($config['include_settings']) {
                 $this->generateSettingsFile($pluginPath, $pluginName, $config);
             }
-            
+
             if ($config['include_assets']) {
                 $this->generateAssetsStructure($pluginPath);
             }
-            
+
             if ($config['include_readme']) {
                 $this->generateReadmeFile($pluginPath, $pluginName, $config);
             }
-            
+
             if ($config['include_tests']) {
                 $this->generateTestFiles($pluginPath, $pluginName, $config);
             }
-            
+
             LogHelper::info('Plugin generated successfully', ['plugin' => $pluginName]);
-            
+
             return [
                 'success' => true,
                 'plugin_name' => $pluginName,
                 'plugin_path' => $pluginPath,
                 'files_created' => $this->getCreatedFiles($pluginPath)
             ];
-            
         } catch (\Exception $e) {
             LogHelper::error('Plugin generation failed', [
                 'error' => $e->getMessage(),
                 'config' => $config
             ]);
-            
+
             return [
                 'success' => false,
                 'errors' => ['Plugin generation failed: ' . $e->getMessage()]
             ];
         }
     }
-    
+
     /**
      * Validate plugin configuration
      * @param array $config Configuration to validate
      * @return array Validation result
      */
-    private function validateConfig(array $config): array {
+    private function validateConfig(array $config): array
+    {
         $errors = [];
-        
+
         // Required fields
         if (empty($config['name'])) {
             $errors[] = 'Plugin name is required';
         }
-        
+
         if (empty($config['description'])) {
             $errors[] = 'Plugin description is required';
         }
-        
+
         if (empty($config['author'])) {
             $errors[] = 'Plugin author is required';
         }
-        
+
         if (empty($config['version'])) {
             $errors[] = 'Plugin version is required';
         }
-        
+
         // Validate plugin name format
         if (!empty($config['name']) && !preg_match('/^[a-zA-Z0-9_-]+$/', $config['name'])) {
             $errors[] = 'Plugin name can only contain letters, numbers, hyphens, and underscores';
         }
-        
+
         // Validate version format
         if (!empty($config['version']) && !preg_match('/^\d+\.\d+\.\d+$/', $config['version'])) {
             $errors[] = 'Version must be in format X.Y.Z (e.g., 1.0.0)';
         }
-        
+
         return [
             'valid' => empty($errors),
             'errors' => $errors
         ];
     }
-    
+
     /**
      * Sanitize plugin name
      * @param string $name Plugin name
      * @return string Sanitized name
      */
-    private function sanitizePluginName(string $name): string {
+    private function sanitizePluginName(string $name): string
+    {
         // Convert to lowercase and replace spaces with hyphens
         $name = strtolower($name);
         $name = preg_replace('/[^a-z0-9_-]/', '-', $name);
         $name = preg_replace('/-+/', '-', $name);
         $name = trim($name, '-');
-        
+
         return $name;
     }
-    
+
     /**
      * Generate main plugin file
      * @param string $pluginPath Plugin directory path
      * @param string $pluginName Plugin name
      * @param array $config Plugin configuration
      */
-    private function generateMainFile(string $pluginPath, string $pluginName, array $config): void {
+    private function generateMainFile(string $pluginPath, string $pluginName, array $config): void
+    {
         $className = $this->generateClassName($pluginName);
         $functionPrefix = str_replace('-', '_', $pluginName);
-        
+
         $template = $this->getMainFileTemplate();
         $content = $this->replacePlaceholders($template, [
             'PLUGIN_NAME' => $config['display_name'] ?? ucwords(str_replace('-', ' ', $pluginName)),
@@ -186,38 +190,40 @@ class PluginGeneratorService {
             'CURRENT_YEAR' => date('Y'),
             'GENERATION_DATE' => date('Y-m-d H:i:s')
         ]);
-        
+
         file_put_contents($pluginPath . '/' . $pluginName . '.php', $content);
     }
-    
+
     /**
      * Generate hooks file
      * @param string $pluginPath Plugin directory path
      * @param string $pluginName Plugin name
      * @param array $config Plugin configuration
      */
-    private function generateHooksFile(string $pluginPath, string $pluginName, array $config): void {
+    private function generateHooksFile(string $pluginPath, string $pluginName, array $config): void
+    {
         $functionPrefix = str_replace('-', '_', $pluginName);
-        
+
         $template = $this->getHooksFileTemplate();
         $content = $this->replacePlaceholders($template, [
             'PLUGIN_FUNCTION_PREFIX' => $functionPrefix,
             'PLUGIN_NAME' => $config['display_name'] ?? ucwords(str_replace('-', ' ', $pluginName)),
             'CURRENT_YEAR' => date('Y')
         ]);
-        
+
         file_put_contents($pluginPath . '/hooks.php', $content);
     }
-    
+
     /**
      * Generate settings file
      * @param string $pluginPath Plugin directory path
      * @param string $pluginName Plugin name
      * @param array $config Plugin configuration
      */
-    private function generateSettingsFile(string $pluginPath, string $pluginName, array $config): void {
+    private function generateSettingsFile(string $pluginPath, string $pluginName, array $config): void
+    {
         $functionPrefix = str_replace('-', '_', $pluginName);
-        
+
         $template = $this->getSettingsFileTemplate();
         $content = $this->replacePlaceholders($template, [
             'PLUGIN_FUNCTION_PREFIX' => $functionPrefix,
@@ -225,40 +231,42 @@ class PluginGeneratorService {
             'PLUGIN_DIRECTORY_NAME' => $pluginName,
             'CURRENT_YEAR' => date('Y')
         ]);
-        
+
         file_put_contents($pluginPath . '/settings.php', $content);
     }
-    
+
     /**
      * Generate assets structure
      * @param string $pluginPath Plugin directory path
      */
-    private function generateAssetsStructure(string $pluginPath): void {
+    private function generateAssetsStructure(string $pluginPath): void
+    {
         $dirs = ['assets', 'assets/css', 'assets/js', 'assets/img'];
-        
+
         foreach ($dirs as $dir) {
             $dirPath = $pluginPath . '/' . $dir;
             if (!is_dir($dirPath)) {
                 mkdir($dirPath, 0755, true);
             }
         }
-        
+
         // Create basic CSS file
         $cssContent = "/* Plugin Styles */\n.{plugin-name}-wrapper {\n    /* Add your styles here */\n}\n";
         file_put_contents($pluginPath . '/assets/css/style.css', $cssContent);
-        
+
         // Create basic JS file
         $jsContent = "// Plugin JavaScript\n(function($) {\n    'use strict';\n    \n    // Plugin initialization\n    $(document).ready(function() {\n        // Add your JavaScript here\n    });\n    \n})(jQuery);\n";
         file_put_contents($pluginPath . '/assets/js/script.js', $jsContent);
     }
-    
+
     /**
      * Generate README file
      * @param string $pluginPath Plugin directory path
      * @param string $pluginName Plugin name
      * @param array $config Plugin configuration
      */
-    private function generateReadmeFile(string $pluginPath, string $pluginName, array $config): void {
+    private function generateReadmeFile(string $pluginPath, string $pluginName, array $config): void
+    {
         $template = $this->getReadmeTemplate();
         $content = $this->replacePlaceholders($template, [
             'PLUGIN_NAME' => $config['display_name'] ?? ucwords(str_replace('-', ' ', $pluginName)),
@@ -269,89 +277,94 @@ class PluginGeneratorService {
             'PLUGIN_TESTED_UP_TO' => $config['tested_up_to'] ?? '1.5.0',
             'CURRENT_YEAR' => date('Y')
         ]);
-        
+
         file_put_contents($pluginPath . '/README.md', $content);
     }
-    
+
     /**
      * Generate test files
      * @param string $pluginPath Plugin directory path
      * @param string $pluginName Plugin name
      * @param array $config Plugin configuration
      */
-    private function generateTestFiles(string $pluginPath, string $pluginName, array $config): void {
+    private function generateTestFiles(string $pluginPath, string $pluginName, array $config): void
+    {
         $testDir = $pluginPath . '/tests';
         if (!is_dir($testDir)) {
             mkdir($testDir, 0755, true);
         }
-        
+
         $className = $this->generateClassName($pluginName);
-        
+
         $template = $this->getTestFileTemplate();
         $content = $this->replacePlaceholders($template, [
             'PLUGIN_CLASS_NAME' => $className,
             'PLUGIN_NAME' => $config['display_name'] ?? ucwords(str_replace('-', ' ', $pluginName)),
             'CURRENT_YEAR' => date('Y')
         ]);
-        
+
         file_put_contents($testDir . '/' . $className . 'Test.php', $content);
     }
-    
+
     /**
      * Generate class name from plugin name
      * @param string $pluginName Plugin name
      * @return string Class name
      */
-    private function generateClassName(string $pluginName): string {
+    private function generateClassName(string $pluginName): string
+    {
         $parts = explode('-', $pluginName);
         $className = '';
-        
+
         foreach ($parts as $part) {
             $className .= ucfirst($part);
         }
-        
+
         return $className . 'Plugin';
     }
-    
+
     /**
      * Replace placeholders in template
      * @param string $template Template content
      * @param array $replacements Replacement values
      * @return string Processed content
      */
-    private function replacePlaceholders(string $template, array $replacements): string {
+    private function replacePlaceholders(string $template, array $replacements): string
+    {
         foreach ($replacements as $placeholder => $value) {
             $template = str_replace('{{' . $placeholder . '}}', $value, $template);
         }
-        
+
         return $template;
     }
-    
+
     /**
      * Get created files list
      * @param string $pluginPath Plugin directory path
      * @return array List of created files
      */
-    private function getCreatedFiles(string $pluginPath): array {
+    private function getCreatedFiles(string $pluginPath): array
+    {
         $files = [];
         $iterator = new \RecursiveIteratorIterator(
             new \RecursiveDirectoryIterator($pluginPath)
         );
-        
+
         foreach ($iterator as $file) {
             if ($file->isFile()) {
                 $files[] = str_replace($pluginPath . '/', '', $file->getPathname());
             }
         }
-        
+
         return $files;
     }
-    
+
     /**
      * Get main file template
      * @return string Template content
      */
-    private function getMainFileTemplate(): string {
+    private function getMainFileTemplate(): string
+    {
         return '<?php
 /**
  * Plugin Name: {{PLUGIN_NAME}}
@@ -508,12 +521,13 @@ function {{PLUGIN_FUNCTION_PREFIX}}_deactivate() {
 {{PLUGIN_CLASS_NAME}}::getInstance();
 ';
     }
-    
+
     /**
      * Get hooks file template
      * @return string Template content
      */
-    private function getHooksFileTemplate(): string {
+    private function getHooksFileTemplate(): string
+    {
         return '<?php
 /**
  * {{PLUGIN_NAME}} - Hooks Definition
@@ -630,12 +644,13 @@ function {{PLUGIN_FUNCTION_PREFIX}}_get_settings() {
 {{PLUGIN_FUNCTION_PREFIX}}_register_hooks();
 ';
     }
-    
+
     /**
      * Get settings file template
      * @return string Template content
      */
-    private function getSettingsFileTemplate(): string {
+    private function getSettingsFileTemplate(): string
+    {
         return '<?php
 /**
  * {{PLUGIN_NAME}} - Settings Configuration
@@ -741,12 +756,13 @@ if (isset($_GET[\'action\']) && $_GET[\'action\'] === \'settings\') {
 }
 ';
     }
-    
+
     /**
      * Get README template
      * @return string Template content
      */
-    private function getReadmeTemplate(): string {
+    private function getReadmeTemplate(): string
+    {
         return '# {{PLUGIN_NAME}}
 
 {{PLUGIN_DESCRIPTION}}
@@ -835,12 +851,13 @@ Generated by swCMS Plugin Generator on {{GENERATION_DATE}}
 Copyright {{CURRENT_YEAR}} {{PLUGIN_AUTHOR}}
 ';
     }
-    
+
     /**
      * Get test file template
      * @return string Template content
      */
-    private function getTestFileTemplate(): string {
+    private function getTestFileTemplate(): string
+    {
         return '<?php
 /**
  * {{PLUGIN_NAME}} - Unit Tests

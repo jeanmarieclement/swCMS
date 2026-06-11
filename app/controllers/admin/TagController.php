@@ -3,7 +3,6 @@
 namespace App\Controllers\Admin;
 
 use App\Core\Controller;
-
 use App\Helpers\SecurityHelper;
 use App\Helpers\RedirectHelper;
 use App\Helpers\SessionHelper;
@@ -34,7 +33,7 @@ class TagController extends AdminController
         $this->tagModel = new Tag();
     }
 
-  
+
     /**
      * Visualizza la lista dei tag con messaggi flash
      *
@@ -138,7 +137,7 @@ class TagController extends AdminController
         ]);
     }
 
-   
+
     /**
      * Handles the update of an existing tag after validation and sanitization.
      *
@@ -205,7 +204,7 @@ class TagController extends AdminController
         RedirectHelper::redirect('/admin/tags');
     }
 
-   
+
     /**
      * AJAX: crea rapidamente un tag, restituisce JSON
      *

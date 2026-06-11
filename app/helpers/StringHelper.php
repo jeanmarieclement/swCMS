@@ -1,18 +1,21 @@
 <?php
+
 namespace App\Helpers;
 
 /**
  * StringHelper
- * 
+ *
  * Helper class for string manipulation.
  */
-class StringHelper {
+class StringHelper
+{
     /**
      * Convert a string to a URL-friendly slug
      * @param string $string
      * @return string
      */
-    public static function slugify($string) {
+    public static function slugify($string)
+    {
         $slug = preg_replace('/[^a-z0-9]+/i', '-', strtolower(trim($string)));
         $slug = preg_replace('/-+/', '-', $slug);
         return trim($slug, '-');
@@ -24,7 +27,8 @@ class StringHelper {
      * @param string $needle
      * @return bool
      */
-    public static function startsWith($haystack, $needle) {
+    public static function startsWith($haystack, $needle)
+    {
         return substr($haystack, 0, strlen($needle)) === $needle;
     }
 
@@ -34,7 +38,8 @@ class StringHelper {
      * @param string $needle
      * @return bool
      */
-    public static function endsWith($haystack, $needle) {
+    public static function endsWith($haystack, $needle)
+    {
         return substr($haystack, -strlen($needle)) === $needle;
     }
 
@@ -45,7 +50,8 @@ class StringHelper {
      * @param string $append
      * @return string
      */
-    public static function truncate($string, $length = 100, $append = '...') {
+    public static function truncate($string, $length = 100, $append = '...')
+    {
         if (strlen($string) > $length) {
             return substr($string, 0, $length) . $append;
         }
@@ -57,7 +63,8 @@ class StringHelper {
      * @param int $length
      * @return string
      */
-    public static function randomString($length = 10) {
+    public static function randomString($length = 10)
+    {
         $characters = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
         $string = '';
         for ($i = 0; $i < $length; $i++) {

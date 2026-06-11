@@ -51,7 +51,7 @@ class CacheManager
     {
         $ttl = defined('CACHE_TTL') ? (int)\CACHE_TTL : 3600;
 
-        return match(strtolower($driver)) {
+        return match (strtolower($driver)) {
             'file' => new FileCache(null, $ttl),
             default => new FileCache(null, $ttl) // Default to file cache
         };

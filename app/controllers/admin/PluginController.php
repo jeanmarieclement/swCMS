@@ -15,14 +15,16 @@ use App\Services\PluginGeneratorService;
  * Plugin Controller
  * Handles admin plugin management functionality
  */
-class PluginController extends AdminController {
+class PluginController extends AdminController
+{
     protected $pluginService;
     protected $pluginGeneratorService;
 
     /**
      * PluginController constructor.
      */
-    public function __construct($params = []) {
+    public function __construct($params = [])
+    {
         parent::__construct($params);
         $this->pluginService = new PluginService();
         $this->pluginGeneratorService = new PluginGeneratorService();
@@ -31,10 +33,11 @@ class PluginController extends AdminController {
     /**
      * Display plugins list
      */
-    public function indexAction() {
+    public function indexAction()
+    {
         $plugins = $this->pluginService->getAvailablePlugins();
         $activePlugins = $this->pluginService->getActivePlugins();
-        
+
         $this->render('admin/plugins/index', [
             'title' => 'Plugins',
             'page_name' => 'plugins',
@@ -46,7 +49,8 @@ class PluginController extends AdminController {
     /**
      * Activate a plugin
      */
-    public function activateAction() {
+    public function activateAction()
+    {
         if (!RequestHelper::isPost()) {
             $this->setFlashMessage('error', 'Invalid request method');
             RedirectHelper::redirect('/admin/plugins');
@@ -89,7 +93,8 @@ class PluginController extends AdminController {
     /**
      * Deactivate a plugin
      */
-    public function deactivateAction() {
+    public function deactivateAction()
+    {
         if (!RequestHelper::isPost()) {
             $this->setFlashMessage('error', 'Invalid request method');
             RedirectHelper::redirect('/admin/plugins');
@@ -142,7 +147,8 @@ class PluginController extends AdminController {
     /**
      * Show plugin details
      */
-    public function detailsAction() {
+    public function detailsAction()
+    {
         $pluginName = RequestHelper::get('plugin', '');
 
         if (empty($pluginName)) {
@@ -172,7 +178,6 @@ class PluginController extends AdminController {
                 'compatibility' => $compatibility,
                 'dependents' => $dependents
             ]);
-
         } catch (\Exception $e) {
             LogHelper::error('Error loading plugin details', ['plugin' => $pluginName, 'error' => $e->getMessage()]);
             $this->setFlashMessage('error', 'Error loading plugin details: ' . $e->getMessage());
@@ -183,7 +188,8 @@ class PluginController extends AdminController {
     /**
      * Show plugin generator form
      */
-    public function generateAction() {
+    public function generateAction()
+    {
         if (RequestHelper::isPost()) {
             // Validate CSRF token
             if (!CSRFHelper::validateRequest()) {
@@ -248,7 +254,8 @@ class PluginController extends AdminController {
     /**
      * Install a new plugin (placeholder for future implementation)
      */
-    public function installAction() {
+    public function installAction()
+    {
         $this->setFlashMessage('info', 'Plugin installation feature will be available in a future version');
         RedirectHelper::redirect('/admin/plugins');
     }
@@ -256,7 +263,8 @@ class PluginController extends AdminController {
     /**
      * Delete a plugin (placeholder for future implementation)
      */
-    public function deleteAction() {
+    public function deleteAction()
+    {
         $this->setFlashMessage('info', 'Plugin deletion feature will be available in a future version');
         RedirectHelper::redirect('/admin/plugins');
     }
@@ -264,7 +272,8 @@ class PluginController extends AdminController {
     /**
      * Configure plugin settings
      */
-    public function configureAction() {
+    public function configureAction()
+    {
         $pluginName = RequestHelper::get('plugin', '');
 
         if (empty($pluginName)) {
@@ -314,7 +323,6 @@ class PluginController extends AdminController {
                 'plugin' => $plugin,
                 'settings' => $settings
             ]);
-
         } catch (\Exception $e) {
             LogHelper::error('Error configuring plugin', ['plugin' => $pluginName, 'error' => $e->getMessage()]);
             $this->setFlashMessage('error', 'Error configuring plugin: ' . $e->getMessage());

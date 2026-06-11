@@ -6,7 +6,8 @@ namespace App\Core;
  * Hook System for swCMS
  * Provides extensible hooks and filters system for plugins
  */
-class HookSystem {
+class HookSystem
+{
     private static $instance = null;
     private $actions = [];
     private $filters = [];
@@ -15,14 +16,16 @@ class HookSystem {
     /**
      * Get singleton instance
      */
-    public static function getInstance() {
+    public static function getInstance()
+    {
         if (self::$instance === null) {
             self::$instance = new self();
         }
         return self::$instance;
     }
 
-    private function __construct() {
+    private function __construct()
+    {
         // Private constructor for singleton
     }
 
@@ -33,7 +36,8 @@ class HookSystem {
      * @param int $priority Priority (lower numbers = earlier execution)
      * @param int $accepted_args Number of arguments the callback accepts
      */
-    public function addAction($tag, $callback, $priority = 10, $accepted_args = 1) {
+    public function addAction($tag, $callback, $priority = 10, $accepted_args = 1)
+    {
         return $this->addHook('actions', $tag, $callback, $priority, $accepted_args);
     }
 
@@ -44,14 +48,16 @@ class HookSystem {
      * @param int $priority Priority (lower numbers = earlier execution)
      * @param int $accepted_args Number of arguments the callback accepts
      */
-    public function addFilter($tag, $callback, $priority = 10, $accepted_args = 1) {
+    public function addFilter($tag, $callback, $priority = 10, $accepted_args = 1)
+    {
         return $this->addHook('filters', $tag, $callback, $priority, $accepted_args);
     }
 
     /**
      * Add a hook (internal method)
      */
-    private function addHook($type, $tag, $callback, $priority, $accepted_args) {
+    private function addHook($type, $tag, $callback, $priority, $accepted_args)
+    {
         if (!isset($this->{$type}[$tag])) {
             $this->{$type}[$tag] = [];
         }
@@ -76,7 +82,8 @@ class HookSystem {
      * @param string $tag Action name
      * @param mixed ...$args Arguments to pass to callbacks
      */
-    public function doAction($tag, ...$args) {
+    public function doAction($tag, ...$args)
+    {
         if (!isset($this->actions[$tag])) {
             return;
         }
@@ -106,7 +113,8 @@ class HookSystem {
      * @param mixed ...$args Additional arguments
      * @return mixed Filtered value
      */
-    public function applyFilters($tag, $value, ...$args) {
+    public function applyFilters($tag, $value, ...$args)
+    {
         if (!isset($this->filters[$tag])) {
             return $value;
         }
@@ -138,7 +146,8 @@ class HookSystem {
      * @param int $priority Priority level
      * @return bool Success status
      */
-    public function removeAction($tag, $callback, $priority = 10) {
+    public function removeAction($tag, $callback, $priority = 10)
+    {
         return $this->removeHook('actions', $tag, $callback, $priority);
     }
 
@@ -149,14 +158,16 @@ class HookSystem {
      * @param int $priority Priority level
      * @return bool Success status
      */
-    public function removeFilter($tag, $callback, $priority = 10) {
+    public function removeFilter($tag, $callback, $priority = 10)
+    {
         return $this->removeHook('filters', $tag, $callback, $priority);
     }
 
     /**
      * Remove a hook (internal method)
      */
-    private function removeHook($type, $tag, $callback, $priority) {
+    private function removeHook($type, $tag, $callback, $priority)
+    {
         if (!isset($this->{$type}[$tag][$priority])) {
             return false;
         }
@@ -164,16 +175,16 @@ class HookSystem {
         foreach ($this->{$type}[$tag][$priority] as $key => $callback_data) {
             if ($callback_data['callback'] === $callback) {
                 unset($this->{$type}[$tag][$priority][$key]);
-                
+
                 // Clean up empty arrays
                 if (empty($this->{$type}[$tag][$priority])) {
                     unset($this->{$type}[$tag][$priority]);
-                    
+
                     if (empty($this->{$type}[$tag])) {
                         unset($this->{$type}[$tag]);
                     }
                 }
-                
+
                 return true;
             }
         }
@@ -187,7 +198,8 @@ class HookSystem {
      * @param string $type Type: 'action' or 'filter'
      * @return bool True if has callbacks
      */
-    public function hasHook($tag, $type = 'action') {
+    public function hasHook($tag, $type = 'action')
+    {
         $hooks = $type === 'filter' ? $this->filters : $this->actions;
         return !empty($hooks[$tag]);
     }
@@ -196,7 +208,8 @@ class HookSystem {
      * Get current filter being processed
      * @return string Current filter name
      */
-    public function currentFilter() {
+    public function currentFilter()
+    {
         return $this->current_filter;
     }
 
@@ -205,7 +218,8 @@ class HookSystem {
      * @param string $type Type: 'actions' or 'filters'
      * @return array All hooks
      */
-    public function getHooks($type = 'actions') {
+    public function getHooks($type = 'actions')
+    {
         return $this->{$type} ?? [];
     }
 
@@ -215,7 +229,8 @@ class HookSystem {
      * @param string $type Type: 'actions' or 'filters'
      * @return bool Success status
      */
-    public function removeAllHooks($tag, $type = 'actions') {
+    public function removeAllHooks($tag, $type = 'actions')
+    {
         if (isset($this->{$type}[$tag])) {
             unset($this->{$type}[$tag]);
             return true;
@@ -230,7 +245,8 @@ class HookSystem {
      * @param string $type Type: 'actions' or 'filters'
      * @return int|false Priority or false if not found
      */
-    public function getHookPriority($tag, $callback, $type = 'actions') {
+    public function getHookPriority($tag, $callback, $type = 'actions')
+    {
         if (!isset($this->{$type}[$tag])) {
             return false;
         }
@@ -250,7 +266,8 @@ class HookSystem {
      * Initialize common CMS hooks
      * This method sets up standard hooks that plugins can use
      */
-    public function initializeCoreHooks() {
+    public function initializeCoreHooks()
+    {
         // These are placeholders for common hooks that the CMS can trigger
         $core_hooks = [
             // Initialization hooks
@@ -258,7 +275,7 @@ class HookSystem {
             'plugins_loaded',
             'after_setup_theme',
             'setup_complete',
-            
+
             // Frontend hooks
             'cms_head',
             'cms_footer',
@@ -269,7 +286,7 @@ class HookSystem {
             'after_content',
             'sidebar_widgets',
             'navigation_menu',
-            
+
             // Admin hooks
             'admin_head',
             'admin_footer',
@@ -279,7 +296,7 @@ class HookSystem {
             'admin_notices',
             'admin_enqueue_scripts',
             'admin_bar_menu',
-            
+
             // Database hooks
             'save_post',
             'before_save_post',
@@ -297,14 +314,14 @@ class HookSystem {
             'delete_category',
             'save_tag',
             'delete_tag',
-            
+
             // Authentication hooks
             'user_login',
             'user_logout',
             'user_register',
             'login_failed',
             'password_reset',
-            
+
             // Template hooks
             'template_redirect',
             'page_template',
@@ -314,32 +331,32 @@ class HookSystem {
             'search_template',
             'archive_template',
             '404_template',
-            
+
             // Media hooks
             'upload_file',
             'delete_file',
             'image_resize',
-            
+
             // Cache hooks
             'cache_clear',
             'cache_write',
             'cache_read',
-            
+
             // Security hooks
             'login_attempt',
             'security_check',
             'permission_check',
-            
+
             // System hooks
             'system_error',
             'maintenance_mode',
             'cron_job',
-            
+
             // Theme hooks
             'theme_activated',
             'theme_deactivated',
             'theme_customizer',
-            
+
             // Comment hooks
             'comment_post',
             'comment_approved',
@@ -362,7 +379,8 @@ class HookSystem {
      * Get list of all available core hooks
      * @return array List of core hooks
      */
-    public function getCoreHooks(): array {
+    public function getCoreHooks(): array
+    {
         return [
             'initialization' => ['init', 'plugins_loaded', 'after_setup_theme', 'setup_complete'],
             'frontend' => ['cms_head', 'cms_footer', 'the_content', 'the_title', 'the_excerpt', 'before_content', 'after_content', 'sidebar_widgets', 'navigation_menu'],
@@ -384,7 +402,8 @@ class HookSystem {
      * @param string $hook Hook name
      * @return bool True if it's a core hook
      */
-    public function isCoreHook(string $hook): bool {
+    public function isCoreHook(string $hook): bool
+    {
         $coreHooks = $this->getCoreHooks();
         foreach ($coreHooks as $category => $hooks) {
             if (in_array($hook, $hooks)) {
@@ -399,7 +418,8 @@ class HookSystem {
      * @param string $category Category name
      * @return array Hooks in category
      */
-    public function getHooksByCategory(string $category): array {
+    public function getHooksByCategory(string $category): array
+    {
         $coreHooks = $this->getCoreHooks();
         return $coreHooks[$category] ?? [];
     }
@@ -409,7 +429,8 @@ class HookSystem {
      * @param array $hooks Array of hook definitions
      * @return bool Success status
      */
-    public function addHooks(array $hooks): bool {
+    public function addHooks(array $hooks): bool
+    {
         foreach ($hooks as $hook) {
             $type = $hook['type'] ?? 'action';
             $tag = $hook['tag'] ?? '';
@@ -434,7 +455,8 @@ class HookSystem {
      * Get hook statistics for debugging
      * @return array Hook statistics
      */
-    public function getHookStats(): array {
+    public function getHookStats(): array
+    {
         $stats = [
             'total_actions' => count($this->actions),
             'total_filters' => count($this->filters),

@@ -8,11 +8,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 # Development environment
 docker-compose up -d          # Start app (port 80), MySQL (3306), phpMyAdmin (8081)
 
-# Tests
-vendor/bin/phpunit             # All tests
-vendor/bin/phpunit --testsuite Unit        # Unit only
-vendor/bin/phpunit --testsuite Integration # Integration only
-vendor/bin/phpunit tests/Unit/RouterTest.php  # Single file
+# Tests (need MySQL: run inside the app container, host PHP lacks pdo_mysql)
+docker exec swcms_app php vendor/bin/phpunit                # All tests
+docker exec swcms_app php vendor/bin/phpunit --testsuite Unit        # Unit only
+docker exec swcms_app php vendor/bin/phpunit --testsuite Integration # Integration only
+docker exec swcms_app php vendor/bin/phpunit tests/Unit/RouterTest.php  # Single file
 
 # Code style (PSR-12)
 composer cs-check              # phpcs --standard=PSR12 App/

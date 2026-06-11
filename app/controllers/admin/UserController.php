@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Controllers\Admin;
 
 use App\Models\User;
@@ -14,7 +15,8 @@ use App\Helpers\LogHelper;
  * Admin User Controller
  * Handles user management in the admin dashboard
  */
-class UserController extends AdminController {
+class UserController extends AdminController
+{
     protected $userModel;
 
     /**
@@ -23,7 +25,8 @@ class UserController extends AdminController {
      *
      * @param array $params Optional parameters for the controller
      */
-    public function __construct($params = []) {
+    public function __construct($params = [])
+    {
         parent::__construct($params);
 
         AuthMiddleware::requireAdmin();
@@ -38,7 +41,8 @@ class UserController extends AdminController {
      * @param int $window Time window in seconds (default: 1 hour)
      * @return bool True if operation is allowed, false if rate limit exceeded
      */
-    private function checkRateLimit($operation, $limit = 5, $window = 3600) {
+    private function checkRateLimit($operation, $limit = 5, $window = 3600)
+    {
         $key = "rate_limit_{$operation}_" . SessionHelper::getValue('user_id');
         $timeKey = $key . '_time';
 
@@ -67,7 +71,8 @@ class UserController extends AdminController {
      * @param string $username Username to validate
      * @return array Array with 'valid' boolean and 'error' message
      */
-    private function validateUsername($username) {
+    private function validateUsername($username)
+    {
         if (empty($username)) {
             return ['valid' => false, 'error' => 'Username is required'];
         }
@@ -94,7 +99,8 @@ class UserController extends AdminController {
      * @param string $email Email to validate
      * @return array Array with 'valid' boolean and 'error' message
      */
-    private function validateEmail($email) {
+    private function validateEmail($email)
+    {
         if (empty($email)) {
             return ['valid' => false, 'error' => 'Email is required'];
         }
@@ -122,7 +128,8 @@ class UserController extends AdminController {
      * @param string $password Password to validate
      * @return array Array with 'valid' boolean and 'error' message
      */
-    private function validatePassword($password) {
+    private function validatePassword($password)
+    {
         if (empty($password)) {
             return ['valid' => false, 'error' => 'Password is required'];
         }
@@ -144,7 +151,8 @@ class UserController extends AdminController {
      * @param string $role Role to validate
      * @return array Array with 'valid' boolean and 'error' message
      */
-    private function validateRole($role) {
+    private function validateRole($role)
+    {
         $validRoles = ['admin', 'editor', 'author', 'subscriber'];
 
         if (empty($role)) {
@@ -164,7 +172,8 @@ class UserController extends AdminController {
      * @param string $displayName Display name to validate
      * @return array Array with 'valid' boolean and 'error' message
      */
-    private function validateDisplayName($displayName) {
+    private function validateDisplayName($displayName)
+    {
         // Display name is optional - empty is valid
         if (empty($displayName)) {
             return ['valid' => true, 'error' => ''];
@@ -182,16 +191,17 @@ class UserController extends AdminController {
 
         return ['valid' => true, 'error' => ''];
     }
-    
+
     /**
      * Displays the list of users in the admin dashboard.
      *
      * @return void
      */
-    public function indexAction() {
+    public function indexAction()
+    {
         // Get all users from the database
         $users = $this->userModel->getAllUsers();
-        
+
         $this->render('admin/users/list', [
             'title' => 'User Management',
             'page_name' => 'users',
@@ -202,12 +212,13 @@ class UserController extends AdminController {
             'canDelete' => $this->roleService->hasPermission(SessionHelper::getValue('user_role'), 'admin')
         ]);
     }
-    
+
     /**
      * Create a new user
      *
      */
-    public function createAction() {
+    public function createAction()
+    {
         $error = '';
         $success = false;
 
@@ -296,11 +307,11 @@ class UserController extends AdminController {
                 SessionHelper::setFlashMessage($error, 'error');
             }
         }
-        
+
         $roles = $this->roleService->getRoleHierarchy();
 
         $user = new User();
-        
+
         $this->render('admin/users/create', [
             'title' => 'Create User',
             'page_name' => 'users',
@@ -312,34 +323,35 @@ class UserController extends AdminController {
             'canEditRole' => $this->roleService->hasPermission(SessionHelper::getValue('user_role'), 'admin')
         ]);
     }
-    
-   
+
+
     /**
      * Displays the form to edit an existing user and handles submission.
      *
      * @return void
      */
-    public function editAction() {
+    public function editAction()
+    {
         // Get the user ID from the URL
         $userId = isset($this->params[0]) ? (int)$this->params[0] : 0;
-        
+
         if ($userId <= 0) {
             RedirectHelper::redirect($this->settings['ADMIN_URL'] . '/admin/users');
         }
-        
+
         // Get user data
         $user = $this->userModel->getUserById($userId);
-        
+
         if (!$user) {
             SessionHelper::setFlashMessage('User not found', 'error');
             RedirectHelper::redirect($this->settings['ADMIN_URL'] . '/admin/users');
         }
-        
+
         if (!$this->roleService->hasPermission(SessionHelper::getValue('user_role'), $user['role'])) {
             SessionHelper::setFlashMessage('You don\'t have permission to edit this user', 'error');
             RedirectHelper::redirect($this->settings['ADMIN_URL'] . '/admin/users');
         }
-        
+
         $error = '';
         $success = false;
 
@@ -451,9 +463,9 @@ class UserController extends AdminController {
                 SessionHelper::setFlashMessage($error, 'error');
             }
         }
-        
+
         $roles = $this->roleService->getRoleHierarchy();
-        
+
         $this->render('admin/users/edit', [
             'title' => 'Edit User',
             'page_name' => 'users',
@@ -464,35 +476,36 @@ class UserController extends AdminController {
             'canEditRole' => $this->roleService->hasPermission(SessionHelper::getValue('user_role'), 'admin')
         ]);
     }
-    
-   
+
+
     /**
      * Deletes a user by ID.
      *
      * @return void
      */
-    public function deleteAction() {
+    public function deleteAction()
+    {
         // Get the user ID from the URL
         $userId = (int)$this->getParam('id', 0);
-        
+
         if ($userId <= 0) {
             RedirectHelper::redirect($this->settings['SITE_URL'] . '/admin/users');
         }
-        
+
         // Prevent deleting the current user
         if ($userId == SessionHelper::getValue('user_id')) {
             SessionHelper::setFlashMessage('You cannot delete yourself', 'error');
             RedirectHelper::redirect($this->settings['SITE_URL'] . '/admin/users');
         }
-        
+
         // Get user data
         $user = $this->userModel->getUserById($userId);
-        
+
         if (!$user) {
             SessionHelper::setFlashMessage('User not found', 'error');
             RedirectHelper::redirect($this->settings['SITE_URL'] . '/admin/users');
         }
-        
+
         $error = '';
         $success = false;
 
@@ -522,7 +535,7 @@ class UserController extends AdminController {
                 SessionHelper::setFlashMessage('User deletion failed. Please try again.', 'error');
             }
         }
-        
+
         $this->render('admin/users/delete', [
             'title' => 'Delete User',
             'page_name' => 'users',

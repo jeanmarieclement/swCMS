@@ -10,14 +10,14 @@ use App\Controllers\Frontend\BaseController;
 /**
  * HomeController gestisce la homepage pubblica
  */
-class HomeController extends BaseController {
-   
-
+class HomeController extends BaseController
+{
     protected $pageModel;
     protected $settingsModel;
     protected $postModel;
-    
-    public function __construct($params = []) {
+
+    public function __construct($params = [])
+    {
         parent::__construct($params);
         $this->pageModel = new Page();
         $this->settingsModel = new Settings();
@@ -29,9 +29,10 @@ class HomeController extends BaseController {
      *
      * @return void
      */
-    public function indexAction() {
+    public function indexAction()
+    {
         // Carica le impostazioni del sito
-       
+
 
         $homepageMode = $this->settings['homepage_mode'] ?? 'latest';
         $homepagePageId = $this->settings['homepage_page'] ?? '';
@@ -53,7 +54,7 @@ class HomeController extends BaseController {
                     'homepage_page' => $page,
                     'latest_posts' => null,
                     'main_menu' => $mainMenu,
-                    
+
                 ]);
                 return;
             }
@@ -62,7 +63,7 @@ class HomeController extends BaseController {
 
         // Fallback: mostra ultimi articoli
         $latestArticles = $this->postModel->getLatest(6);
-      
+
         $this->render('home', [
             'settings' => $this->settings,
             'site_title' => $this->settings['site_title'] ?? 'swCMS',
@@ -71,26 +72,28 @@ class HomeController extends BaseController {
             'homepage_page' => null, // Set to null when showing articles, not the page ID
         ]);
     }
-    
-    
+
+
     /**
      * Displays the About Us page.
      *
      * @return void
      */
-    public function aboutAction() {
+    public function aboutAction()
+    {
         $this->render('about', [
             'title' => 'About Us'
         ]);
     }
-    
-    
+
+
     /**
      * Displays the Contact Us page.
      *
      * @return void
      */
-    public function contactAction() {
+    public function contactAction()
+    {
         $this->render('contact', [
             'title' => 'Contact Us'
         ]);

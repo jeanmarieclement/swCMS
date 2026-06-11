@@ -16,7 +16,13 @@ class ArticleManagementTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
+        $this->markTestSkipped(
+            'Legacy test: targets pre-1.0 classes (App\Controllers\ArticleController, ' .
+            'App\Models\ArticleModel) that no longer exist. Needs a rewrite against ' .
+            'App\Controllers\Admin\ArticleController and App\Models\Post.'
+        );
+
         // Start a session if not already started
         if (session_status() == PHP_SESSION_NONE) {
             session_start();

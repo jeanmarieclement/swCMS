@@ -229,9 +229,9 @@
         </div>
         
         <div class="content">
-            <?php if (!empty($errors)): ?>
+            <?php if (!empty($errors)) : ?>
                 <div class="error">
-                    <?php foreach ($errors as $error): ?>
+                    <?php foreach ($errors as $error) : ?>
                         <div><?php echo htmlspecialchars($error); ?></div>
                     <?php endforeach; ?>
                 </div>

@@ -1,14 +1,16 @@
 <?php
+
 namespace App\Models;
 
 use App\Core\Model;
 use App\Helpers\LogHelper;
+
 /**
  * User Model
  * Handles user authentication and management
  */
-class User extends Model{
-
+class User extends Model
+{
     /**
      * Pre-computed dummy hash for timing attack prevention
      * This is computed once and reused to ensure consistent timing
@@ -19,59 +21,63 @@ class User extends Model{
     /**
      * Constructor - get database connection
      */
-    public function __construct() {
+    public function __construct()
+    {
         parent::__construct();
         $this->table = 'users';
     }
-    
+
     /**
      * Get user by ID
-     * 
+     *
      * @param int $id User ID
      * @return array|false User data or false if not found
      */
-    public function getUserById($id) {
+    public function getUserById($id)
+    {
         $stmt = $this->query("SELECT * FROM {$this->table} WHERE id = :id AND status = 'active'", [':id' => $id]);
         return $stmt->fetch();
     }
-    
+
     /**
      * Get user by email
-     * 
+     *
      * @param string $email User email
      * @return array|false User data or false if not found
      */
-    public function getUserByEmail($email) {
+    public function getUserByEmail($email)
+    {
         $stmt = $this->query("SELECT * FROM {$this->table} WHERE email = :email", [':email' => $email]);
         return $stmt->fetch();
     }
-    
+
     /**
      * Get all users
-     * 
+     *
      * @param string $orderBy Field to order by
      * @param string $order Order direction (ASC or DESC)
      * @return array List of users
      */
-    public function getAllUsers($orderBy = 'id', $order = 'ASC') {
+    public function getAllUsers($orderBy = 'id', $order = 'ASC')
+    {
         // Validate order by field to prevent SQL injection
         $validFields = ['id', 'username', 'email', 'role', 'created_at', 'updated_at'];
         if (!in_array($orderBy, $validFields)) {
             $orderBy = 'id';
         }
-        
+
         // Validate order direction
         $order = strtoupper($order) === 'DESC' ? 'DESC' : 'ASC';
-        
+
         $stmt = $this->query("
             SELECT id, username, email, display_name, role, status, created_at, updated_at, last_login
             FROM {$this->table}
             ORDER BY {$orderBy} {$order}
         ");
-        
+
         return $stmt->fetchAll();
     }
-    
+
     /**
      * Authenticate user with security enhancements
      *
@@ -79,7 +85,8 @@ class User extends Model{
      * @param string $password User password (plain text)
      * @return array|false User data or false if authentication failed
      */
-    public function authenticate($email, $password) {
+    public function authenticate($email, $password)
+    {
         // Rate limiting check (basic implementation)
         if ($this->isRateLimited($email)) {
             // Perform dummy password verification to prevent timing attacks
@@ -137,7 +144,8 @@ class User extends Model{
      *
      * @return string Pre-computed bcrypt hash
      */
-    private function getDummyHash() {
+    private function getDummyHash()
+    {
         if (self::$dummyHash === null) {
             // Pre-compute dummy hash once and cache it
             // Using a constant value ensures the hash is always the same
@@ -153,7 +161,8 @@ class User extends Model{
      * @return int|false New user ID or false if failed
      * @throws \Exception if password does not meet security requirements
      */
-    public function createUser($userData) {
+    public function createUser($userData)
+    {
         // Validate password strength
         $validationResult = $this->validatePasswordStrength($userData['password']);
         if (!$validationResult['valid']) {
@@ -175,7 +184,7 @@ class User extends Model{
 
         return $stmt;
     }
-    
+
     /**
      * Update user
      *
@@ -184,7 +193,8 @@ class User extends Model{
      * @return bool Success or failure
      * @throws \Exception if password does not meet security requirements
      */
-    public function updateUser($id, $userData) {
+    public function updateUser($id, $userData)
+    {
         $params = [];
 
         foreach ($userData as $key => $value) {
@@ -196,8 +206,7 @@ class User extends Model{
                     throw new \Exception('Password does not meet security requirements: ' . implode(', ', $validationResult['errors']));
                 }
                 $value = password_hash($value, PASSWORD_BCRYPT, ['cost' => 12]);
-            }
-            elseif ($key === 'id') {
+            } elseif ($key === 'id') {
                 continue;
             }
             $params[$key] = $value;
@@ -206,104 +215,109 @@ class User extends Model{
 
         return $this->update($id, $params);
     }
-    
+
     /**
      * Delete a user
-     * 
+     *
      * @param int $id User ID
      * @return bool Success or failure
      */
-    public function deleteUser($id) {
+    public function deleteUser($id)
+    {
         // Soft delete - set status to 'deleted'
         return $this->delete($id);
     }
-    
+
     /**
      * Count total users
-     * 
+     *
      * @param string $status User status (active, deleted, all)
      * @return int Number of users
      */
-    public function countUsers($status = 'active') {
+    public function countUsers($status = 'active')
+    {
         $query = "SELECT COUNT(*) FROM {$this->table}";
-        
+
         if ($status !== 'all') {
             $query .= " WHERE status = :status";
         }
 
         $stmt = $this->query($query, [':status' => $status]);
-        
+
         return (int)$stmt->fetchColumn();
     }
 
     /**
      * Get user count by role
-     * 
+     *
      * @param string $role Role name
      * @return int Number of users with this role
      */
-    public function getUserCountByRole($role) {
+    public function getUserCountByRole($role)
+    {
         $query = "SELECT COUNT(*) FROM {$this->table} WHERE role = :role AND status = 'active'";
         $stmt = $this->query($query, [':role' => $role]);
         return (int)$stmt->fetchColumn();
     }
-    
+
     /**
      * Check if authentication is rate limited for an email
-     * 
+     *
      * @param string $email User email
      * @return bool True if rate limited
      */
-    private function isRateLimited($email) {
+    private function isRateLimited($email)
+    {
         try {
             // Check if the table exists first
             if (!$this->tableExists('user_login_attempts')) {
                 return false; // If table doesn't exist, don't apply rate limiting
             }
-            
+
             $query = "SELECT failed_attempts, last_attempt FROM user_login_attempts WHERE email = :email";
             $stmt = $this->query($query, [':email' => $email]);
             $attempt = $stmt->fetch();
-            
+
             if (!$attempt) {
                 return false;
             }
-            
+
             $maxAttempts = 5;
             $lockoutTime = 900; // 15 minutes
-            
+
             if ($attempt['failed_attempts'] >= $maxAttempts) {
                 $lastAttempt = strtotime($attempt['last_attempt']);
                 if (time() - $lastAttempt < $lockoutTime) {
                     return true;
                 }
             }
-            
+
             return false;
         } catch (\Exception $e) {
             LogHelper::error("Error checking rate limit: " . $e->getMessage());
             return false; // Fail open - don't block authentication if there's an error
         }
     }
-    
+
     /**
      * Record failed authentication attempt
-     * 
+     *
      * @param string $email User email
      */
-    private function recordFailedAttempt($email) {
+    private function recordFailedAttempt($email)
+    {
         try {
             // Check if the table exists first
             if (!$this->tableExists('user_login_attempts')) {
                 return; // If table doesn't exist, silently skip recording
             }
-            
+
             if (defined('DB_DRIVER') && DB_DRIVER === 'sqlite') {
                 // SQLite doesn't support ON DUPLICATE KEY UPDATE, so we use INSERT OR REPLACE
                 $checkQuery = "SELECT id, failed_attempts FROM user_login_attempts WHERE email = :email";
                 $checkStmt = $this->query($checkQuery, [':email' => $email]);
                 $existing = $checkStmt->fetch();
-                
+
                 if ($existing) {
                     $updateQuery = "UPDATE user_login_attempts SET failed_attempts = failed_attempts + 1, last_attempt = datetime('now') WHERE email = :email";
                     $this->query($updateQuery, [':email' => $email]);
@@ -324,38 +338,40 @@ class User extends Model{
             LogHelper::error("Failed to record login attempt: " . $e->getMessage());
         }
     }
-    
+
     /**
      * Clear failed authentication attempts
-     * 
+     *
      * @param string $email User email
      */
-    private function clearFailedAttempts($email) {
+    private function clearFailedAttempts($email)
+    {
         try {
             // Check if the table exists first
             if (!$this->tableExists('user_login_attempts')) {
                 return; // If table doesn't exist, silently skip clearing
             }
-            
+
             $query = "DELETE FROM user_login_attempts WHERE email = :email";
             $this->query($query, [':email' => $email]);
         } catch (\Exception $e) {
             LogHelper::error("Failed to clear login attempts: " . $e->getMessage());
         }
     }
-    
+
     /**
      * Update last login time for user
-     * 
+     *
      * @param int $userId User ID
      */
-    private function updateLastLogin($userId) {
+    private function updateLastLogin($userId)
+    {
         try {
             // Check if the last_login column exists first
             if (!$this->columnExists($this->table, 'last_login')) {
                 return; // If column doesn't exist, silently skip updating
             }
-            
+
             if (defined('DB_DRIVER') && DB_DRIVER === 'sqlite') {
                 $query = "UPDATE {$this->table} SET last_login = datetime('now') WHERE id = :id";
             } else {
@@ -366,67 +382,69 @@ class User extends Model{
             LogHelper::error("Failed to update last login: " . $e->getMessage());
         }
     }
-    
+
     /**
      * Validate password strength
-     * 
+     *
      * @param string $password Password to validate
      * @return array Validation result with 'valid' boolean and 'errors' array
      */
-    public function validatePasswordStrength($password) {
+    public function validatePasswordStrength($password)
+    {
         $errors = [];
-        
+
         if (strlen($password) < 8) {
             $errors[] = 'Password must be at least 8 characters long';
         }
-        
+
         if (!preg_match('/[A-Z]/', $password)) {
             $errors[] = 'Password must contain at least one uppercase letter';
         }
-        
+
         if (!preg_match('/[a-z]/', $password)) {
             $errors[] = 'Password must contain at least one lowercase letter';
         }
-        
+
         if (!preg_match('/[0-9]/', $password)) {
             $errors[] = 'Password must contain at least one number';
         }
-        
+
         if (!preg_match('/[^A-Za-z0-9]/', $password)) {
             $errors[] = 'Password must contain at least one special character';
         }
-        
+
         return [
             'valid' => empty($errors),
             'errors' => $errors
         ];
     }
-    
+
     /**
      * Check if a table exists in the database
-     * 
+     *
      * @param string $tableName Table name to check
      * @return bool True if table exists
      */
-    private function tableExists($tableName) {
+    private function tableExists($tableName)
+    {
         try {
             if (defined('DB_DRIVER') && DB_DRIVER === 'sqlite') {
                 $query = "SELECT name FROM sqlite_master WHERE type='table' AND name = :table_name";
             } else {
                 $query = "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = :table_name";
             }
-            
+
             $stmt = $this->db->prepare($query);
             $stmt->bindValue(':table_name', $tableName, \PDO::PARAM_STR);
             $stmt->execute();
-            
+
             return $stmt->rowCount() > 0;
         } catch (\Exception $e) {
             LogHelper::error("Error checking if table exists: " . $e->getMessage());
             return false;
         }
     }
-    
+
     /**
      * Check if a column exists in a table
      *
@@ -434,7 +452,8 @@ class User extends Model{
      * @param string $columnName Column name
      * @return bool True if column exists
      */
-    private function columnExists($tableName, $columnName) {
+    private function columnExists($tableName, $columnName)
+    {
         try {
             if (defined('DB_DRIVER') && DB_DRIVER === 'sqlite') {
                 $stmt = $this->db->query("PRAGMA table_info($tableName)");
@@ -465,7 +484,8 @@ class User extends Model{
      *
      * @return array List of column names allowed in ORDER BY
      */
-    protected function getAllowedOrderByColumns() {
+    protected function getAllowedOrderByColumns()
+    {
         return ['id', 'username', 'email', 'display_name', 'role', 'status', 'created_at', 'updated_at'];
     }
 }

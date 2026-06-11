@@ -1,11 +1,12 @@
 <?php
 
 namespace App\Core\Database;
+
+use App\Core\Database\Database;
+
 /**
  * Base Migration class
  */
-use App\Core\Database\Database;
-
 
 abstract class Migration
 {
@@ -20,20 +21,20 @@ abstract class Migration
     {
         $this->db = \App\Core\Database\Database::getInstance();
     }
-    
+
     /**
      * Execute the migration
      */
     abstract public function up();
-    
+
     /**
      * Rollback the migration
      */
     abstract public function down();
-    
+
     /**
      * Execute a raw SQL query
-     * 
+     *
      * @param string $sql
      * @return bool
      */
@@ -46,10 +47,10 @@ abstract class Migration
     {
         return $this->db->exec($sql);
     }
-    
+
     /**
      * Add a foreign key constraint
-     * 
+     *
      * @param string $table
      * @param string $column
      * @param string $referenceTable
@@ -77,13 +78,13 @@ abstract class Migration
                 REFERENCES `{$referenceTable}` (`{$referenceColumn}`)
                 ON DELETE {$onDelete} 
                 ON UPDATE {$onUpdate}";
-                
+
         return $this->execute($sql);
     }
-    
+
     /**
      * Drop a foreign key constraint
-     * 
+     *
      * @param string $table
      * @param string $constraintName
      * @return bool

@@ -1,7 +1,9 @@
 <?php
+
 /**
  * Main configuration file for the CMS
  */
+
 if (!defined('ROOT_PATH')) {
     define('ROOT_PATH', dirname(__DIR__, 2));
 }
@@ -20,7 +22,8 @@ if (file_exists($envFile)) {
 }
 
 // Helper function to get environment variable with fallback
-function env($key, $default = null) {
+function env($key, $default = null)
+{
     return $_ENV[$key] ?? $default;
 }
 
@@ -62,7 +65,3 @@ ini_set('session.cookie_secure', 0); // Set to 1 if using HTTPS
 define('CACHE_DRIVER', env('CACHE_DRIVER', 'file')); // file or database
 define('CACHE_TTL', env('CACHE_TTL', 3600)); // Default TTL in seconds (1 hour)
 define('CACHE_PATH', ROOT_PATH . '/storage/cache');
-
-
-
-

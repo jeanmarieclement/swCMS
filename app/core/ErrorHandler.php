@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Core;
 
 use App\Helpers\LogHelper;
@@ -6,26 +7,28 @@ use App\Helpers\SystemSettingsHelper;
 
 /**
  * ErrorHandler
- * 
+ *
  * Manages error and exception handling for the application
  */
-class ErrorHandler {
+class ErrorHandler
+{
     /**
      * Initialize error and exception handlers
      *
      * @return void
      */
-    public static function initialize() {
+    public static function initialize()
+    {
         // Set error handler
         set_error_handler([self::class, 'handleError']);
-        
+
         // Set exception handler
         set_exception_handler([self::class, 'handleException']);
-        
+
         // Register shutdown function
         register_shutdown_function([self::class, 'handleShutdown']);
     }
-    
+
     /**
      * Handle PHP errors
      *
@@ -35,7 +38,8 @@ class ErrorHandler {
      * @param int $line Line where the error occurred
      * @return bool
      */
-    public static function handleError($level, $message, $file, $line) {
+    public static function handleError($level, $message, $file, $line)
+    {
         // Don't log suppressed errors (using @ operator)
         if (error_reporting() === 0) {
             return false;
@@ -62,14 +66,15 @@ class ErrorHandler {
         // Let PHP continue with its default error handling
         return false;
     }
-    
+
     /**
      * Handle uncaught exceptions
      *
      * @param \Throwable $exception The uncaught exception
      * @return void
      */
-    public static function handleException($exception) {
+    public static function handleException($exception)
+    {
         // Log detailed error information to file
         LogHelper::critical("Uncaught exception: " . get_class($exception), [
             'message' => $exception->getMessage(),
@@ -99,13 +104,14 @@ class ErrorHandler {
 
         exit(1);
     }
-    
+
     /**
      * Handle fatal errors on shutdown
      *
      * @return void
      */
-    public static function handleShutdown() {
+    public static function handleShutdown()
+    {
         $error = error_get_last();
 
         // Check if the error was a fatal error
@@ -124,14 +130,15 @@ class ErrorHandler {
             }
         }
     }
-    
+
     /**
      * Get the error type as a string
      *
      * @param int $type The error type
      * @return string
      */
-    private static function getErrorType($type) {
+    private static function getErrorType($type)
+    {
         $errorTypes = [
             E_ERROR => 'Error',
             E_WARNING => 'Warning',
@@ -148,16 +155,17 @@ class ErrorHandler {
             E_DEPRECATED => 'Deprecated',
             E_USER_DEPRECATED => 'User Deprecated'
         ];
-        
+
         return isset($errorTypes[$type]) ? $errorTypes[$type] : 'Unknown Error';
     }
-    
+
     /**
      * Determine if the application is running in production environment
      *
      * @return bool
      */
-    private static function isProductionEnvironment() {
+    private static function isProductionEnvironment()
+    {
         // Check APP_ENV environment variable first
         $appEnv = getenv('APP_ENV');
         if ($appEnv !== false) {
@@ -184,7 +192,8 @@ class ErrorHandler {
      *
      * @return void
      */
-    private static function showErrorPage() {
+    private static function showErrorPage()
+    {
         http_response_code(500);
 
         // Try to load a custom error template if available

@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Controllers\Admin;
 
 use App\Controllers\Admin\AdminController;
@@ -15,13 +16,13 @@ class CommentsController extends AdminController
         $commentsModel = new Comments();
         $status = $this->getParam('status');
         $hierarchical = $this->getParam('hierarchical', 'true'); // Default to hierarchical view
-        
+
         if ($hierarchical === 'true') {
             $comments = $commentsModel->getAllHierarchical($status);
         } else {
             $comments = $commentsModel->getAll($status);
         }
-        
+
         $this->render('admin/comments/index', [
             'comments' => $comments,
             'status' => $status,

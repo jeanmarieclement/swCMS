@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Controllers\Admin;
 
 use App\Helpers\LogHelper;
@@ -9,14 +10,16 @@ use App\Helpers\SecurityHelper;
 use App\Helpers\RequestHelper;
 use App\Helpers\CSRFHelper;
 
-class MediaController extends AdminController {
+class MediaController extends AdminController
+{
     private $mediaModel;
 
     /**
      * MediaController constructor.
      * Initializes the media model and requires authentication.
      */
-    public function __construct($params = []) {
+    public function __construct($params = [])
+    {
         parent::__construct($params);
         $this->mediaModel = new MediaModel();
     }
@@ -26,7 +29,8 @@ class MediaController extends AdminController {
      *
      * @return void
      */
-    public function indexAction() {
+    public function indexAction()
+    {
         $page = RequestHelper::get('page', 1, 'int') ?: 1;
         $filters = [
             'type' => RequestHelper::get('type', ''),
@@ -47,11 +51,11 @@ class MediaController extends AdminController {
             'filters' => $filters,
             'url' => RequestHelper::server('REQUEST_URI', '')
         ]);
-        
+
         $data['title'] = 'Media Library';
         $data['active_menu'] = 'media';
         $data['filters'] = $filters;
-        
+
         // Usa render() invece di view() per evitare loop di redirect
         $this->render('admin/media/index', $data);
     }
@@ -62,7 +66,8 @@ class MediaController extends AdminController {
      * @param int $id Media item ID
      * @return void
      */
-    public function viewAction($id) {
+    public function viewAction($id)
+    {
         if (empty($id) || !is_numeric($id)) {
             RedirectHelper::redirect('/admin/media');
         }
@@ -82,7 +87,8 @@ class MediaController extends AdminController {
      *
      * @return void
      */
-    public function uploadAction() {
+    public function uploadAction()
+    {
         if (RequestHelper::isPost()) {
             // Validate CSRF token
             if (!CSRFHelper::validateRequest()) {
@@ -103,7 +109,7 @@ class MediaController extends AdminController {
                     'alt_text' => RequestHelper::post('alt_text', '')
                 ];
                 $uploaded = $this->mediaModel->upload($files, $userId, $postData);
-                
+
                 if ($this->isAjaxRequest()) {
                     LogHelper::debug('File caricati con successo', [
                         'files' => $uploaded
@@ -115,10 +121,9 @@ class MediaController extends AdminController {
                     ]);
                     exit;
                 }
-                
+
                 SessionHelper::setFlashMessage('File caricati con successo', 'success');
                 RedirectHelper::redirect('/admin/media');
-                
             } catch (\Exception $e) {
                 if ($this->isAjaxRequest()) {
                     http_response_code(400);
@@ -129,19 +134,20 @@ class MediaController extends AdminController {
                     ]);
                     exit;
                 }
-                
+
                 SessionHelper::setFlashMessage($e->getMessage(), 'error');
                 RedirectHelper::redirect('/admin/media');
             }
         }
-        
+
         $this->render('admin/media/upload', [
             'title' => 'Carica Media',
             'active_menu' => 'media'
         ]);
     }
 
-    public function editAction($id = 0) {
+    public function editAction($id = 0)
+    {
         if ($id == 0) {
             $id = $this->params[0];
         }
@@ -159,7 +165,8 @@ class MediaController extends AdminController {
         ]);
     }
 
-    public function updateAction($id = 0) {
+    public function updateAction($id = 0)
+    {
         if ($id == 0) {
             $id = $this->params[0];
         }
@@ -205,7 +212,8 @@ class MediaController extends AdminController {
      * @param int $id Media item ID
      * @return void
      */
-    public function deleteAction($id = 0) {
+    public function deleteAction($id = 0)
+    {
         if ($id == 0) {
             $id = $this->params[0];
         }
@@ -245,7 +253,8 @@ class MediaController extends AdminController {
      *
      * @return bool
      */
-    protected function isAjaxRequest() {
+    protected function isAjaxRequest()
+    {
         $requestedWith = RequestHelper::server('HTTP_X_REQUESTED_WITH', '');
         LogHelper::debug('isAjaxRequest', [
             'HTTP_X_REQUESTED_WITH' => $requestedWith,
@@ -257,7 +266,8 @@ class MediaController extends AdminController {
     /**
      * Restituisce la lista dei media in formato JSON per AJAX
      */
-    public function ajaxListAction() {
+    public function ajaxListAction()
+    {
         header('Content-Type: application/json');
         $filters = [
             'type' => RequestHelper::get('type', ''),
@@ -272,7 +282,8 @@ class MediaController extends AdminController {
     /**
      * Gestisce upload media via AJAX e restituisce JSON
      */
-    public function ajaxUploadAction() {
+    public function ajaxUploadAction()
+    {
         if (RequestHelper::isPost()) {
             // Validate CSRF token
             if (!CSRFHelper::validateRequest()) {
@@ -312,8 +323,7 @@ class MediaController extends AdminController {
                 ]);
                 exit;
             }
-        }
-        else {
+        } else {
             http_response_code(405);
             header('Content-Type: application/json');
             echo json_encode(['success' => false, 'message' => 'Metodo non consentito']);

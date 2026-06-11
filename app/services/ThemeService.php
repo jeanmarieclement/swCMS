@@ -9,10 +9,12 @@ use App\Helpers\LogHelper;
  * Theme Service
  * Handles theme operations and management
  */
-class ThemeService {
+class ThemeService
+{
     private $themesPath;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->themesPath = __DIR__ . '/../../public/themes/';
     }
 
@@ -20,16 +22,17 @@ class ThemeService {
      * Get all available themes
      * @return array Array of theme information
      */
-    public function getAvailableThemes(): array {
+    public function getAvailableThemes(): array
+    {
         $themes = [];
-        
+
         if (!is_dir($this->themesPath)) {
             LogHelper::warning('Themes directory not found', ['path' => $this->themesPath]);
             return $themes;
         }
 
         $directories = scandir($this->themesPath);
-        
+
         foreach ($directories as $dir) {
             if ($dir === '.' || $dir === '..' || !is_dir($this->themesPath . $dir)) {
                 continue;
@@ -49,7 +52,8 @@ class ThemeService {
      * @param string $themeName Theme directory name
      * @return array|null Theme details or null if not found
      */
-    public function getThemeDetails(string $themeName): ?array {
+    public function getThemeDetails(string $themeName): ?array
+    {
         // Validate theme name - only alphanumeric, dash, underscore
         if (!preg_match('/^[a-zA-Z0-9_-]+$/', $themeName)) {
             throw new \Exception('Invalid theme name');
@@ -130,7 +134,8 @@ class ThemeService {
      * @param string $themeName Theme name to activate
      * @return bool Success status
      */
-    public function activateTheme(string $themeName): bool {
+    public function activateTheme(string $themeName): bool
+    {
         // Validate theme exists
         if (!$this->isValidTheme($themeName)) {
             throw new \Exception("Theme '$themeName' not found or invalid");
@@ -139,7 +144,7 @@ class ThemeService {
         try {
             // Update the active theme setting
             $result = SystemSettingsHelper::set('THEME_ACTIVE', $themeName);
-            
+
             if ($result) {
                 LogHelper::info('Theme activated successfully', ['theme' => $themeName]);
                 return true;
@@ -161,7 +166,8 @@ class ThemeService {
      * @param string $themeName Theme name to check
      * @return bool True if theme is valid
      */
-    public function isValidTheme(string $themeName): bool {
+    public function isValidTheme(string $themeName): bool
+    {
         // Validate theme name - only alphanumeric, dash, underscore
         if (!preg_match('/^[a-zA-Z0-9_-]+$/', $themeName)) {
             return false;
@@ -183,7 +189,7 @@ class ThemeService {
         // Check for at least a basic template (home.tpl or layout.tpl)
         $requiredTemplates = ['home.tpl', 'layout.tpl'];
         $hasRequiredTemplate = false;
-        
+
         foreach ($requiredTemplates as $template) {
             if (file_exists($templatesPath . $template)) {
                 $hasRequiredTemplate = true;
@@ -199,9 +205,10 @@ class ThemeService {
      * @param string $path Templates directory path
      * @return array List of template files
      */
-    private function getTemplateFiles(string $path): array {
+    private function getTemplateFiles(string $path): array
+    {
         $templates = [];
-        
+
         if (!is_dir($path)) {
             return $templates;
         }
@@ -227,20 +234,21 @@ class ThemeService {
      * @param string $extension File extension to filter
      * @return array List of asset files
      */
-    private function getAssetFiles(string $path, string $extension): array {
+    private function getAssetFiles(string $path, string $extension): array
+    {
         $assets = [];
-        
+
         if (!is_dir($path)) {
             return $assets;
         }
 
         $files = scandir($path);
-        
+
         foreach ($files as $file) {
             if ($file === '.' || $file === '..') {
                 continue;
             }
-            
+
             $filePath = $path . $file;
             if (is_file($filePath) && substr($file, -strlen($extension)) === $extension) {
                 $assets[] = $file;
@@ -255,7 +263,8 @@ class ThemeService {
      * Get the currently active theme name
      * @return string Active theme name
      */
-    public function getActiveTheme(): string {
+    public function getActiveTheme(): string
+    {
         return SystemSettingsHelper::get('THEME_ACTIVE') ?? 'default';
     }
 
@@ -264,7 +273,8 @@ class ThemeService {
      * @param string $themeName Theme name
      * @return bool True if updates are available
      */
-    public function hasUpdates(string $themeName): bool {
+    public function hasUpdates(string $themeName): bool
+    {
         // Placeholder for future update checking functionality
         return false;
     }

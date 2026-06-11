@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Controllers\Admin;
 
 use App\Helpers\LogHelper;
@@ -17,10 +18,11 @@ use App\middlewares\AuthMiddleware;
  * Article Controller
  * Handles article management in the admin area
  */
-class ArticleController extends AdminController {
+class ArticleController extends AdminController
+{
     protected $postModel;
     protected $categoryModel;
-    
+
     /**
      * ArticleController constructor.
      * Checks if the user is logged in and loads models.
@@ -28,42 +30,43 @@ class ArticleController extends AdminController {
      * @param array $params Optional parameters for the controller
      * @return void
      */
-    public function __construct($params = []) {
+    public function __construct($params = [])
+    {
         parent::__construct($params);
-        
+
         // Require authentication for all article management pages
         // For basic article access, at least author role is required
         AuthMiddleware::requireAuthor();
-        
+
         // Load models
         $this->postModel = new Post();
-        
+
         $this->categoryModel = new Category();
-      
     }
-    
+
     /**
      * Displays the list of articles in the admin area.
      *
      * @return void
      */
-    public function indexAction() {
+    public function indexAction()
+    {
         // Get status filter
         $status = $this->getParam('status', 'all');
 
         // Get pagination parameters
         $page = (int)$this->getParam('page', 1);
         $limit = 20;
-        
+
         // Get total count for pagination
         $totalArticles = $this->postModel->countAll($status);
-        
+
         // Use PaginationHelper to generate pagination data
         $pagination = PaginationHelper::paginate($totalArticles, $page, $limit, $status);
-        
+
         // Get articles
         $articles = $this->postModel->getAllForAdmin($status, $pagination['per_page'], $pagination['offset']);
-        
+
         // Render the view using the controller's render method
         $this->render('admin/articles/index', [
             'title' => 'Manage Articles',
@@ -74,22 +77,22 @@ class ArticleController extends AdminController {
             'site_url' => $this->settings['SITE_URL']
         ]);
     }
-    
+
     /**
      * Displays the edit form for an article, or loads data for editing.
      * Handles both GET (display) and POST (submit) requests.
      *
      * @return void
      */
-    public function editAction() {
+    public function editAction()
+    {
         $id = null;
 
         // First check if we have an ID in the route parameters
         if (isset($this->params[0]) && is_numeric($this->params[0])) {
             $id = $this->params[0];
-        }
-        // If not, check if we have an ID in the session (from storeAction)
-        elseif (SessionHelper::hasValue('edit_article_id')) {
+        } elseif (SessionHelper::hasValue('edit_article_id')) {
+            // If not, check if we have an ID in the session (from storeAction)
             $id = SessionHelper::getValue('edit_article_id');
             // Clear the session variable after using it
             SessionHelper::removeValue('edit_article_id');
@@ -117,37 +120,36 @@ class ArticleController extends AdminController {
 
             $postCategories = RequestHelper::post('categories');
             $postTags = RequestHelper::post('tags');
-            $this->_saveData($id, $postCategories, $postTags);
+            $this->saveData($id, $postCategories, $postTags);
         }
 
 
         // If ID is provided, load the article
         if ($id) {
             $article = $this->postModel->getById($id);
-            
+
             // If article not found, redirect to article list
             if (!$article) {
                 SessionHelper::setFlashMessage('Article not found', 'error');
                 RedirectHelper::redirect($this->settings['SITE_URL'] . '/admin/articles');
                 exit;
             }
-            
+
             // Get article categories and tags
             $articleCategories = $this->postModel->getCategories($id);
             $articleCategoryIds = array_column($articleCategories, 'id');
-            
+
             $tags = $this->postModel->getTags($id);
-            
         }
-        
+
         // Include TinyMCE helper
-        
+
         $tinymce_include = TinyMCEHelper::includeTinyMCE();
-        
+
         // Pre-render the TinyMCE editor HTML
         $content = $article ? $article['content'] : '';
         $editor_html = TinyMCEHelper::editor('content', $content, 'content', 15);
-        
+
         // Render the edit form using the controller's render method
         $this->render('admin/articles/edit', [
             'title' => $id ? 'Edit Article' : 'New Article',
@@ -162,7 +164,7 @@ class ArticleController extends AdminController {
             'site_url' => $this->settings['SITE_URL']
         ]);
     }
-    
+
 
     /**
      * Saves article data (create or update), categories and tags.
@@ -172,7 +174,8 @@ class ArticleController extends AdminController {
      * @param array|null $tags List of tag names
      * @return void
      */
-    private function _saveData($id = null, $categories = null, $tags = []) {
+    private function saveData($id = null, $categories = null, $tags = [])
+    {
         // Collect form data
         $data = [
             'title' => RequestHelper::post('title', ''),
@@ -223,8 +226,7 @@ class ArticleController extends AdminController {
             // Redirect to avoid form resubmission
             if (!$id) {
                 RedirectHelper::redirect($this->settings['SITE_URL'] . '/admin/articles/edit/' . $newId);
-            }   
-            
+            }
         } else {
             SessionHelper::setFlashMessage('Failed to save article', 'error');
             // If save failed, show error
@@ -241,13 +243,14 @@ class ArticleController extends AdminController {
             return false;
         }
     }
-    
+
     /**
      * Displays the form to create a new article and handles submission.
      *
      * @return void
      */
-    public function createAction() {
+    public function createAction()
+    {
 
         // Handle form submission
         if (RequestHelper::isPost()) {
@@ -262,13 +265,13 @@ class ArticleController extends AdminController {
             $postCategories = RequestHelper::post('categories');
             $postTags = RequestHelper::post('tags');
 
-            $this->_saveData(0, $postCategories, $postTags);
+            $this->saveData(0, $postCategories, $postTags);
         }
 
         // Carica categorie e dati necessari
         $categories = $this->categoryModel->getAll();
         $tags = [];
-        
+
 
 
         $tinymce_include = TinyMCEHelper::includeTinyMCE();
@@ -296,13 +299,14 @@ class ArticleController extends AdminController {
             'site_url' => $this->settings['SITE_URL']
         ]);
     }
-    
+
     /**
      * Deletes an article by ID.
      *
      * @return void
      */
-    public function deleteAction() {
+    public function deleteAction()
+    {
         // Get the article ID from the URL
         $articleId = (int)$this->getParam('id', 0);
 
@@ -317,7 +321,7 @@ class ArticleController extends AdminController {
             RedirectHelper::redirect($this->settings['SITE_URL'] . '/admin/articles');
             exit;
         }
-        
+
         // Check if article exists
         $article = $this->postModel->getById($articleId);
         if (!$article) {
@@ -325,10 +329,10 @@ class ArticleController extends AdminController {
             RedirectHelper::redirect($this->settings['SITE_URL'] . '/admin/articles');
             exit;
         }
-        
+
         // Delete the article
         $success = $this->postModel->delete($articleId);
-        
+
         // Redirect with status
         if ($success) {
             SessionHelper::setFlashMessage('Article deleted successfully', 'success');
@@ -339,24 +343,25 @@ class ArticleController extends AdminController {
         }
         exit;
     }
-    
+
     /**
      * Changes the status of an article (published, draft, trash).
      *
      * @return void
      */
-    public function statusAction() {
+    public function statusAction()
+    {
         // Get the article ID and new status from the URL
         $articleId = (int)$this->getParam('id', isset($this->params[0]) ? (int)$this->params[0] : 0);
         $status = $this->getParam('status', isset($this->params[1]) ? $this->params[1] : '');
-        
+
         // Check if ID and status are provided
         if (!$articleId || !in_array($status, ['published', 'draft', 'trash'])) {
             SessionHelper::setFlashMessage('Invalid parameters', 'error');
             RedirectHelper::redirect($this->settings['SITE_URL'] . '/admin/articles');
             exit;
         }
-        
+
         // Check if article exists
         $article = $this->postModel->getById($articleId);
         if (!$article) {
@@ -364,10 +369,10 @@ class ArticleController extends AdminController {
             RedirectHelper::redirect($this->settings['SITE_URL'] . '/admin/articles');
             exit;
         }
-        
+
         // Change the status
         $success = $this->postModel->changeStatus($articleId, $status);
-        
+
         // Redirect with status
         if ($success) {
             SessionHelper::setFlashMessage('Article status changed successfully', 'success');

@@ -6,20 +6,20 @@ use App\Helpers\RedirectHelper;
 use App\Helpers\LogHelper;
 use App\Helpers\RequestHelper;
 use App\Helpers\CSRFHelper;
-
 use App\Core\Controller;
 use App\Helpers\SessionHelper;
 use App\Helpers\TinyMCEHelper;
 use App\middlewares\AuthMiddleware;
+use App\Services\AdminMenuService;
+use App\Services\DashboardService;
 
 /**
  * Admin Controller
  * Handles requests to the admin area
  */
-use App\Services\AdminMenuService;
-use App\Services\DashboardService;
 
-class AdminController extends Controller {
+class AdminController extends Controller
+{
     protected $adminMenuService;
     protected $dashboardService;
 
@@ -31,22 +31,22 @@ class AdminController extends Controller {
      *
      * @param array $params Optional parameters for the controller
      */
-    public function __construct($params = []) {
+    public function __construct($params = [])
+    {
         parent::__construct($params);
         // Require authentication for all admin pages
         AuthMiddleware::requireAuthor();
 
         // Istanzia AdminMenuService (adatta la connessione PDO secondo la tua architettura)
-    
+
         $this->adminMenuService = new AdminMenuService($this->roleService);
         $this->dashboardService = new DashboardService();
         // For specific admin sections that require higher privileges,
         // you can use these in the specific action methods:
         // AuthMiddleware::requireEditor(); // For editor or admin only
         // AuthMiddleware::requireAdmin(); // For admin only
-    
     }
-    
+
     /**
      * Checks if the current user role can access the given template.
      * Redirects if access is denied.
@@ -56,8 +56,8 @@ class AdminController extends Controller {
      */
     protected function checkTemplateAccess(string $template)
     {
-      
-        
+
+
         if (!$this->roleService->canAccessTemplate(SessionHelper::getValue('user_role'), $template)) {
             LogHelper::warning('Template access denied', [
                 'template' => $template,
@@ -65,7 +65,7 @@ class AdminController extends Controller {
                 'request_uri' => RequestHelper::server('REQUEST_URI', 'unknown')
             ]);
             $this->setFlashMessage('error', 'You don\'t have permission to access this section');
-            
+
             // Avoid redirect loop - if we're already on the dashboard, redirect to a different page
             if ($template === 'admin/dashboard') {
                 // Accesso non autorizzato: mostra pagina 403 personalizzata
@@ -77,7 +77,6 @@ class AdminController extends Controller {
             } else {
                 RedirectHelper::redirect('/admin/dashboard');
             }
-      
         }
     }
 
@@ -96,13 +95,14 @@ class AdminController extends Controller {
         $data['admin_menu'] = $this->adminMenuService->getMenu($userRole);
         parent::render($template, $data);
     }
-    
+
     /**
      * Displays the admin dashboard.
      *
      * @return void
      */
-    public function indexAction() {
+    public function indexAction()
+    {
         // Get dashboard data from the service
         $stats = $this->dashboardService->getStats();
         $recentContent = $this->dashboardService->getRecentContent(5);
@@ -124,44 +124,46 @@ class AdminController extends Controller {
             'site_url' => $siteUrl
         ]);
     }
-    
+
     /**
      * Alias for indexAction, displays the admin dashboard for /admin/dashboard route.
      *
      * @return void
      */
-    public function dashboardAction() {
+    public function dashboardAction()
+    {
         $this->indexAction();
     }
-    
+
     /**
      * Clears the Smarty compiled templates cache.
      *
      * @return void
      */
-    public function clearCacheAction() {
+    public function clearCacheAction()
+    {
         try {
             // Get the compiled directory path
             $compiledDir = __DIR__ . '/../../views/compiled/';
-            
+
             if (is_dir($compiledDir)) {
                 // Clear all compiled template files
                 $files = glob($compiledDir . '*');
                 $deletedCount = 0;
-                
+
                 foreach ($files as $file) {
                     if (is_file($file)) {
                         unlink($file);
                         $deletedCount++;
                     }
                 }
-                
+
                 LogHelper::info('Cache cleared', [
                     'files_deleted' => $deletedCount,
                     'user_id' => SessionHelper::getValue('user_id'),
                     'user_role' => SessionHelper::getValue('user_role')
                 ]);
-                
+
                 $this->setFlashMessage('success', "Cache cleared successfully! {$deletedCount} compiled files deleted.");
             } else {
                 $this->setFlashMessage('warning', 'Compiled cache directory not found.');
@@ -171,12 +173,11 @@ class AdminController extends Controller {
                 'error' => $e->getMessage(),
                 'user_id' => SessionHelper::getValue('user_id')
             ]);
-            
+
             $this->setFlashMessage('error', 'Failed to clear cache: ' . $e->getMessage());
         }
-        
+
         // Redirect back to dashboard
         RedirectHelper::redirect('/admin/dashboard');
     }
-
 }

@@ -25,11 +25,11 @@ class DependencyChecker
     {
         $results = [];
         $hasComposer = self::hasComposer();
-        
+
         foreach (self::$dependencies as $name => $config) {
             $results[$name] = self::checkDependency($name, $config, $hasComposer);
         }
-        
+
         return [
             'has_composer' => $hasComposer,
             'dependencies' => $results,
@@ -53,7 +53,7 @@ class DependencyChecker
         $satisfied = false;
         $method = 'none';
         $path = '';
-        
+
         // Try Composer first if available
         if ($hasComposer) {
             if (class_exists($config['composer_class'])) {
@@ -62,7 +62,7 @@ class DependencyChecker
                 $path = 'vendor/' . $name;
             }
         }
-        
+
         // Try direct vendor path
         if (!$satisfied) {
             $vendorPath = \ROOT_PATH . $config['vendor_path'];
@@ -82,7 +82,7 @@ class DependencyChecker
                 $path = $bundledPath;
             }
         }
-        
+
         return [
             'name' => $config['description'],
             'satisfied' => $satisfied,
@@ -99,18 +99,18 @@ class DependencyChecker
     public static function initializeWithoutComposer()
     {
         $status = self::checkAll();
-        
+
         foreach ($status['dependencies'] as $name => $info) {
             if (!$info['satisfied'] && $info['required']) {
                 throw new \Exception("Required dependency '{$info['name']}' not found. Please install manually or use bundled version.");
             }
-            
+
             // Load dependency based on method
             if ($info['satisfied']) {
                 self::loadDependency($name, $info);
             }
         }
-        
+
         return $status;
     }
 
@@ -135,11 +135,11 @@ class DependencyChecker
             case 'composer':
                 // Already loaded by Composer autoloader
                 break;
-                
+
             case 'vendor_direct':
                 require_once $info['path'];
                 break;
-                
+
             case 'bundled':
                 $smartyPath = $info['path'] . '/src/Smarty.php';
                 if (file_exists($smartyPath)) {
@@ -155,11 +155,11 @@ class DependencyChecker
     public static function createBundledDependencies()
     {
         $bundleDir = \ROOT_PATH . '/App/vendor';
-        
+
         if (!is_dir($bundleDir)) {
             mkdir($bundleDir, 0755, true);
         }
-        
+
         // For now, just create the structure
         // In a real scenario, you'd bundle the essential files
         return [

@@ -1,20 +1,27 @@
 <?php
+
 namespace App\Helpers;
 
 use App\Helpers\SessionHelper;
 
 /**
  * SecurityHelper
- * 
+ *
  * Helper class for security-related functions.
+ *
+ * The csrf_* methods keep their snake_case names on purpose: they are part of
+ * the public template/plugin API (WordPress-style), renaming them would break
+ * existing themes and plugins.
+ * phpcs:disable PSR1.Methods.CamelCapsMethodName.NotCamelCaps
  */
-class SecurityHelper {
-
+class SecurityHelper
+{
     /**
      * Generate or retrieve the CSRF token
      * @return string
      */
-    public static function csrf_token() {
+    public static function csrf_token()
+    {
         if (!SessionHelper::hasValue('csrf_token')) {
             SessionHelper::setValue('csrf_token', bin2hex(random_bytes(32)));
         }
@@ -25,7 +32,8 @@ class SecurityHelper {
      * Generate a hidden CSRF field for forms
      * @return string
      */
-    public static function csrf_field() {
+    public static function csrf_field()
+    {
         $token = self::csrf_token();
         return '<input type="hidden" name="csrf_token" value="' . $token . '">';
     }
@@ -35,7 +43,8 @@ class SecurityHelper {
      * @param string $token
      * @return bool
      */
-    public static function verify_csrf_token($token) {
+    public static function verify_csrf_token($token)
+    {
         return SessionHelper::hasValue('csrf_token') && hash_equals(SessionHelper::getValue('csrf_token'), $token);
     }
 
@@ -44,11 +53,13 @@ class SecurityHelper {
      * @param string $data
      * @return string
      */
-    public static function sanitize($data) {
+    public static function sanitize($data)
+    {
         return htmlspecialchars($data, ENT_QUOTES, 'UTF-8');
     }
 
-    public static function sanitizeHtml($data) {
+    public static function sanitizeHtml($data)
+    {
         return htmlspecialchars($data, ENT_QUOTES, 'UTF-8', ENT_HTML5);
     }
 }

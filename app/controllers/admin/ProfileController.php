@@ -1,8 +1,10 @@
 <?php
+
 /**
  * AdminProfileController
  * Handles user profile display and update in the admin area
  */
+
 namespace App\Controllers\Admin;
 
 use App\Models\User;
@@ -18,16 +20,17 @@ use App\Helpers\LogHelper;
 class ProfileController extends AdminController
 {
     protected $userModel;
-    
-    public function __construct($params = []) {
+
+    public function __construct($params = [])
+    {
         parent::__construct($params);
-        
+
         // Ensure user is authenticated
         AuthMiddleware::requireAuth();
-        
+
         $this->userModel = new User();
     }
-    
+
     /**
      * Display and update user profile
      */
@@ -40,7 +43,7 @@ class ProfileController extends AdminController
             RedirectHelper::redirect('/auth/login');
             return;
         }
-        
+
         $user = $this->userModel->getUserById($userId);
         if (!$user) {
             SessionHelper::setFlashMessage('User not found.', 'error');
@@ -67,7 +70,7 @@ class ProfileController extends AdminController
             $displayName = trim(RequestHelper::post('display_name'));
             $password = RequestHelper::post('password', null, 'raw');
             $confirmPassword = RequestHelper::post('confirm_password', null, 'raw');
-            
+
             // Validate input
             if (empty($username) || empty($email)) {
                 $error = 'Username and email are required';
@@ -87,7 +90,7 @@ class ProfileController extends AdminController
                         'email' => $email,
                         'display_name' => $displayName ?: $username
                     ];
-                    
+
                     // Only update password if provided
                     if (!empty($password)) {
                         $userData['password'] = $password;

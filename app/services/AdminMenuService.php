@@ -48,9 +48,11 @@ class AdminMenuService
         }
 
         // 4. Recursive function to build menu tree
-        $buildTree = function($parentId) use (&$buildTree, $itemsByParent, $userRole) {
+        $buildTree = function ($parentId) use (&$buildTree, $itemsByParent, $userRole) {
             $tree = [];
-            if (!isset($itemsByParent[$parentId])) return $tree;
+            if (!isset($itemsByParent[$parentId])) {
+                return $tree;
+            }
             foreach ($itemsByParent[$parentId] as $item) {
                 // Permission check
                 if ($item['permission_key'] && !$this->roleService->canAccessTemplate($userRole, $item['permission_key'])) {

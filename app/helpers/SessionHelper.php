@@ -1,14 +1,16 @@
 <?php
+
 namespace App\Helpers;
 
 /**
  * SessionHelper
- * 
+ *
  * Helper class for session and flash message management.
  */
-class SessionHelper {
-
-    public static function hasFlashMessage() {
+class SessionHelper
+{
+    public static function hasFlashMessage()
+    {
         return self::hasValue('flash_message');
     }
     /**
@@ -17,7 +19,8 @@ class SessionHelper {
      * @param string $type
      * @return void
      */
-    public static function setFlashMessage($message, $type = 'info') {
+    public static function setFlashMessage($message, $type = 'info')
+    {
         $_SESSION['flash_message'] = [
             'message' => $message,
             'type' => $type
@@ -28,7 +31,8 @@ class SessionHelper {
      * Retrieve and remove the flash message from session
      * @return array|null
      */
-    public static function getFlashMessage() {
+    public static function getFlashMessage()
+    {
         if (self::hasFlashMessage()) {
             $msg = $_SESSION['flash_message'];
             unset($_SESSION['flash_message']);
@@ -44,7 +48,8 @@ class SessionHelper {
      * @param mixed $value
      * @return void
      */
-    public static function setValue($key, $value) {
+    public static function setValue($key, $value)
+    {
         $_SESSION[$key] = $value;
     }
 
@@ -54,7 +59,8 @@ class SessionHelper {
      * @param mixed $default
      * @return mixed|null
      */
-    public static function getValue($key, $default = null) {
+    public static function getValue($key, $default = null)
+    {
         return self::hasValue($key) ? $_SESSION[$key] : $default;
     }
 
@@ -63,7 +69,8 @@ class SessionHelper {
      * @param string $key
      * @return void
      */
-    public static function removeValue($key) {
+    public static function removeValue($key)
+    {
         if (self::hasValue($key)) {
             unset($_SESSION[$key]);
         }
@@ -74,7 +81,8 @@ class SessionHelper {
      * @param string $key
      * @return bool
      */
-    public static function hasValue($key) {
+    public static function hasValue($key)
+    {
         return isset($_SESSION[$key]);
     }
 }

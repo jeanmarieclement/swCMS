@@ -49,7 +49,7 @@
         </div>
     </div>
     
-    <?php if (isset($config['db_connection_success']) && $config['db_connection_success']): ?>
+    <?php if (isset($config['db_connection_success']) && $config['db_connection_success']) : ?>
         <div class="success">
             Database connection test successful! You can proceed to the next step.
         </div>

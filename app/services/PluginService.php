@@ -12,18 +12,20 @@ use App\Services\PluginRoutesManager;
  * Plugin Service
  * Handles plugin operations and management
  */
-class PluginService {
+class PluginService
+{
     private $pluginsPath;
     private $db;
     private $menuManager;
     private $routesManager;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->pluginsPath = __DIR__ . '/../../plugins/';
         $this->db = Database::getInstance();
         $this->menuManager = new PluginMenuManager();
         $this->routesManager = new PluginRoutesManager();
-        
+
         // Create plugins directory if it doesn't exist
         if (!is_dir($this->pluginsPath)) {
             mkdir($this->pluginsPath, 0755, true);
@@ -34,16 +36,17 @@ class PluginService {
      * Get all available plugins
      * @return array Array of plugin information
      */
-    public function getAvailablePlugins(): array {
+    public function getAvailablePlugins(): array
+    {
         $plugins = [];
-        
+
         if (!is_dir($this->pluginsPath)) {
             LogHelper::warning('Plugins directory not found', ['path' => $this->pluginsPath]);
             return $plugins;
         }
 
         $directories = scandir($this->pluginsPath);
-        
+
         foreach ($directories as $dir) {
             if ($dir === '.' || $dir === '..' || !is_dir($this->pluginsPath . $dir)) {
                 continue;
@@ -63,9 +66,10 @@ class PluginService {
      * @param string $pluginName Plugin directory name
      * @return array|null Plugin details or null if not found
      */
-    public function getPluginDetails(string $pluginName): ?array {
+    public function getPluginDetails(string $pluginName): ?array
+    {
         $pluginPath = $this->pluginsPath . $pluginName;
-        
+
         if (!is_dir($pluginPath)) {
             return null;
         }
@@ -89,7 +93,7 @@ class PluginService {
         $mainFile = $pluginPath . '/' . $pluginName . '.php';
         if (file_exists($mainFile)) {
             $plugin['main_file'] = $mainFile;
-            
+
             // Parse plugin header for metadata
             $pluginData = $this->parsePluginHeader($mainFile);
             if ($pluginData) {
@@ -120,7 +124,8 @@ class PluginService {
      * @param string $filePath Path to plugin main file
      * @return array|null Plugin metadata
      */
-    private function parsePluginHeader(string $filePath): ?array {
+    private function parsePluginHeader(string $filePath): ?array
+    {
         if (!file_exists($filePath)) {
             return null;
         }
@@ -145,17 +150,17 @@ class PluginService {
         ];
 
         $pluginData = [];
-        
+
         foreach ($headers as $key => $header) {
             if (preg_match('/^[ \t\/*#@]*' . preg_quote($header, '/') . ':(.*)$/mi', $fileContent, $match)) {
                 $value = trim($match[1]);
-                
+
                 // Parse comma-separated values for dependencies
                 if (in_array($key, ['depends', 'conflicts'])) {
                     $value = array_map('trim', explode(',', $value));
                     $value = array_filter($value); // Remove empty values
                 }
-                
+
                 $pluginData[$key] = $value;
             }
         }
@@ -168,9 +173,10 @@ class PluginService {
      * @param string $path Plugin directory path
      * @return array List of files with extensions
      */
-    private function getPluginFiles(string $path): array {
+    private function getPluginFiles(string $path): array
+    {
         $files = [];
-        
+
         if (!is_dir($path)) {
             return $files;
         }
@@ -183,7 +189,7 @@ class PluginService {
             if ($file->isFile()) {
                 $relativePath = str_replace($path . '/', '', $file->getPathname());
                 $extension = strtoupper($file->getExtension());
-                
+
                 $files[] = [
                     'name' => $relativePath,
                     'extension' => $extension ?: 'FILE'
@@ -192,10 +198,10 @@ class PluginService {
         }
 
         // Sort by name
-        usort($files, function($a, $b) {
+        usort($files, function ($a, $b) {
             return strcmp($a['name'], $b['name']);
         });
-        
+
         return $files;
     }
 
@@ -203,9 +209,10 @@ class PluginService {
      * Get list of active plugins
      * @return array List of active plugin names
      */
-    public function getActivePlugins(): array {
+    public function getActivePlugins(): array
+    {
         $activePlugins = SystemSettingsHelper::get('ACTIVE_PLUGINS');
-        
+
         if (empty($activePlugins)) {
             return [];
         }
@@ -218,7 +225,8 @@ class PluginService {
      * @param string $pluginName Plugin name
      * @return bool True if plugin is active
      */
-    public function isPluginActive(string $pluginName): bool {
+    public function isPluginActive(string $pluginName): bool
+    {
         $activePlugins = $this->getActivePlugins();
         return in_array($pluginName, $activePlugins);
     }
@@ -228,7 +236,8 @@ class PluginService {
      * @param string $pluginName Plugin name to activate
      * @return bool Success status
      */
-    public function activatePlugin(string $pluginName): bool {
+    public function activatePlugin(string $pluginName): bool
+    {
         // Validate plugin exists
         if (!$this->isValidPlugin($pluginName)) {
             throw new \Exception("Plugin '$pluginName' not found or invalid");
@@ -238,26 +247,26 @@ class PluginService {
         $this->validatePluginDependencies($pluginName);
 
         $activePlugins = $this->getActivePlugins();
-        
+
         if (!in_array($pluginName, $activePlugins)) {
             $activePlugins[] = $pluginName;
-            
+
             try {
                 // Ensure menu tables have correct structure
                 $this->menuManager->checkMenuTablesStructure();
-                
+
                 // Register plugin menus
                 $pluginPath = $this->pluginsPath . $pluginName;
                 $menuConfig = $this->menuManager->getPluginMenuConfig($pluginName, $pluginPath);
-                
+
                 if ($menuConfig) {
                     $this->menuManager->registerPluginMenus($pluginName, $menuConfig);
                 }
-                
+
                 // Register plugin routes
                 $hasController = $this->routesManager->hasController($pluginName);
                 LogHelper::info("Plugin route generation", ['plugin' => $pluginName, 'hasController' => $hasController]);
-                
+
                 if ($hasController) {
                     LogHelper::info("Generating routes for plugin", ['plugin' => $pluginName]);
                     $routes = $this->routesManager->generatePluginRoutes($pluginName, $pluginPath);
@@ -267,20 +276,20 @@ class PluginService {
                 } else {
                     LogHelper::warning("No controller found for plugin", ['plugin' => $pluginName]);
                 }
-                
+
                 // Update active plugins setting FIRST
                 $result = SystemSettingsHelper::set('ACTIVE_PLUGINS', json_encode($activePlugins));
-                
+
                 // THEN generate routes file (now active_plugins will be updated)
                 if ($hasController && $result) {
                     $this->routesManager->generateRoutesFile();
                     LogHelper::info("Routes file generated after plugin activation", ['plugin' => $pluginName]);
                 }
-                
+
                 if ($result) {
                     // Run plugin activation hook
                     $this->runPluginHook($pluginName, 'activate');
-                    
+
                     LogHelper::info('Plugin activated successfully', ['plugin' => $pluginName]);
                     return true;
                 } else {
@@ -304,27 +313,28 @@ class PluginService {
      * @param string $pluginName Plugin name to deactivate
      * @return bool Success status
      */
-    public function deactivatePlugin(string $pluginName): bool {
+    public function deactivatePlugin(string $pluginName): bool
+    {
         $activePlugins = $this->getActivePlugins();
-        
+
         $key = array_search($pluginName, $activePlugins);
         if ($key !== false) {
             unset($activePlugins[$key]);
-            
+
             try {
                 // Run plugin deactivation hook first
                 $this->runPluginHook($pluginName, 'deactivate');
-                
+
                 // Remove plugin menus
                 $this->menuManager->unregisterPluginMenus($pluginName);
-                
+
                 // Remove plugin routes
                 $this->routesManager->unregisterPluginRoutes($pluginName);
                 $this->routesManager->generateRoutesFile();
-                
+
                 // Update active plugins setting
                 $result = SystemSettingsHelper::set('ACTIVE_PLUGINS', json_encode(array_values($activePlugins)));
-                
+
                 if ($result) {
                     LogHelper::info('Plugin deactivated successfully', ['plugin' => $pluginName]);
                     return true;
@@ -349,9 +359,10 @@ class PluginService {
      * @param string $pluginName Plugin name to check
      * @return bool True if plugin is valid
      */
-    public function isValidPlugin(string $pluginName): bool {
+    public function isValidPlugin(string $pluginName): bool
+    {
         $pluginPath = $this->pluginsPath . $pluginName;
-        
+
         // Check if directory exists
         if (!is_dir($pluginPath)) {
             return false;
@@ -368,14 +379,15 @@ class PluginService {
      * @param string $hook Hook name (activate, deactivate, etc.)
      * @return void
      */
-    private function runPluginHook(string $pluginName, string $hook): void {
+    private function runPluginHook(string $pluginName, string $hook): void
+    {
         $pluginPath = $this->pluginsPath . $pluginName;
         $mainFile = $pluginPath . '/' . $pluginName . '.php';
-        
+
         if (file_exists($mainFile)) {
             try {
                 include_once $mainFile;
-                
+
                 // Try to call hook function if it exists
                 $hookFunction = $pluginName . '_' . $hook;
                 if (function_exists($hookFunction)) {
@@ -396,10 +408,11 @@ class PluginService {
      * @param string $pluginName Plugin name
      * @return array Plugin settings
      */
-    public function getPluginSettings(string $pluginName): array {
+    public function getPluginSettings(string $pluginName): array
+    {
         $settingsKey = 'PLUGIN_' . strtoupper($pluginName) . '_SETTINGS';
         $settings = SystemSettingsHelper::get($settingsKey);
-        
+
         return $settings ? json_decode($settings, true) : [];
     }
 
@@ -409,17 +422,18 @@ class PluginService {
      * @param array $settings Settings array
      * @return bool Success status
      */
-    public function savePluginSettings(string $pluginName, array $settings): bool {
+    public function savePluginSettings(string $pluginName, array $settings): bool
+    {
         $settingsKey = 'PLUGIN_' . strtoupper($pluginName) . '_SETTINGS';
-        
+
         try {
             $result = SystemSettingsHelper::set($settingsKey, json_encode($settings));
-            
+
             if ($result) {
                 LogHelper::info('Plugin settings saved', ['plugin' => $pluginName]);
                 return true;
             }
-            
+
             return false;
         } catch (\Exception $e) {
             LogHelper::error('Error saving plugin settings', [
@@ -434,9 +448,10 @@ class PluginService {
      * Load active plugins (call this during application bootstrap)
      * @return void
      */
-    public function loadActivePlugins(): void {
+    public function loadActivePlugins(): void
+    {
         $activePlugins = $this->getActivePlugins();
-        
+
         foreach ($activePlugins as $pluginName) {
             $this->loadPlugin($pluginName);
         }
@@ -447,20 +462,21 @@ class PluginService {
      * @param string $pluginName Plugin name
      * @return bool Success status
      */
-    private function loadPlugin(string $pluginName): bool {
+    private function loadPlugin(string $pluginName): bool
+    {
         $pluginPath = $this->pluginsPath . $pluginName;
         $mainFile = $pluginPath . '/' . $pluginName . '.php';
-        
+
         if (file_exists($mainFile)) {
             try {
                 include_once $mainFile;
-                
+
                 // Load hooks if they exist
                 $hooksFile = $pluginPath . '/hooks.php';
                 if (file_exists($hooksFile)) {
                     include_once $hooksFile;
                 }
-                
+
                 LogHelper::debug('Plugin loaded', ['plugin' => $pluginName]);
                 return true;
             } catch (\Exception $e) {
@@ -471,7 +487,7 @@ class PluginService {
                 return false;
             }
         }
-        
+
         return false;
     }
 
@@ -480,19 +496,20 @@ class PluginService {
      * @param string $pluginName Plugin name to validate
      * @throws \Exception If validation fails
      */
-    private function validatePluginDependencies(string $pluginName): void {
+    private function validatePluginDependencies(string $pluginName): void
+    {
         $plugin = $this->getPluginDetails($pluginName);
-        
+
         if (!$plugin) {
             throw new \Exception("Plugin details not found for '$pluginName'");
         }
 
         // Check system requirements
         $this->validateSystemRequirements($plugin);
-        
+
         // Check plugin dependencies
         $this->validatePluginDependencyChain($plugin);
-        
+
         // Check for conflicts
         $this->validatePluginConflicts($plugin);
     }
@@ -502,7 +519,8 @@ class PluginService {
      * @param array $plugin Plugin data
      * @throws \Exception If requirements not met
      */
-    private function validateSystemRequirements(array $plugin): void {
+    private function validateSystemRequirements(array $plugin): void
+    {
         // Check CMS version
         if (!empty($plugin['requires'])) {
             $cmsVersion = SystemSettingsHelper::get('CMS_VERSION') ?? '1.0.0';
@@ -533,7 +551,8 @@ class PluginService {
      * @param array $plugin Plugin data
      * @throws \Exception If dependencies not met
      */
-    private function validatePluginDependencyChain(array $plugin): void {
+    private function validatePluginDependencyChain(array $plugin): void
+    {
         if (empty($plugin['depends'])) {
             return;
         }
@@ -576,7 +595,8 @@ class PluginService {
      * @param array $plugin Plugin data
      * @throws \Exception If conflicts found
      */
-    private function validatePluginConflicts(array $plugin): void {
+    private function validatePluginConflicts(array $plugin): void
+    {
         if (empty($plugin['conflicts'])) {
             return;
         }
@@ -598,9 +618,10 @@ class PluginService {
      * @param string $dependency Dependency string
      * @return array Parsed dependency info
      */
-    private function parseDependencyString(string $dependency): array {
+    private function parseDependencyString(string $dependency): array
+    {
         $pattern = '/^([a-zA-Z0-9_-]+)(?:\s*(>=|<=|>|<|=)\s*([0-9]+(?:\.[0-9]+)*(?:-[a-zA-Z0-9]+)?))?$/';
-        
+
         if (preg_match($pattern, $dependency, $matches)) {
             return [
                 'name' => $matches[1],
@@ -623,7 +644,8 @@ class PluginService {
      * @param string $operator Comparison operator
      * @return bool Comparison result
      */
-    private function versionCompare(string $version1, string $version2, string $operator): bool {
+    private function versionCompare(string $version1, string $version2, string $operator): bool
+    {
         return version_compare($version1, $version2, $operator);
     }
 
@@ -632,7 +654,8 @@ class PluginService {
      * @param string $pluginName Plugin name
      * @return array Dependency tree
      */
-    public function getPluginDependencyTree(string $pluginName): array {
+    public function getPluginDependencyTree(string $pluginName): array
+    {
         $tree = [];
         $this->buildDependencyTree($pluginName, $tree, []);
         return $tree;
@@ -645,24 +668,25 @@ class PluginService {
      * @param array $visited Visited plugins to avoid circular dependencies
      * @throws \Exception If circular dependency found
      */
-    private function buildDependencyTree(string $pluginName, array &$tree, array $visited): void {
+    private function buildDependencyTree(string $pluginName, array &$tree, array $visited): void
+    {
         if (in_array($pluginName, $visited)) {
             throw new \Exception("Circular dependency detected involving plugin '$pluginName'");
         }
 
         $visited[] = $pluginName;
         $plugin = $this->getPluginDetails($pluginName);
-        
+
         if (!$plugin || empty($plugin['depends'])) {
             return;
         }
 
         $tree[$pluginName] = [];
-        
+
         foreach ($plugin['depends'] as $dependency) {
             $depInfo = $this->parseDependencyString($dependency);
             $depName = $depInfo['name'];
-            
+
             $tree[$pluginName][] = $depName;
             $this->buildDependencyTree($depName, $tree, $visited);
         }
@@ -673,7 +697,8 @@ class PluginService {
      * @param string $pluginName Plugin name
      * @return array List of dependent plugins
      */
-    public function getPluginDependents(string $pluginName): array {
+    public function getPluginDependents(string $pluginName): array
+    {
         $dependents = [];
         $allPlugins = $this->getAvailablePlugins();
 
@@ -697,12 +722,13 @@ class PluginService {
      * @param string $pluginName Plugin name
      * @return array|true True if safe, array of issues if not
      */
-    public function canDeactivatePlugin(string $pluginName) {
+    public function canDeactivatePlugin(string $pluginName)
+    {
         $dependents = $this->getPluginDependents($pluginName);
         $activePlugins = $this->getActivePlugins();
-        
+
         $activeDependents = array_intersect($dependents, $activePlugins);
-        
+
         if (!empty($activeDependents)) {
             return [
                 'error' => 'Cannot deactivate plugin with active dependents',
@@ -718,7 +744,8 @@ class PluginService {
      * @param array $pluginNames List of plugin names to order
      * @return array Ordered plugin names
      */
-    public function getPluginActivationOrder(array $pluginNames): array {
+    public function getPluginActivationOrder(array $pluginNames): array
+    {
         $ordered = [];
         $remaining = $pluginNames;
         $iterations = 0;
@@ -726,7 +753,7 @@ class PluginService {
 
         while (!empty($remaining) && $iterations < $maxIterations) {
             $progress = false;
-            
+
             foreach ($remaining as $key => $pluginName) {
                 $plugin = $this->getPluginDetails($pluginName);
                 $canActivate = true;
@@ -735,7 +762,7 @@ class PluginService {
                     foreach ($plugin['depends'] as $dependency) {
                         $depInfo = $this->parseDependencyString($dependency);
                         $depName = $depInfo['name'];
-                        
+
                         // Check if dependency is in our list and not yet ordered
                         if (in_array($depName, $pluginNames) && !in_array($depName, $ordered)) {
                             $canActivate = false;
@@ -769,7 +796,8 @@ class PluginService {
      * @param string $pluginName Plugin name
      * @return array Validation results
      */
-    public function validatePluginCompatibility(string $pluginName): array {
+    public function validatePluginCompatibility(string $pluginName): array
+    {
         $plugin = $this->getPluginDetails($pluginName);
         $results = [
             'compatible' => true,

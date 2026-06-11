@@ -3,7 +3,6 @@
 namespace App\Controllers\Admin;
 
 use App\Models\Page;
-
 use App\Models\Settings;
 use App\Controllers\Admin\AdminController;
 use App\Helpers\LogHelper;
@@ -15,8 +14,6 @@ use App\Helpers\SessionHelper;
  */
 class SettingsController extends AdminController
 {
-
-
     protected $page;
     protected $clsSettings;
 
@@ -26,7 +23,7 @@ class SettingsController extends AdminController
         $this->page = new Page();
         $this->clsSettings = new Settings();
     }
-    
+
     public function indexAction()
     {
         // Elenco chiavi e valori di default

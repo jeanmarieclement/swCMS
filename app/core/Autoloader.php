@@ -1,44 +1,49 @@
 <?php
+
 namespace App\Core;
+
 /**
  * Custom Autoloader for swCMS
  * Handles class loading without relying on Composer
  */
-class Autoloader {
+class Autoloader
+{
     /**
      * Register the autoloader
      */
-    public static function register() {
+    public static function register()
+    {
         spl_autoload_register([self::class, 'loadClass']);
     }
-    
+
     /**
      * Load a class
-     * 
+     *
      * @param string $className The name of the class to load
      * @return bool True if the class was loaded, false otherwise
      */
-    public static function loadClass($className) {
+    public static function loadClass($className)
+    {
         // First, check if it's a core class
         if (self::loadCoreClass($className)) {
             return true;
         }
-        
+
         // Then check if it's a model
         if (self::loadModel($className)) {
             return true;
         }
-        
+
         // Then check if it's a controller
         if (self::loadController($className)) {
             return true;
         }
-        
+
         // Check if it's a helper class
         if (self::loadHelper($className)) {
             return true;
         }
-        
+
         // Check if it's a service class
         if (self::loadService($className)) {
             return true;
@@ -46,28 +51,30 @@ class Autoloader {
 
         return false;
     }
-    
-    private static function loadService($className) {
+
+    private static function loadService($className)
+    {
         $file = SERVICES_PATH . '/' . $className . '.php';
         if (file_exists($file)) {
             require_once $file;
             return true;
         }
-        
+
         return false;
     }
 
     /**
      * Load a core class
-     * 
+     *
      * @param string $className The name of the class to load
      * @return bool True if the class was loaded, false otherwise
      */
-    private static function loadCoreClass($className) {
+    private static function loadCoreClass($className)
+    {
         $coreClasses = [
             'Router', 'Controller', 'Model', 'View', 'Database', 'Autoloader', 'RoleService'
         ];
-        
+
         if (in_array($className, $coreClasses)) {
             $file = \APP_PATH . '/Core/' . $className . '.php';
             if (file_exists($file)) {
@@ -75,17 +82,18 @@ class Autoloader {
                 return true;
             }
         }
-        
+
         return false;
     }
-    
+
     /**
      * Load a model
-     * 
+     *
      * @param string $className The name of the class to load
      * @return bool True if the class was loaded, false otherwise
      */
-    private static function loadModel($className) {
+    private static function loadModel($className)
+    {
         // Check if the class name ends with "Model"
         if (substr($className, -5) === 'Model') {
             $modelName = substr($className, 0, -5);
@@ -93,22 +101,23 @@ class Autoloader {
         } else {
             $file = \MODELS_PATH . '/' . $className . '.php';
         }
-        
+
         if (file_exists($file)) {
             require_once $file;
             return true;
         }
-        
+
         return false;
     }
-    
+
     /**
      * Load a controller
-     * 
+     *
      * @param string $className The name of the class to load
      * @return bool True if the class was loaded, false otherwise
      */
-    private static function loadController($className) {
+    private static function loadController($className)
+    {
         // Supporto PSR-4: trasforma namespace in path
         if (strpos($className, '\\') !== false) {
             // Rimuove il prefisso "App\\" dal namespace, se presente
@@ -144,20 +153,21 @@ class Autoloader {
         }
         return false;
     }
-    
+
     /**
      * Load a helper class
-     * 
+     *
      * @param string $className The name of the class to load
      * @return bool True if the class was loaded, false otherwise
      */
-    private static function loadHelper($className) {
+    private static function loadHelper($className)
+    {
         $file = \HELPERS_PATH . '/' . $className . '.php';
         if (file_exists($file)) {
             require_once $file;
             return true;
         }
-        
+
         return false;
     }
 }

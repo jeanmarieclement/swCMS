@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Core\Model;
+
 /**
  * Model Settings - Site settings management
  */
@@ -64,7 +65,8 @@ class Settings extends Model
      *
      * @return array List of column names allowed in ORDER BY
      */
-    protected function getAllowedOrderByColumns() {
+    protected function getAllowedOrderByColumns()
+    {
         return ['id', 'key', 'autoload'];
     }
 }

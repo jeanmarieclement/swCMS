@@ -26,18 +26,18 @@ class MigrationRunner
         try {
             // Create migrations table if it doesn't exist
             $this->createMigrationsTable();
-            
+
             // Get applied migrations
             $this->loadAppliedMigrations();
-            
+
             // Get all migration files
             $migrationFiles = $this->getMigrationFiles();
-            
+
             $results = [];
-            
+
             foreach ($migrationFiles as $file) {
                 $filename = basename($file);
-                
+
                 if (in_array($filename, $this->appliedMigrations)) {
                     $results[] = [
                         'file' => $filename,
@@ -46,7 +46,7 @@ class MigrationRunner
                     ];
                     continue;
                 }
-                
+
                 try {
                     $this->runSingleMigration($file);
                     $results[] = [
@@ -60,12 +60,12 @@ class MigrationRunner
                         'status' => 'error',
                         'message' => $e->getMessage()
                     ];
-                    
+
                     // Stop on first error during installation
                     break;
                 }
             }
-            
+
             return [
                 'success' => !$this->hasErrors($results),
                 'results' => $results,
@@ -74,7 +74,6 @@ class MigrationRunner
                 'skipped' => count(array_filter($results, fn($r) => $r['status'] === 'skipped')),
                 'errors' => count(array_filter($results, fn($r) => $r['status'] === 'error'))
             ];
-            
         } catch (\Exception $e) {
             return [
                 'success' => false,
@@ -102,7 +101,7 @@ class MigrationRunner
                 applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4";
         }
-        
+
         $this->pdo->exec($sql);
     }
 
@@ -136,26 +135,26 @@ class MigrationRunner
     private function runSingleMigration($file)
     {
         $filename = basename($file);
-        
+
         // Load the migration file
         require_once $file;
-        
+
         // Extract class name from file
         $contents = file_get_contents($file);
         if (!preg_match('/class\s+(\w+)/', $contents, $matches)) {
             throw new \Exception("No class found in {$filename}");
         }
-        
+
         $className = $matches[1];
-        
+
         if (!class_exists($className)) {
             throw new \Exception("Class {$className} not found in {$filename}");
         }
-        
+
         // Create instance and run migration
         $migration = new $className();
         $migration->up();
-        
+
         // Record migration as applied
         $stmt = $this->pdo->prepare("INSERT INTO migrations (migration) VALUES (?)");
         $stmt->execute([$filename]);
@@ -201,9 +200,9 @@ class MigrationRunner
     {
         $criticalTables = ['settings', 'users', 'posts', 'categories', 'comments'];
         $existingTables = $this->getExistingTables();
-        
+
         $missing = array_diff($criticalTables, $existingTables);
-        
+
         return [
             'valid' => empty($missing),
             'existing' => $existingTables,

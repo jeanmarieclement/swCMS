@@ -1,13 +1,16 @@
 <?php
+
 /**
  * Helper for managing system settings (site name, url, theme, etc.)
  * Retrieves from database with fallback to default values.
  */
+
 namespace App\Helpers;
 
 use App\Models\Settings;
 
-class SystemSettingsHelper {
+class SystemSettingsHelper
+{
     protected static $cache = [];
     protected static $defaults = [
         'SITE_NAME' => 'swCMS',
@@ -24,7 +27,8 @@ class SystemSettingsHelper {
      * @param string $key
      * @return mixed
      */
-    public static function get($key) {
+    public static function get($key)
+    {
         if (isset(self::$cache[$key])) {
             return self::$cache[$key];
         }
@@ -49,7 +53,8 @@ class SystemSettingsHelper {
     /**
      * Imposta una impostazione di sistema
      */
-    public static function set($key, $value, $description = null, $autoload = 1) {
+    public static function set($key, $value, $description = null, $autoload = 1)
+    {
         $settings = new Settings();
         self::$cache[$key] = $value;
         return $settings->set($key, $value, $description, $autoload);
@@ -58,7 +63,8 @@ class SystemSettingsHelper {
     /**
      * Recupera tutte le impostazioni caricate
      */
-    public static function all() {
+    public static function all()
+    {
         $settings = new Settings();
         $all = $settings->all();
         $result = [];

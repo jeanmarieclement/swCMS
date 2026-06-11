@@ -8,25 +8,28 @@ use App\Helpers\CSRFHelper;
 use App\Helpers\SessionHelper;
 use App\Helpers\LogHelper;
 
-class MenuController extends AdminController {
-    
+class MenuController extends AdminController
+{
     private $menuModel;
 
-    public function __construct($params = []) {
+    public function __construct($params = [])
+    {
         parent::__construct($params);
         $this->menuModel = new Menu();
     }
 
-    public function indexAction() {
+    public function indexAction()
+    {
         $menus = $this->menuModel->getAllMenus();
-        
+
         $this->render('admin/menus/index', [
             'menus' => $menus,
             'page_title' => 'Gestione Menu'
         ]);
     }
 
-    public function createAction() {
+    public function createAction()
+    {
         // Pulisci i dati di sessione precedenti per evitare interferenze
         SessionHelper::removeValue('old_input');
         SessionHelper::removeValue('flash_errors');
@@ -48,7 +51,8 @@ class MenuController extends AdminController {
         ]);
     }
 
-    public function storeAction() {
+    public function storeAction()
+    {
         if (!RequestHelper::isPost()) {
             $this->redirect('/admin/menus');
             return;
@@ -110,7 +114,8 @@ class MenuController extends AdminController {
         $this->redirect('/admin/menus');
     }
 
-    public function editAction() {
+    public function editAction()
+    {
         $id = RequestHelper::get('id', 0, 'int');
 
         SessionHelper::removeValue('flash_errors');
@@ -147,7 +152,8 @@ class MenuController extends AdminController {
         ]);
     }
 
-    public function updateAction() {
+    public function updateAction()
+    {
         $id = RequestHelper::get('id', 0, 'int');
 
         if (empty($id) && !isset($this->params[0])) {
@@ -223,7 +229,8 @@ class MenuController extends AdminController {
         $this->redirect('/admin/menus');
     }
 
-    public function deleteAction() {
+    public function deleteAction()
+    {
         $id = RequestHelper::get('id', 0, 'int');
 
         if (empty($id) && !isset($this->params[0])) {
@@ -251,7 +258,8 @@ class MenuController extends AdminController {
         $this->redirect('/admin/menus');
     }
 
-    private function validateMenuData($data) {
+    private function validateMenuData($data)
+    {
         $errors = [];
 
         if (empty($data['title'])) {

@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Controllers\Admin;
 
 use App\Models\Category;
@@ -11,7 +12,8 @@ use App\Controllers\Admin\AdminController;
  * AdminCategoryController.php
  * Controller for category management (backend)
  */
-class CategoryController extends AdminController {
+class CategoryController extends AdminController
+{
     protected $categoryModel;
 
     /**
@@ -20,7 +22,8 @@ class CategoryController extends AdminController {
      *
      * @param array $params Optional parameters for the controller
      */
-    public function __construct($params = []) {
+    public function __construct($params = [])
+    {
         parent::__construct($params);
 
         // Only admin can manage users
@@ -34,7 +37,8 @@ class CategoryController extends AdminController {
      *
      * @return void
      */
-    public function indexAction() {
+    public function indexAction()
+    {
         $categories = $this->categoryModel->getAll();
         $this->render('admin/categories/category_list', [
             'categories' => $categories,
@@ -48,7 +52,8 @@ class CategoryController extends AdminController {
      *
      * @return void
      */
-    public function createAction() {
+    public function createAction()
+    {
         $this->render('admin/categories/category_form', [
             'action' => 'create',
             'category' => null,
@@ -61,7 +66,8 @@ class CategoryController extends AdminController {
      *
      * @return void
      */
-    public function storeAction() {
+    public function storeAction()
+    {
         $name = $this->getParam('name', '', 'POST');
         $slug = $this->getParam('slug', '', 'POST');
         $description = $this->getParam('description', '', 'POST');
@@ -97,7 +103,8 @@ class CategoryController extends AdminController {
      *
      * @return void
      */
-    public function editAction() {
+    public function editAction()
+    {
         $id = isset($this->params[0]) ? (int)$this->params[0] : 0;
         if ($id <= 0) {
             SessionHelper::setFlashMessage('Invalid category ID', 'error');
@@ -120,7 +127,8 @@ class CategoryController extends AdminController {
      *
      * @return void
      */
-    public function updateAction() {
+    public function updateAction()
+    {
         $id = isset($this->params[0]) ? (int)$this->params[0] : 0;
         if ($id <= 0) {
             SessionHelper::setFlashMessage('Invalid category ID', 'error');
@@ -163,7 +171,8 @@ class CategoryController extends AdminController {
      *
      * @return void
      */
-    public function deleteAction() {
+    public function deleteAction()
+    {
         $id = isset($this->params[0]) ? (int)$this->params[0] : 0;
         if ($id <= 0) {
             SessionHelper::setFlashMessage('Invalid category ID', 'error');
@@ -187,7 +196,8 @@ class CategoryController extends AdminController {
         ]);
     }
 
-    public function destroyAction() {
+    public function destroyAction()
+    {
         $id = isset($this->params[0]) ? (int)$this->params[0] : 0;
         if ($id <= 0) {
             SessionHelper::setFlashMessage('Invalid category ID', 'error');
@@ -208,7 +218,8 @@ class CategoryController extends AdminController {
      *
      * @return void
      */
-    public function ajaxCreateAction() {
+    public function ajaxCreateAction()
+    {
         header('Content-Type: application/json');
         $input = json_decode(file_get_contents('php://input'), true);
         $name = trim($input['name'] ?? '');
@@ -216,10 +227,18 @@ class CategoryController extends AdminController {
         $description = trim($input['description'] ?? '');
 
         $errors = [];
-        if ($name === '') $errors[] = 'name is required';
-        if ($slug === '') $errors[] = 'slug is required';
-        if (!preg_match('/^[a-z0-9-]+$/', $slug)) $errors[] = 'slug can only contain lowercase letters, numbers, and hyphens';
-        if ($this->categoryModel->slugExists($slug)) $errors[] = 'slug already exists';
+        if ($name === '') {
+            $errors[] = 'name is required';
+        }
+        if ($slug === '') {
+            $errors[] = 'slug is required';
+        }
+        if (!preg_match('/^[a-z0-9-]+$/', $slug)) {
+            $errors[] = 'slug can only contain lowercase letters, numbers, and hyphens';
+        }
+        if ($this->categoryModel->slugExists($slug)) {
+            $errors[] = 'slug already exists';
+        }
 
         if ($errors) {
             echo json_encode(['success' => false, 'error' => implode('. ', $errors)]);

@@ -1,8 +1,8 @@
 <?php
+
 namespace App\Models;
 
 use App\Core\Model;
-
 
 /**
  * User role management
@@ -58,7 +58,8 @@ class Role extends Model
      *
      * @return array List of column names allowed in ORDER BY
      */
-    protected function getAllowedOrderByColumns() {
+    protected function getAllowedOrderByColumns()
+    {
         return ['name', 'level', 'description', 'created_at', 'updated_at'];
     }
 }

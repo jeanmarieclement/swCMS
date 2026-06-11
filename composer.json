@@ -45,8 +45,8 @@
     "scripts": {
         "test": "phpunit",
         "test-coverage": "phpunit --coverage-html coverage",
-        "cs-check": "phpcs --standard=PSR12 App/",
-        "cs-fix": "phpcbf --standard=PSR12 App/",
+        "cs-check": "phpcs --standard=PSR12 app/",
+        "cs-fix": "phpcbf --standard=PSR12 app/",
         "migrate-up": "php database/migrate.php up",
         "migrate-down": "php database/migrate.php down"
     },

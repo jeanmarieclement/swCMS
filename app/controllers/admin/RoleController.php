@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Controllers\Admin;
 
 use App\Helpers\SecurityHelper;
@@ -12,8 +13,9 @@ use App\Helpers\LogHelper;
 class RoleController extends AdminController
 {
     private $userModel;
-   
-    public function __construct($params = []) {
+
+    public function __construct($params = [])
+    {
         parent::__construct($params);
         $this->userModel = new User();
     }
@@ -27,14 +29,14 @@ class RoleController extends AdminController
     {
         // Fetch all roles and their permissions
         $roles = $this->roleService->getRoles();
-        
+
         foreach ($roles as &$role) {
             // Get permissions for each role
             $role['permissions'] = $this->roleService->getAccessibleTemplates($role['name']);
-            
+
             // Get user count for each role
             $role['user_count'] = $this->getUserCountByRole($role['name']);
-            
+
             // Ensure description field exists
             if (!isset($role['description']) || empty($role['description'])) {
                 $role['description'] = $this->getDefaultRoleDescription($role['name'], $role['level']);
@@ -52,7 +54,8 @@ class RoleController extends AdminController
     /**
      * Get user count by role
      */
-    private function getUserCountByRole($roleName): int {
+    private function getUserCountByRole($roleName): int
+    {
         try {
             return $this->userModel->getUserCountByRole($roleName);
         } catch (\Exception $e) {
@@ -64,7 +67,8 @@ class RoleController extends AdminController
     /**
      * Get default description for a role
      */
-    private function getDefaultRoleDescription($roleName, $level): string {
+    private function getDefaultRoleDescription($roleName, $level): string
+    {
         $descriptions = [
             'super_admin' => 'Full system access with all administrative privileges',
             'admin' => 'Administrative access to manage users, content, and system settings',
@@ -89,7 +93,7 @@ class RoleController extends AdminController
         return $levelDescriptions[$level] ?? 'Custom role with specific permissions';
     }
 
-   
+
     /**
      * Displays the form to edit a role and handles updates.
      *
@@ -99,17 +103,17 @@ class RoleController extends AdminController
     {
         // Get role ID from URL parameters
         $roleId = isset($this->params[0]) ? (int)$this->params[0] : 0;
-        
+
         // If no role ID provided, redirect to roles list
         if (!$roleId) {
             $this->setFlashMessage('error', 'No role ID provided');
             RedirectHelper::redirect('/admin/roles');
             return;
         }
-        
+
         // Get role details
         $role = $this->roleService->getRoleById($roleId);
-        
+
         // If role not found, redirect to roles list
         if (!$role) {
             $this->setFlashMessage('error', 'Role not found');
@@ -120,7 +124,7 @@ class RoleController extends AdminController
         // Get current permissions for this role
         $role['permissions'] = $this->roleService->getAccessibleTemplates($role['name']);
         $role['user_count'] = $this->getUserCountByRole($role['name']);
-        
+
         // Ensure description field exists
         if (!isset($role['description']) || empty($role['description'])) {
             $role['description'] = $this->getDefaultRoleDescription($role['name'], $role['level']);
@@ -131,23 +135,23 @@ class RoleController extends AdminController
             try {
                 // Get permissions from POST data
                 $permissions = isset($_POST['permissions']) ? $_POST['permissions'] : [];
-                
+
                 // Check if we should grant all permissions
                 if (in_array('all', $permissions)) {
                     $permissions = ['*']; // Use wildcard to grant all permissions
                 }
-                
+
                 // Update role permissions
                 $success = $this->roleService->updatePermissions($roleId, $permissions);
 
                 if ($success) {
                     LogHelper::info('Role permissions updated successfully', [
-                        'role_id' => $roleId, 
+                        'role_id' => $roleId,
                         'role_name' => $role['name'],
                         'permissions' => $permissions,
                         'user_id' => $_SESSION['user_id'] ?? null
                     ]);
-                    
+
                     $this->setFlashMessage('success', "Permessi del ruolo '{$role['name']}' aggiornati con successo!");
                     RedirectHelper::redirect('/admin/roles');
                     return;
@@ -159,21 +163,21 @@ class RoleController extends AdminController
                     'role_id' => $roleId,
                     'error' => $e->getMessage()
                 ]);
-                
+
                 // Provide user-friendly error messages based on error type
                 if (strpos($e->getMessage(), 'readonly database') !== false) {
                     $this->setFlashMessage('error', 'Errore: Il database è in sola lettura. Controlla i permessi del file database.');
-                } else if (strpos($e->getMessage(), 'database is locked') !== false) {
+                } elseif (strpos($e->getMessage(), 'database is locked') !== false) {
                     $this->setFlashMessage('error', 'Errore: Database temporaneamente bloccato. Riprova tra qualche secondo.');
                 } else {
                     $this->setFlashMessage('error', 'Errore durante l\'aggiornamento dei permessi: ' . $e->getMessage());
                 }
             }
-            
+
             // Refresh role data after attempting update (whether success or failure)
             $role['permissions'] = $this->roleService->getAccessibleTemplates($role['name']);
         }
-        
+
         // Render the edit form
         $this->render('admin/roles/edit', [
             'title' => 'Edit Role - ' . $role['name'],
@@ -197,7 +201,7 @@ class RoleController extends AdminController
     public function deleteAction()
     {
         $roleId = isset($this->params[0]) ? (int)$this->params[0] : 0;
-        
+
         if (!$roleId) {
             $this->setFlashMessage('error', 'No role ID provided');
             RedirectHelper::redirect('/admin/roles');
@@ -206,7 +210,7 @@ class RoleController extends AdminController
 
         // Get role details for logging
         $role = $this->roleService->getRoleById($roleId);
-        
+
         if (!$role) {
             $this->setFlashMessage('error', 'Role not found');
             RedirectHelper::redirect('/admin/roles');
@@ -223,6 +227,4 @@ class RoleController extends AdminController
         $this->setFlashMessage('info', 'Role deletion feature will be available in a future version');
         RedirectHelper::redirect('/admin/roles');
     }
-    
-    
 }

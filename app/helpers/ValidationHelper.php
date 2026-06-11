@@ -154,7 +154,7 @@ class ValidationHelper
                     continue;
                 }
 
-                $valid = match($ruleName) {
+                $valid = match ($ruleName) {
                     'required' => self::required($value),
                     'email' => filter_var($value, FILTER_VALIDATE_EMAIL) !== false,
                     'url' => filter_var($value, FILTER_VALIDATE_URL) !== false,
