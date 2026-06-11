@@ -197,7 +197,7 @@ class InstallController
             // Clear session data
             SessionHelper::unsetValue('install_config');
 
-            $this->renderView('complete', ['success' => true]);
+            $this->renderView('complete', ['success' => true, 'config' => $this->config]);
         } catch (Exception $e) {
             $this->errors[] = 'Installation failed: ' . $e->getMessage();
             $this->renderView('complete', ['success' => false, 'errors' => $this->errors]);
