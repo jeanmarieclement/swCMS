@@ -200,9 +200,11 @@ class InstallController
             SessionHelper::removeValue('install_config');
 
             $this->renderView('complete', ['success' => true, 'config' => $this->config]);
+            exit;
         } catch (Exception $e) {
             $this->errors[] = 'Installation failed: ' . $e->getMessage();
             $this->renderView('complete', ['success' => false, 'errors' => $this->errors]);
+            exit;
         }
     }
 
