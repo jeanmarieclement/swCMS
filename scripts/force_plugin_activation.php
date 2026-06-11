@@ -1,15 +1,15 @@
 <?php
 
 // Force plugin activation
-define('APP_PATH', __DIR__ . '/App');
+define('APP_PATH', __DIR__ . '/app');
 define('PUBLIC_PATH', __DIR__ . '/public');
 define('ROOT_PATH', __DIR__);
 
-require_once __DIR__ . '/App/Config/Config.php';
-require_once __DIR__ . '/App/Core/Database/Database.php';
-require_once __DIR__ . '/App/Helpers/SystemSettingsHelper.php';
-require_once __DIR__ . '/App/Helpers/LogHelper.php';
-require_once __DIR__ . '/App/Services/PluginService.php';
+require_once __DIR__ . '/app/Config/Config.php';
+require_once __DIR__ . '/app/Core/Database/Database.php';
+require_once __DIR__ . '/app/Helpers/SystemSettingsHelper.php';
+require_once __DIR__ . '/app/Helpers/LogHelper.php';
+require_once __DIR__ . '/app/Services/PluginService.php';
 
 use App\Services\PluginService;
 use App\Helpers\SystemSettingsHelper;
@@ -37,7 +37,7 @@ try {
     echo $result ? "✅ Activated\n" : "❌ Failed to activate\n";
     
     echo "\n3️⃣ Checking routes file...\n";
-    $routesFile = __DIR__ . '/App/Core/plugin_routes_include.php';
+    $routesFile = __DIR__ . '/app/Core/plugin_routes_include.php';
     if (file_exists($routesFile)) {
         $content = file_get_contents($routesFile);
         echo "File size: " . strlen($content) . " bytes\n";

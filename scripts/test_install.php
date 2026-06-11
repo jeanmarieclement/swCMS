@@ -6,7 +6,7 @@
 
 // Set up basic paths
 define('ROOT_PATH', dirname(__DIR__));
-define('APP_PATH', ROOT_PATH . '/App');
+define('APP_PATH', ROOT_PATH . '/app');
 define('PUBLIC_PATH', ROOT_PATH . '/public');
 define('DATA_PATH', ROOT_PATH . '/data');
 

@@ -14,7 +14,7 @@ use App\Services\PluginService;
 use App\Helpers\SystemSettingsHelper;
 
 // Define the application path
-define('APP_PATH', dirname(__DIR__) . '/App');
+define('APP_PATH', dirname(__DIR__) . '/app');
 define('PUBLIC_PATH', __DIR__);
 define('ROOT_PATH', dirname(__DIR__));
 

@@ -17,7 +17,7 @@ require_once __DIR__ . '/../vendor/autoload.php';
 
 // Define the application path
 if (!defined('APP_PATH')) {
-    define('APP_PATH', dirname(__DIR__) . '/App');
+    define('APP_PATH', dirname(__DIR__) . '/app');
 }
 if (!defined('PUBLIC_PATH')) {
     define('PUBLIC_PATH', __DIR__);
