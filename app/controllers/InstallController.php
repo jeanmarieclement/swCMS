@@ -502,7 +502,7 @@ class InstallController
                 }
                 return false;
             }
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             // If User model is not available during install, use basic validation
             if (strlen($password) < 8) {
                 $this->errors[] = 'Admin password must be at least 8 characters long.';
