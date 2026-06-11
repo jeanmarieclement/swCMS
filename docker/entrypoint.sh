@@ -12,7 +12,7 @@ fi
 # Ensure writable directories exist and are owned by www-data.
 # Apache runs as www-data; the bind-mounted volume is typically owned by
 # the host user, so these dirs must be explicitly created/fixed.
-for dir in data logs storage/cache; do
+for dir in data logs storage/cache app/views/compiled app/views/cache app/views/configs; do
     mkdir -p "$dir"
     chown -R www-data:www-data "$dir"
     chmod 755 "$dir"
