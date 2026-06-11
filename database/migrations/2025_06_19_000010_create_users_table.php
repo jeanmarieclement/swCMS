@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/../../App/Core/Database/Migration.php';
+require_once __DIR__ . '/../../app/core/Database/Migration.php';
 
 use App\Core\Database\Database;
 use App\Core\Database\Migration ;
