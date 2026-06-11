@@ -26,13 +26,20 @@ class AddCommentsEnabledToPostsAndPages extends Migration
         try {
             $this->db->beginTransaction();
             
-            // Add comments_enabled column to posts table
-            if (defined('DB_DRIVER') && DB_DRIVER === 'sqlite') {
-                $this->db->exec("ALTER TABLE posts ADD COLUMN comments_enabled INTEGER DEFAULT 1");
-                $this->db->exec("ALTER TABLE pages ADD COLUMN comments_enabled INTEGER DEFAULT 1");
-            } else {
-                $this->db->exec("ALTER TABLE posts ADD COLUMN comments_enabled TINYINT(1) DEFAULT 1");
-                $this->db->exec("ALTER TABLE pages ADD COLUMN comments_enabled TINYINT(1) DEFAULT 1");
+            $isSqlite = defined('DB_DRIVER') && DB_DRIVER === 'sqlite';
+            $tables = $isSqlite
+                ? $this->db->query("SELECT name FROM sqlite_master WHERE type='table'")->fetchAll(\PDO::FETCH_COLUMN)
+                : $this->db->query("SHOW TABLES")->fetchAll(\PDO::FETCH_COLUMN);
+
+            foreach (['posts', 'pages'] as $table) {
+                if (!in_array($table, $tables)) {
+                    continue;
+                }
+                if ($isSqlite) {
+                    $this->db->exec("ALTER TABLE {$table} ADD COLUMN comments_enabled INTEGER DEFAULT 1");
+                } else {
+                    $this->db->exec("ALTER TABLE {$table} ADD COLUMN comments_enabled TINYINT(1) DEFAULT 1");
+                }
             }
             
             if ($this->db->inTransaction()) {
