@@ -143,6 +143,14 @@ class Autoloader
             if ($lcFirst !== $classPath) {
                 $candidates[] = $lcFirst;
             }
+            // Also try lcfirst on every directory segment (not the class name).
+            // Needed for e.g. App\Controllers\Admin\* → controllers/admin/ on Linux.
+            $allParts = explode('/', $classPath);
+            $classFile = array_pop($allParts);
+            $lcAllDirs = implode('/', array_map('lcfirst', $allParts)) . '/' . $classFile;
+            if (!in_array($lcAllDirs, $candidates)) {
+                $candidates[] = $lcAllDirs;
+            }
             foreach ($candidates as $candidate) {
                 $file = \APP_PATH . '/' . $candidate . '.php';
                 if (file_exists($file)) {
