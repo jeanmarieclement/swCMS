@@ -4,7 +4,7 @@
  * Run this script if you need to bypass the installer or mark installation as complete
  */
 
-require_once dirname(__DIR__) . '/App/Config/install_config.php';
+require_once dirname(__DIR__) . '/app/Config/install_config.php';
 
 $flagPath = ROOT_PATH . '/data/.installed';
 $flagContent = json_encode([

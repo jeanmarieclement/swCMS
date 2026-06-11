@@ -11,7 +11,7 @@ define('PUBLIC_PATH', ROOT_PATH . '/public');
 define('DATA_PATH', ROOT_PATH . '/data');
 
 require_once APP_PATH . '/Config/install_config.php';
-require_once APP_PATH . '/Core/Autoloader.php';
+require_once APP_PATH . '/core/Autoloader.php';
 
 use App\Core\Autoloader;
 use App\Helpers\SystemSettingsHelper;

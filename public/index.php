@@ -23,7 +23,7 @@ $installFlagFile = ROOT_PATH . '/data/.installed';
 if (!file_exists($installFlagFile)) {
     // Load minimal config for installation
     require_once APP_PATH . '/Config/install_config.php';
-    require_once APP_PATH . '/Core/Autoloader.php';
+    require_once APP_PATH . '/core/Autoloader.php';
     
     Autoloader::register();
     
@@ -37,7 +37,7 @@ if (!file_exists($installFlagFile)) {
 require_once APP_PATH . '/Config/Config.php';
 
 // Load the autoloader
-require_once APP_PATH . '/Core/Autoloader.php';
+require_once APP_PATH . '/core/Autoloader.php';
 
 Autoloader::register();
 
@@ -196,8 +196,8 @@ try {
     } else {
         // Production mode - show generic error page without sensitive details
         http_response_code(500);
-        if (file_exists(APP_PATH . '/Views/errors/500.php')) {
-            include APP_PATH . '/Views/errors/500.php';
+        if (file_exists(APP_PATH . '/views/errors/500.php')) {
+            include APP_PATH . '/views/errors/500.php';
         } else {
             echo '<!DOCTYPE html>';
             echo '<html><head><title>Server Error</title></head><body>';

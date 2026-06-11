@@ -7,6 +7,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```bash
 # Development environment
 docker-compose up -d          # Start app (port 80), MySQL (3306), phpMyAdmin (8081)
+                              # On first start the container auto-runs composer install
+                              # if vendor/ is absent (fresh clone scenario)
 
 # Tests (need MySQL: run inside the app container, host PHP lacks pdo_mysql)
 docker exec swcms_app php vendor/bin/phpunit                # All tests

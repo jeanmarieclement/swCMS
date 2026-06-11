@@ -13,7 +13,7 @@ define('PUBLIC_PATH', ROOT_PATH . '/public');
 define('DATA_PATH', ROOT_PATH . '/data');
 
 require_once APP_PATH . '/Config/install_config.php';
-require_once APP_PATH . '/Core/Autoloader.php';
+require_once APP_PATH . '/core/Autoloader.php';
 
 use App\Core\Autoloader;
 
@@ -33,7 +33,7 @@ require_once APP_PATH . '/Config/Config.php';
 // Test 2: Test Migration Runner
 echo "\n2. Testing MigrationRunner...\n";
 try {
-    require_once APP_PATH . '/Core/MigrationRunner.php';
+    require_once APP_PATH . '/core/MigrationRunner.php';
     
     // Test database connection
     if (DB_DRIVER === 'mysql') {
@@ -99,7 +99,7 @@ try {
 // Test 4: Test InstallController integration
 echo "\n4. Testing InstallController with migrations...\n";
 try {
-    require_once APP_PATH . '/Controllers/InstallController.php';
+    require_once APP_PATH . '/controllers/InstallController.php';
     
     // Mock session for testing
     if (session_status() == PHP_SESSION_NONE) {

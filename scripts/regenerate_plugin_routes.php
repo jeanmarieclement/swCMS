@@ -2,10 +2,10 @@
 
 // Script per rigenerare le route dei plugin
 
-require_once __DIR__ . '/App/Core/Database/Database.php';
-require_once __DIR__ . '/App/Services/PluginRoutesManager.php';
-require_once __DIR__ . '/App/Helpers/LogHelper.php';
-require_once __DIR__ . '/App/Helpers/SystemSettingsHelper.php';
+require_once __DIR__ . '/app/Core/Database/Database.php';
+require_once __DIR__ . '/app/Services/PluginRoutesManager.php';
+require_once __DIR__ . '/app/Helpers/LogHelper.php';
+require_once __DIR__ . '/app/Helpers/SystemSettingsHelper.php';
 
 use App\Services\PluginRoutesManager;
 use App\Helpers\SystemSettingsHelper;
@@ -58,7 +58,7 @@ try {
     echo $result ? "✅ File generato con successo\n" : "❌ Errore nella generazione\n";
     
     // Mostra il contenuto del file generato
-    $routesFile = __DIR__ . '/App/Core/plugin_routes_include.php';
+    $routesFile = __DIR__ . '/app/Core/plugin_routes_include.php';
     if (file_exists($routesFile)) {
         echo "\n📋 Contenuto file route:\n";
         echo "========================\n";

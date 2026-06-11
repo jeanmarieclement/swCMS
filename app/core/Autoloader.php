@@ -76,7 +76,7 @@ class Autoloader
         ];
 
         if (in_array($className, $coreClasses)) {
-            $file = \APP_PATH . '/Core/' . $className . '.php';
+            $file = \APP_PATH . '/core/' . $className . '.php';
             if (file_exists($file)) {
                 require_once $file;
                 return true;
@@ -127,10 +127,22 @@ class Autoloader
                 $classPath = $className;
             }
             $classPath = str_replace('\\', '/', $classPath);
-            $file = \APP_PATH . '/' . $classPath . '.php';
-            if (file_exists($file)) {
-                require_once $file;
-                return true;
+            // Try namespace case first (works for Cache/, Config/, Exceptions/),
+            // then lcfirst of the first segment (works for core/, controllers/,
+            // helpers/, models/, services/, middlewares/ which are lowercase on
+            // Linux case-sensitive filesystems).
+            $candidates = [$classPath];
+            $parts = explode('/', $classPath, 2);
+            $lcFirst = lcfirst($parts[0]) . (isset($parts[1]) ? '/' . $parts[1] : '');
+            if ($lcFirst !== $classPath) {
+                $candidates[] = $lcFirst;
+            }
+            foreach ($candidates as $candidate) {
+                $file = \APP_PATH . '/' . $candidate . '.php';
+                if (file_exists($file)) {
+                    require_once $file;
+                    return true;
+                }
             }
         }
         // Logica legacy (admin + base)
