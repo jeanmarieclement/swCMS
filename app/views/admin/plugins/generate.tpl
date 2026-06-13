@@ -76,7 +76,8 @@
 <div class="row">
     <div class="col-lg-8">
         <form method="POST" action="/admin/plugins/generate" class="plugin-generator-form" id="pluginGeneratorForm">
-            
+            <input type="hidden" name="csrf_token" value="{$csrf_token}">
+
             {* Basic Information *}
             <div class="form-section">
                 <h5><i class="fas fa-info-circle me-2"></i>Basic Information</h5>
@@ -371,6 +372,7 @@ function my_plugin_filter($content) {
 {/block}
 
 {block name="scripts"}
+{literal}
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Auto-generate display name from plugin name
@@ -435,4 +437,5 @@ document.addEventListener('DOMContentLoaded', function() {
     };
 });
 </script>
+{/literal}
 {/block}

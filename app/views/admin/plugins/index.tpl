@@ -152,8 +152,9 @@
                         <div class="plugin-actions">
                             {if $is_active}
                                 <form method="POST" action="/admin/plugins/deactivate" style="display: inline;">
+                                    <input type="hidden" name="csrf_token" value="{$csrf_token}">
                                     <input type="hidden" name="plugin" value="{$plugin.name}">
-                                    <button type="submit" class="btn btn-danger btn-sm me-2" 
+                                    <button type="submit" class="btn btn-danger btn-sm me-2"
                                             onclick="return confirm('Are you sure you want to deactivate this plugin?')">
                                         <i class="fas fa-stop"></i> Deactivate
                                     </button>
@@ -166,8 +167,9 @@
                                 {/if}
                             {else}
                                 <form method="POST" action="/admin/plugins/activate" style="display: inline;">
+                                    <input type="hidden" name="csrf_token" value="{$csrf_token}">
                                     <input type="hidden" name="plugin" value="{$plugin.name}">
-                                    <button type="submit" class="btn btn-success btn-sm me-2" 
+                                    <button type="submit" class="btn btn-success btn-sm me-2"
                                             onclick="return confirm('Are you sure you want to activate this plugin?')">
                                         <i class="fas fa-play"></i> Activate
                                     </button>
@@ -263,16 +265,21 @@ document.addEventListener('DOMContentLoaded', function() {
     // Plugin deletion confirmation
     window.confirmDelete = function(pluginName) {
         if (confirm('Are you sure you want to delete the "' + pluginName + '" plugin? This action cannot be undone.')) {
-            // Create a form to submit the delete request
             const form = document.createElement('form');
             form.method = 'POST';
             form.action = '/admin/plugins/delete';
-            
+
+            const csrf = document.createElement('input');
+            csrf.type = 'hidden';
+            csrf.name = 'csrf_token';
+            csrf.value = '{$csrf_token}';
+            form.appendChild(csrf);
+
             const input = document.createElement('input');
             input.type = 'hidden';
             input.name = 'plugin';
             input.value = pluginName;
-            
+
             form.appendChild(input);
             document.body.appendChild(form);
             form.submit();

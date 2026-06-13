@@ -62,6 +62,7 @@
 {/if}
 
 <form method="POST" action="/admin/plugins/configure?plugin={$plugin.name}">
+    <input type="hidden" name="csrf_token" value="{$csrf_token}">
     <div class="row">
         <div class="col-lg-8">
             {* Configuration Form *}

@@ -136,6 +136,7 @@ class Router
         $this->addRoute('admin/plugins/activate', ['controller' => 'Plugin', 'action' => 'activate']);
         $this->addRoute('admin/plugins/deactivate', ['controller' => 'Plugin', 'action' => 'deactivate']);
         $this->addRoute('admin/plugins/configure', ['controller' => 'Plugin', 'action' => 'configure']);
+        $this->addRoute('admin/plugins/generate', ['controller' => 'Plugin', 'action' => 'generate']);
         $this->addRoute('admin/plugins/install', ['controller' => 'Plugin', 'action' => 'install']);
         $this->addRoute('admin/plugins/delete', ['controller' => 'Plugin', 'action' => 'delete']);
 

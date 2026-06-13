@@ -91,16 +91,18 @@
         </div>
         {if $is_active}
             <form method="POST" action="/admin/plugins/deactivate" style="display: inline;">
+                <input type="hidden" name="csrf_token" value="{$csrf_token}">
                 <input type="hidden" name="plugin" value="{$plugin.name}">
-                <button type="submit" class="btn btn-sm btn-danger" 
+                <button type="submit" class="btn btn-sm btn-danger"
                         onclick="return confirm('Are you sure you want to deactivate this plugin?')">
                     <i class="fas fa-stop"></i> Deactivate Plugin
                 </button>
             </form>
         {else}
             <form method="POST" action="/admin/plugins/activate" style="display: inline;">
+                <input type="hidden" name="csrf_token" value="{$csrf_token}">
                 <input type="hidden" name="plugin" value="{$plugin.name}">
-                <button type="submit" class="btn btn-sm btn-success" 
+                <button type="submit" class="btn btn-sm btn-success"
                         onclick="return confirm('Are you sure you want to activate this plugin?')">
                     <i class="fas fa-play"></i> Activate Plugin
                 </button>
@@ -412,13 +414,14 @@
                 <div class="d-grid gap-2">
                     {if $is_active}
                         <form method="POST" action="/admin/plugins/deactivate">
+                            <input type="hidden" name="csrf_token" value="{$csrf_token}">
                             <input type="hidden" name="plugin" value="{$plugin.name}">
-                            <button type="submit" class="btn btn-danger w-100" 
+                            <button type="submit" class="btn btn-danger w-100"
                                     onclick="return confirm('Are you sure you want to deactivate this plugin?')">
                                 <i class="fas fa-stop me-2"></i>Deactivate Plugin
                             </button>
                         </form>
-                        
+
                         {if $plugin.has_settings}
                             <a href="/admin/plugins/configure?plugin={$plugin.name}" class="btn btn-outline-primary w-100">
                                 <i class="fas fa-cogs me-2"></i>Configure Settings
@@ -426,8 +429,9 @@
                         {/if}
                     {else}
                         <form method="POST" action="/admin/plugins/activate">
+                            <input type="hidden" name="csrf_token" value="{$csrf_token}">
                             <input type="hidden" name="plugin" value="{$plugin.name}">
-                            <button type="submit" class="btn btn-success w-100" 
+                            <button type="submit" class="btn btn-success w-100"
                                     onclick="return confirm('Are you sure you want to activate this plugin?')">
                                 <i class="fas fa-play me-2"></i>Activate Plugin
                             </button>
@@ -478,12 +482,18 @@ document.addEventListener('DOMContentLoaded', function() {
             const form = document.createElement('form');
             form.method = 'POST';
             form.action = '/admin/plugins/delete';
-            
+
+            const csrf = document.createElement('input');
+            csrf.type = 'hidden';
+            csrf.name = 'csrf_token';
+            csrf.value = '{$csrf_token}';
+            form.appendChild(csrf);
+
             const input = document.createElement('input');
             input.type = 'hidden';
             input.name = 'plugin';
             input.value = '{$plugin.name}';
-            
+
             form.appendChild(input);
             document.body.appendChild(form);
             form.submit();
