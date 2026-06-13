@@ -29,7 +29,7 @@ if (!defined('ROOT_PATH')) {
 // Load the configuration file
 require_once APP_PATH . '/Config/config.php';
 // Include the custom Database class
-require_once __DIR__ . '/../App/Core/Database/Database.php';
+require_once __DIR__ . '/../app/core/Database/Database.php';
 
 use App\Core\Database\Database;
 

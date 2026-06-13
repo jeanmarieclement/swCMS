@@ -11,6 +11,7 @@ use App\Helpers\RedirectHelper;
 use App\Helpers\SecurityHelper;
 use App\Helpers\RequestHelper;
 use App\Helpers\CSRFHelper;
+use App\Helpers\StringHelper;
 use App\middlewares\AuthMiddleware;
 
 /**
@@ -68,9 +69,9 @@ class PageController extends AdminController
         $messageType = '';
 
         if (SessionHelper::hasFlashMessage()) {
-            $message = SessionHelper::getFlashMessage();
-            $messageType = SessionHelper::getFlashMessageType() ?? 'success';
-            SessionHelper::removeFlashMessage();
+            $flash = SessionHelper::getFlashMessage();
+            $message = $flash['message'] ?? '';
+            $messageType = $flash['type'] ?? 'success';
         }
 
         // Render the view using the controller's render method
@@ -236,8 +237,9 @@ class PageController extends AdminController
         $saved = false;
 
         if (SessionHelper::hasFlashMessage()) {
-            $message = SessionHelper::getFlashMessage();
-            $messageType = SessionHelper::getFlashMessageType() ?? 'success';
+            $flash = SessionHelper::getFlashMessage();
+            $message = $flash['message'] ?? '';
+            $messageType = $flash['type'] ?? 'success';
             $saved = ($messageType === 'success');
         }
 

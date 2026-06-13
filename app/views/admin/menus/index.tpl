@@ -1,5 +1,16 @@
 {extends file="admin/layout.tpl"}
 
+{block name="title"}Menus{/block}
+
+{block name="breadcrumbs"}
+<nav aria-label="breadcrumb" class="mt-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{$admin_url}">Dashboard</a></li>
+        <li class="breadcrumb-item active">Menus</li>
+    </ol>
+</nav>
+{/block}
+
 {block name="content"}
 <div class="container-fluid">
     <div class="row">

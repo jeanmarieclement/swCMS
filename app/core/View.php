@@ -142,6 +142,15 @@ class View
 
         // Allow plugins to modify template data
         $data = $this->hookSystem->applyFilters('template_data', $data, $template, $area);
+        // Admin and auth pages must never use cached output — they show live DB data
+        $isAdminOrAuth = (
+            $area === 'admin' || strpos($template, 'admin/') === 0 ||
+            $area === 'auth' || strpos($template, 'auth/') === 0
+        );
+        if ($isAdminOrAuth) {
+            $this->smarty->caching = Smarty::CACHING_OFF;
+        }
+
         // Scegli la directory template in base all'area
         if (
             $area === 'admin' || strpos($template, 'admin/') === 0 ||
@@ -419,7 +428,7 @@ class View
             $this->smarty->compile_check = true;
         } else {
             $this->smarty->caching = Smarty::CACHING_LIFETIME_CURRENT;
-            $this->smarty->cache_lifetime = 3600; // 1 hour
+            $this->smarty->cache_lifetime = 3600;
             $this->smarty->compile_check = false;
         }
     }

@@ -1,6 +1,7 @@
 <form action="{$admin_url}/articles/{if isset($article.id)}edit/{$article.id}{else}create{/if}" method="post" id="articleForm">
     <input type="hidden" name="id" value="{$article.id|default:''}">
-    
+    <input type="hidden" name="csrf_token" value="{$csrf_token}">
+
     <div class="mb-3">
         <label for="title" class="form-label">Title</label>
         <input type="text" class="form-control" id="title" name="title" value="{$article.title|default:''}" required>

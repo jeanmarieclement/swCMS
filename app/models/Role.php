@@ -39,7 +39,7 @@ class Role extends Model
     {
         $stmt = $this->query("SELECT template_permissions FROM {$this->table} WHERE name = :name", [':name' => $roleName]);
         $result = $stmt->fetch();
-        return $result ? json_decode($result['template_permissions'], true) : [];
+        return $result ? (json_decode($result['template_permissions'], true) ?? []) : [];
     }
 
     public function updateTemplatePermissions(string $roleName, array $permissions): bool

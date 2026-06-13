@@ -93,6 +93,7 @@
                                     </a>
                                     
                                     <form action="{$site_url}/admin/articles/status" method="post">
+                                        <input type="hidden" name="csrf_token" value="{$csrf_token}">
                                         <input type="hidden" name="id" value="{$article.id}">
                                         <input type="hidden" name="status" value="{$new_status}">
                                         <input type="hidden" name="confirm" value="1">

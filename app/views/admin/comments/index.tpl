@@ -1,4 +1,16 @@
 {extends file="admin/layout.tpl"}
+
+{block name="title"}Comments{/block}
+
+{block name="breadcrumbs"}
+<nav aria-label="breadcrumb" class="mt-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{$admin_url}">Dashboard</a></li>
+        <li class="breadcrumb-item active">Comments</li>
+    </ol>
+</nav>
+{/block}
+
 {block name="content"}
 <div class="container-fluid">
     <h1>Comments Management</h1>
@@ -110,9 +122,13 @@
                 {/if}
             {/function}
             
-            {foreach $comments as $comment}
-                {call displayComment comment=$comment level=0}
-            {/foreach}
+            {if $comments}
+                {foreach $comments as $comment}
+                    {call displayComment comment=$comment level=0}
+                {/foreach}
+            {else}
+                <div class="alert alert-info mt-3">No comments found.</div>
+            {/if}
         </div>
     {else}
         {* List View *}
@@ -130,6 +146,9 @@
                 </tr>
             </thead>
             <tbody>
+                {if !$comments}
+                <tr><td colspan="8" class="text-center text-muted py-4">No comments found.</td></tr>
+                {/if}
                 {foreach $comments as $comment}
                 <tr>
                     <td>{$comment.id}</td>

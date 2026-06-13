@@ -1,4 +1,16 @@
 {extends file="admin/layout.tpl"}
+
+{block name="title"}Settings{/block}
+
+{block name="breadcrumbs"}
+<nav aria-label="breadcrumb" class="mt-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{$admin_url}">Dashboard</a></li>
+        <li class="breadcrumb-item active">Settings</li>
+    </ol>
+</nav>
+{/block}
+
 {block name="content"}
 <div class="container mt-4">
     <h1>Site Settings</h1>
@@ -6,6 +18,7 @@
         <div class="alert alert-success">{$smarty.session.success}</div>
     {/if}
     <form method="post" action="{$admin_url}/settings/save">
+        <input type="hidden" name="csrf_token" value="{$csrf_token}">
         <!-- SEZIONE GENERALI -->
         <div class="card mb-3">
             <div class="card-header">General</div>

@@ -70,6 +70,7 @@
                                     </a>
                                     
                                     <form action="{$site_url}/admin/articles/delete" method="post">
+                                        <input type="hidden" name="csrf_token" value="{$csrf_token}">
                                         <input type="hidden" name="id" value="{$article.id}">
                                         <input type="hidden" name="confirm" value="1">
                                         <button type="submit" class="btn btn-danger">

@@ -228,13 +228,13 @@ class UserController extends AdminController
             if (!CSRFHelper::validateRequest()) {
                 SessionHelper::setFlashMessage('Invalid CSRF token. Please try again.', 'error');
                 LogHelper::warning('CSRF validation failed for user creation from IP: ' . RequestHelper::server('REMOTE_ADDR', 'unknown'));
-                RedirectHelper::redirect($this->settings['ADMIN_URL'] . '/admin/users');
+                RedirectHelper::redirect('/admin/users');
                 return;
             }
 
             // Check rate limiting - max 5 user creation attempts per hour
             if (!$this->checkRateLimit('user_create', 5, 3600)) {
-                RedirectHelper::redirect($this->settings['ADMIN_URL'] . '/admin/users/create');
+                RedirectHelper::redirect('/admin/users/create');
                 return;
             }
 
@@ -243,7 +243,7 @@ class UserController extends AdminController
             $email = trim(RequestHelper::post('email', null, 'email'));
             $displayName = trim(RequestHelper::post('display_name'));
             $password = RequestHelper::post('password', null, 'raw');
-            $confirmPassword = RequestHelper::post('confirm_password', null, 'raw');
+            $confirmPassword = RequestHelper::post('password_confirm', null, 'raw');
             $role = trim(RequestHelper::post('role'));
 
             // Comprehensive input validation
@@ -289,7 +289,7 @@ class UserController extends AdminController
                                     if ($userId) {
                                         SessionHelper::setFlashMessage('User created successfully', 'success');
                                         // Redirect to user list with success message
-                                        RedirectHelper::redirect($this->settings['ADMIN_URL'] . '/admin/users');
+                                        RedirectHelper::redirect('/admin/users');
                                     } else {
                                         $error = 'User creation failed. Please try again.';
                                     }
@@ -310,7 +310,7 @@ class UserController extends AdminController
 
         $roles = $this->roleService->getRoleHierarchy();
 
-        $user = new User();
+        $user = [];
 
         $this->render('admin/users/create', [
             'title' => 'Create User',
@@ -336,7 +336,7 @@ class UserController extends AdminController
         $userId = isset($this->params[0]) ? (int)$this->params[0] : 0;
 
         if ($userId <= 0) {
-            RedirectHelper::redirect($this->settings['ADMIN_URL'] . '/admin/users');
+            RedirectHelper::redirect('/admin/users');
         }
 
         // Get user data
@@ -344,12 +344,12 @@ class UserController extends AdminController
 
         if (!$user) {
             SessionHelper::setFlashMessage('User not found', 'error');
-            RedirectHelper::redirect($this->settings['ADMIN_URL'] . '/admin/users');
+            RedirectHelper::redirect('/admin/users');
         }
 
         if (!$this->roleService->hasPermission(SessionHelper::getValue('user_role'), $user['role'])) {
             SessionHelper::setFlashMessage('You don\'t have permission to edit this user', 'error');
-            RedirectHelper::redirect($this->settings['ADMIN_URL'] . '/admin/users');
+            RedirectHelper::redirect('/admin/users');
         }
 
         $error = '';
@@ -361,7 +361,7 @@ class UserController extends AdminController
             if (!CSRFHelper::validateRequest()) {
                 SessionHelper::setFlashMessage('Invalid CSRF token. Please try again.', 'error');
                 LogHelper::warning('CSRF validation failed for user edit from IP: ' . RequestHelper::server('REMOTE_ADDR', 'unknown'));
-                RedirectHelper::redirect($this->settings['ADMIN_URL'] . '/admin/users');
+                RedirectHelper::redirect('/admin/users');
                 return;
             }
 
@@ -370,14 +370,14 @@ class UserController extends AdminController
             $email = trim(RequestHelper::post('email', null, 'email'));
             $displayName = trim(RequestHelper::post('display_name'));
             $password = RequestHelper::post('password', null, 'raw');
-            $confirmPassword = RequestHelper::post('confirm_password', null, 'raw');
+            $confirmPassword = RequestHelper::post('password_confirm', null, 'raw');
             $role = trim(RequestHelper::post('role'));
 
             // If password is being changed, apply rate limiting
             $isPasswordChange = !empty($password);
             if ($isPasswordChange) {
                 if (!$this->checkRateLimit('password_change', 5, 3600)) {
-                    RedirectHelper::redirect($this->settings['ADMIN_URL'] . "/admin/users/edit/$userId");
+                    RedirectHelper::redirect("/admin/users/edit/$userId");
                     return;
                 }
             }
@@ -418,7 +418,7 @@ class UserController extends AdminController
                                     // Validate role hierarchy
                                     if (!$this->roleService->hasPermission(SessionHelper::getValue('user_role'), $role)) {
                                         SessionHelper::setFlashMessage('You can\'t assign this role', 'error');
-                                        RedirectHelper::redirect($this->settings['ADMIN_URL'] . "/admin/users/edit/$userId");
+                                        RedirectHelper::redirect("/admin/users/edit/$userId");
                                         return;
                                     }
 
@@ -444,7 +444,7 @@ class UserController extends AdminController
                                         if ($success) {
                                             // Redirect to user list with success message
                                             SessionHelper::setFlashMessage('User updated successfully', 'success');
-                                            RedirectHelper::redirect($this->settings['SITE_URL'] . '/admin/users');
+                                            RedirectHelper::redirect('/admin/users');
                                         } else {
                                             $error = 'User update failed. Please try again.';
                                         }
@@ -485,17 +485,17 @@ class UserController extends AdminController
      */
     public function deleteAction()
     {
-        // Get the user ID from the URL
-        $userId = (int)$this->getParam('id', 0);
+        // Get the user ID from the URL params
+        $userId = isset($this->params[0]) ? (int)$this->params[0] : 0;
 
         if ($userId <= 0) {
-            RedirectHelper::redirect($this->settings['SITE_URL'] . '/admin/users');
+            RedirectHelper::redirect('/admin/users');
         }
 
         // Prevent deleting the current user
         if ($userId == SessionHelper::getValue('user_id')) {
             SessionHelper::setFlashMessage('You cannot delete yourself', 'error');
-            RedirectHelper::redirect($this->settings['SITE_URL'] . '/admin/users');
+            RedirectHelper::redirect('/admin/users');
         }
 
         // Get user data
@@ -503,7 +503,7 @@ class UserController extends AdminController
 
         if (!$user) {
             SessionHelper::setFlashMessage('User not found', 'error');
-            RedirectHelper::redirect($this->settings['SITE_URL'] . '/admin/users');
+            RedirectHelper::redirect('/admin/users');
         }
 
         $error = '';
@@ -515,13 +515,13 @@ class UserController extends AdminController
             if (!CSRFHelper::validateRequest()) {
                 SessionHelper::setFlashMessage('Invalid CSRF token. Please try again.', 'error');
                 LogHelper::warning('CSRF validation failed for user deletion from IP: ' . RequestHelper::server('REMOTE_ADDR', 'unknown'));
-                RedirectHelper::redirect($this->settings['ADMIN_URL'] . '/admin/users');
+                RedirectHelper::redirect('/admin/users');
                 return;
             }
 
             // Check rate limiting - max 5 delete attempts per hour
             if (!$this->checkRateLimit('user_delete', 5, 3600)) {
-                RedirectHelper::redirect($this->settings['ADMIN_URL'] . "/admin/users/delete/$userId");
+                RedirectHelper::redirect("/admin/users/delete/$userId");
                 return;
             }
 
@@ -530,7 +530,7 @@ class UserController extends AdminController
             if ($success) {
                 // Redirect to user list with success message
                 SessionHelper::setFlashMessage('User deleted successfully', 'success');
-                RedirectHelper::redirect($this->settings['SITE_URL'] . '/admin/users');
+                RedirectHelper::redirect('/admin/users');
             } else {
                 SessionHelper::setFlashMessage('User deletion failed. Please try again.', 'error');
             }

@@ -1,5 +1,17 @@
 {extends file="admin/layout.tpl"}
 
+{block name="title"}Create Menu{/block}
+
+{block name="breadcrumbs"}
+<nav aria-label="breadcrumb" class="mt-3">
+    <ol class="breadcrumb">
+        <li class="breadcrumb-item"><a href="{$admin_url}">Dashboard</a></li>
+        <li class="breadcrumb-item"><a href="{$admin_url}/menus">Menus</a></li>
+        <li class="breadcrumb-item active">Create Menu</li>
+    </ol>
+</nav>
+{/block}
+
 {block name="content"}
 <div class="container-fluid">
     <div class="row">
@@ -25,6 +37,7 @@
             <div class="card">
                 <div class="card-body">
                     <form method="POST" action="/admin/menus/store">
+                        <input type="hidden" name="csrf_token" value="{$csrf_token}">
                         <div class="row">
                             <div class="col-md-8">
                                 <div class="mb-3">

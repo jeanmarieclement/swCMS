@@ -71,6 +71,12 @@ class SystemSettingsHelper
         foreach ($all as $row) {
             $result[$row['key']] = $row['value'];
         }
-        return array_merge(self::$defaults, $result);
+        $merged = array_merge(self::$defaults, $result);
+        // Apply ADMIN_URL fallback (same logic as get())
+        if (empty($merged['ADMIN_URL'])) {
+            $siteUrl = $merged['SITE_URL'] ?? '';
+            $merged['ADMIN_URL'] = $siteUrl ? rtrim($siteUrl, '/') . '/admin' : '/admin';
+        }
+        return $merged;
     }
 }
