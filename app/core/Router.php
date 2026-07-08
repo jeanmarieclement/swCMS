@@ -41,7 +41,6 @@ class Router
         $this->addRoute('admin', ['controller' => 'Admin', 'action' => 'index']);
         $this->addRoute('admin/dashboard', ['controller' => 'Admin', 'action' => 'dashboard']);
         $this->addRoute('admin/clear-cache', ['controller' => 'Admin', 'action' => 'clearCache']);
-        $this->addRoute('admin/edit-content', ['controller' => 'Admin', 'action' => 'editContent']);
 
         // Admin User Management routes
         $this->addRoute('admin/users', ['controller' => 'User', 'action' => 'index']);
@@ -98,7 +97,6 @@ class Router
         $this->addRoute('admin/media/delete/([0-9]+)', ['controller' => 'Media', 'action' => 'delete']);
         $this->addRoute('admin/media/edit/([0-9]+)', ['controller' => 'Media', 'action' => 'edit']);
         $this->addRoute('admin/media/update/([0-9]+)', ['controller' => 'Media', 'action' => 'update']);
-        $this->addRoute('admin/media/get/([0-9]+)', ['controller' => 'Media', 'action' => 'get']);
         $this->addRoute('admin/media/view/([0-9]+)', ['controller' => 'Media', 'action' => 'view']);
         $this->addRoute('admin/media/api/list', ['controller' => 'Media', 'action' => 'ajaxList']);
         $this->addRoute('admin/media/api/upload', ['controller' => 'Media', 'action' => 'ajaxUpload']);
@@ -153,6 +151,10 @@ class Router
         $this->addRoute('auth/login', ['controller' => 'Auth', 'action' => 'login']);
         $this->addRoute('auth/logout', ['controller' => 'Auth', 'action' => 'logout']);
         $this->addRoute('auth/register', ['controller' => 'Auth', 'action' => 'register']);
+        $this->addRoute('auth/forgot-password', ['controller' => 'Auth', 'action' => 'forgotPassword']);
+        $this->addRoute('auth/request-password-reset', ['controller' => 'Auth', 'action' => 'requestPasswordReset']);
+        $this->addRoute('auth/reset-password', ['controller' => 'Auth', 'action' => 'resetPassword']);
+        $this->addRoute('auth/process-password-reset', ['controller' => 'Auth', 'action' => 'processPasswordReset']);
         // Admin logout route (redirects to auth/logout)
         $this->addRoute('admin/logout', ['controller' => 'Auth', 'action' => 'logout']);
         // unauthorized

@@ -7,6 +7,11 @@
     <div class="auth-box">
         <h2 class="auth-title">Create an Account</h2>
         
+        {if isset($flash) && $flash}
+        <div class="alert alert-{if $flash.type == 'error'}danger{elseif $flash.type == 'success'}success{else}info{/if}">
+            {$flash.message|escape}
+        </div>
+        {/if}
         {if $error}
         <div class="alert alert-danger">
             {$error}

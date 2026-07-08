@@ -86,9 +86,37 @@ if (!defined('DB_CHARSET')) {
 if (!defined('DB_PORT')) {
     define('DB_PORT', getenv('DB_PORT') ?: '3306');
 }
+if (!defined('DB_SQLITE_PATH')) {
+    // In-memory DB by default so unit tests never touch the real database
+    define('DB_SQLITE_PATH', getenv('DB_SQLITE_PATH') ?: ':memory:');
+}
 
 // Load Composer autoloader
 require_once ROOT_PATH . '/vendor/autoload.php';
+
+// When testing against the in-memory SQLite DB, create the minimal schema
+// the models expect (the shared PDO singleton keeps it alive for the run)
+if (DB_DRIVER === 'sqlite' && DB_SQLITE_PATH === ':memory:') {
+    $testDb = \App\Core\Database\Database::getInstance();
+    $testDb->exec("CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        username VARCHAR(50) NOT NULL,
+        password VARCHAR(255) NOT NULL,
+        email VARCHAR(100) NOT NULL,
+        display_name VARCHAR(100) DEFAULT NULL,
+        role VARCHAR(50) NOT NULL DEFAULT 'subscriber',
+        status VARCHAR(10) NOT NULL DEFAULT 'active',
+        created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT NULL
+    )");
+    $testDb->exec("CREATE TABLE IF NOT EXISTS settings (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        `key` VARCHAR(191) NOT NULL UNIQUE,
+        value TEXT,
+        description TEXT,
+        autoload INTEGER DEFAULT 1
+    )");
+}
 
 // Configure session settings for testing (before any session_start calls)
 ini_set('session.use_cookies', 0);

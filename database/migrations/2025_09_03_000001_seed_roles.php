@@ -12,6 +12,11 @@ class SeedRoles extends Migration
 
     public function up()
     {
+        // Remove any duplicates from earlier double-seeding, then enforce
+        // uniqueness so INSERT OR IGNORE actually protects against re-runs
+        $this->db->exec("DELETE FROM roles WHERE id NOT IN (SELECT MIN(id) FROM roles GROUP BY name)");
+        $this->db->exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_roles_name ON roles(name)");
+
         $roles = [
             ['admin',      'Administrator with full access',           4],
             ['editor',     'Editor with content management access',    3],

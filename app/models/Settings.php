@@ -41,14 +41,13 @@ class Settings extends Model
     {
         if (defined('DB_DRIVER') && DB_DRIVER === 'sqlite') {
             $sql = "INSERT OR REPLACE INTO " . $this->table . " (`key`, `value`, `description`, `autoload`) VALUES (?, ?, ?, ?)";
-            $stmt = $this->query($sql, [$key, $value, $description, $autoload]);
-            return $stmt->execute([$key, $value, $description, $autoload]);
         } else {
-            $sql = "INSERT INTO " . $this->table . " (`key`, `value`, `description`, `autoload`) VALUES (?, ?, ?, ?) 
+            $sql = "INSERT INTO " . $this->table . " (`key`, `value`, `description`, `autoload`) VALUES (?, ?, ?, ?)
                 ON DUPLICATE KEY UPDATE `value` = VALUES(`value`), `description` = VALUES(`description`), `autoload` = VALUES(`autoload`)";
-            $stmt = $this->query($sql, [$key, $value, $description, $autoload]);
-            return $stmt->execute([$key, $value, $description, $autoload]);
         }
+        // query() prepares and executes with the given params
+        $stmt = $this->query($sql, [$key, $value, $description, $autoload]);
+        return $stmt !== false;
     }
 
     /**

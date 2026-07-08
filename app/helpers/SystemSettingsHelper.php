@@ -12,6 +12,8 @@ use App\Models\Settings;
 class SystemSettingsHelper
 {
     protected static $cache = [];
+    /** Per-request cache of the full settings map (invalidated by set()) */
+    protected static $allCache = null;
     protected static $defaults = [
         'SITE_NAME' => 'swCMS',
         'SITE_URL' => '',
@@ -57,14 +59,18 @@ class SystemSettingsHelper
     {
         $settings = new Settings();
         self::$cache[$key] = $value;
+        self::$allCache = null;
         return $settings->set($key, $value, $description, $autoload);
     }
 
     /**
-     * Recupera tutte le impostazioni caricate
+     * Recupera tutte le impostazioni caricate (cached per request)
      */
     public static function all()
     {
+        if (self::$allCache !== null) {
+            return self::$allCache;
+        }
         $settings = new Settings();
         $all = $settings->all();
         $result = [];
@@ -77,6 +83,11 @@ class SystemSettingsHelper
             $siteUrl = $merged['SITE_URL'] ?? '';
             $merged['ADMIN_URL'] = $siteUrl ? rtrim($siteUrl, '/') . '/admin' : '/admin';
         }
+        // Frontend themes use site_title; fall back to SITE_NAME when unset
+        if (empty($merged['site_title'])) {
+            $merged['site_title'] = $merged['SITE_NAME'] ?? 'swCMS';
+        }
+        self::$allCache = $merged;
         return $merged;
     }
 }
