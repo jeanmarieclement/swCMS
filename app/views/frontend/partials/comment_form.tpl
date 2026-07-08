@@ -14,7 +14,7 @@
     {/if}
     
     <form action="/comments/store" method="POST" class="comment-form">
-        {App\Helpers\SecurityHelper::csrf_field()}
+        <input type="hidden" name="csrf_token" value="{$csrf_token}">
         <input type="hidden" name="post_id" value="{$post.id|default:''}">
         <input type="hidden" name="page_id" value="{$page.id|default:''}">
         <input type="hidden" name="redirect_url" value="{$smarty.server.REQUEST_URI}">

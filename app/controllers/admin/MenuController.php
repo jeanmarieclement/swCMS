@@ -58,13 +58,7 @@ class MenuController extends AdminController
             return;
         }
 
-        // Validate CSRF token
-        if (!CSRFHelper::validateRequest()) {
-            SessionHelper::setFlashMessage('Invalid CSRF token. Please try again.', 'error');
-            LogHelper::warning('CSRF validation failed for menu creation from IP: ' . RequestHelper::server('REMOTE_ADDR', 'unknown'));
-            $this->redirect('/admin/menus/create');
-            return;
-        }
+        $this->requireCsrf('/admin/menus/create', 'menu creation');
 
         // Determina content_id basato sul tipo
         $content_id = null;
@@ -170,13 +164,7 @@ class MenuController extends AdminController
             return;
         }
 
-        // Validate CSRF token
-        if (!CSRFHelper::validateRequest()) {
-            SessionHelper::setFlashMessage('Invalid CSRF token. Please try again.', 'error');
-            LogHelper::warning('CSRF validation failed for menu update from IP: ' . RequestHelper::server('REMOTE_ADDR', 'unknown'));
-            $this->redirect("/admin/menus/edit/$id");
-            return;
-        }
+        $this->requireCsrf("/admin/menus/edit/$id", 'menu update');
 
         $menu = $this->menuModel->getMenuById($id);
         if (!$menu) {
@@ -231,6 +219,12 @@ class MenuController extends AdminController
 
     public function deleteAction()
     {
+        if (!RequestHelper::isPost()) {
+            $this->redirect('/admin/menus');
+            return;
+        }
+        $this->requireCsrf('/admin/menus', 'menu deletion');
+
         $id = RequestHelper::get('id', 0, 'int');
 
         if (empty($id) && !isset($this->params[0])) {

@@ -45,11 +45,13 @@ class ThemeController extends AdminController
      */
     public function activateAction()
     {
-        if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+        if (!\App\Helpers\RequestHelper::isPost()) {
             $this->setFlashMessage('error', 'Invalid request method');
             RedirectHelper::redirect('/admin/themes');
             return;
         }
+
+        $this->requireCsrf('/admin/themes', 'theme activation');
 
         $themeName = \App\Helpers\RequestHelper::post('theme', '');
 

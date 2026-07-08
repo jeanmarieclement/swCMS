@@ -201,6 +201,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form method="POST" action="/admin/backup-manager/schedules" id="createScheduleForm">
+                <input type="hidden" name="csrf_token" value="{$csrf_token}">
                 <div class="modal-body">
                     <input type="hidden" name="action" value="create">
                     
@@ -262,6 +263,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form method="POST" action="/admin/backup-manager/schedules" id="editScheduleForm">
+                <input type="hidden" name="csrf_token" value="{$csrf_token}">
                 <div class="modal-body">
                     <input type="hidden" name="action" value="edit">
                     <input type="hidden" name="schedule_id" id="edit_schedule_id">

@@ -33,9 +33,10 @@ let defaultImage = '<svg class="svg-inline--fa fa-file fa-3x text-muted" aria-hi
                 e.preventDefault();
                 addCategoryError.classList.add('d-none');
                 saveCategoryBtn.disabled = true;
+                const csrfToken = document.querySelector('input[name="csrf_token"]')?.value || '';
                 fetch(adminUrl + '/categories/ajax_create', {
                     method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
+                    headers: {'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken},
                     body: JSON.stringify({
                         name: categoryNameInput.value,
                         slug: categorySlugInput.value,
@@ -306,8 +307,11 @@ let defaultImage = '<svg class="svg-inline--fa fa-file fa-3x text-muted" aria-hi
                 if (data.newTag) {
                     $.ajax({
                         type: 'POST',
-                        url: adminUrl + '/tags/ajax-create', // <-- implement this endpoint in backend
-                        data: { tag: data.text },
+                        url: adminUrl + '/tags/ajax-create',
+                        data: {
+                            name: data.text,
+                            csrf_token: document.querySelector('input[name="csrf_token"]')?.value || ''
+                        },
                         success: function(response) {
                             // Optionally show a notification or update UI
                         },

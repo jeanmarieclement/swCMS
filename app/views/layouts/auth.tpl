@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{block name="title"}Authentication{/block} - {$site_name}</title>
+    <title>{block name="title"}Authentication{/block} - {$site_name|escape}</title>
     
     <!-- CSS -->
     <link rel="stylesheet" href="{$site_url}/css/normalize.css">
@@ -21,7 +21,7 @@
             <div class="container">
                 <div class="logo">
                     <a href="{$site_url}">
-                        <h1>{$site_name}</h1>
+                        <h1>{$site_name|escape}</h1>
                     </a>
                 </div>
             </div>
@@ -35,7 +35,7 @@
         
         <footer class="auth-footer">
             <div class="container">
-                <p>&copy; {$smarty.now|date_format:"%Y"} {$site_name}. All rights reserved.</p>
+                <p>&copy; {$smarty.now|date_format:"%Y"} {$site_name|escape}. All rights reserved.</p>
             </div>
         </footer>
     </div>

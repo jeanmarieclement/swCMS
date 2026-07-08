@@ -170,7 +170,7 @@
             form.append($('<input>', {
                 'type': 'hidden',
                 'name': 'csrf_token',
-                'value': '{App\Helpers\SecurityHelper::csrf_token()}'
+                'value': '{$csrf_token}'
             }));
 
             // Add page ID

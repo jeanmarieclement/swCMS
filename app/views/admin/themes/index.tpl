@@ -115,6 +115,7 @@
                         <div class="theme-actions">
                             {if $theme.name != $active_theme}
                                 <form method="POST" action="/admin/themes/activate" style="display: inline;">
+                                    <input type="hidden" name="csrf_token" value="{$csrf_token}">
                                     <input type="hidden" name="theme" value="{$theme.name}">
                                     <button type="submit" class="btn btn-success btn-sm me-2" 
                                             onclick="return confirm('Are you sure you want to activate this theme?')">

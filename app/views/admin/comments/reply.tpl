@@ -76,7 +76,7 @@
             {/if}
             
             <form method="POST" action="/admin/comments/reply?id={$parent_comment.id}">
-                {App\Helpers\SecurityHelper::csrf_field()}
+                <input type="hidden" name="csrf_token" value="{$csrf_token}">
                 <div class="row">
                     <div class="col-md-6">
                         <div class="mb-3">

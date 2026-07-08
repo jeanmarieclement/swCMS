@@ -90,12 +90,7 @@ class MediaController extends AdminController
     public function uploadAction()
     {
         if (RequestHelper::isPost()) {
-            // Validate CSRF token
-            if (!CSRFHelper::validateRequest()) {
-                SessionHelper::setFlashMessage('Invalid CSRF token', 'error');
-                RedirectHelper::redirect('/admin/media');
-                return;
-            }
+            $this->requireCsrf('/admin/media', 'media upload');
 
             try {
                 // $_FILES must be accessed directly (RequestHelper doesn't handle file uploads)
@@ -161,7 +156,7 @@ class MediaController extends AdminController
             'title' => 'Modifica Media',
             'active_menu' => 'media',
             'admin_url' => $this->settings['ADMIN_URL'],
-            'csrf_field' => SecurityHelper::csrf_field()
+            'csrf_field' => \App\Helpers\CSRFHelper::getTokenField()
         ]);
     }
 
@@ -171,12 +166,7 @@ class MediaController extends AdminController
             $id = $this->params[0];
         }
         if (RequestHelper::isPost()) {
-            // Validate CSRF token
-            if (!CSRFHelper::validateRequest()) {
-                SessionHelper::setFlashMessage('Invalid CSRF token', 'error');
-                RedirectHelper::redirect('/admin/media');
-                return;
-            }
+            $this->requireCsrf('/admin/media', 'media update');
 
             try {
                 $data = [
@@ -218,12 +208,7 @@ class MediaController extends AdminController
             $id = $this->params[0];
         }
         if (RequestHelper::isPost()) {
-            // Validate CSRF token
-            if (!CSRFHelper::validateRequest()) {
-                SessionHelper::setFlashMessage('Invalid CSRF token', 'error');
-                RedirectHelper::redirect('/admin/media');
-                return;
-            }
+            $this->requireCsrf('/admin/media', 'media deletion');
 
             try {
                 $this->mediaModel->deleteMedia($id);

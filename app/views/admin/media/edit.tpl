@@ -89,7 +89,7 @@ $(document).on('click', '#confirm-delete-media', function(e) {
         type: 'POST',
         headers: { 'X-Requested-With': 'XMLHttpRequest' },
         data: {
-            csrf_token: '{App\Helpers\SecurityHelper::csrf_token()}'
+            csrf_token: '{$csrf_token}'
         },
         success: function(resp) {
             if (resp.success) {

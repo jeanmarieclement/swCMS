@@ -224,13 +224,7 @@ class UserController extends AdminController
 
         // Handle form submission
         if (RequestHelper::isPost()) {
-            // Validate CSRF token
-            if (!CSRFHelper::validateRequest()) {
-                SessionHelper::setFlashMessage('Invalid CSRF token. Please try again.', 'error');
-                LogHelper::warning('CSRF validation failed for user creation from IP: ' . RequestHelper::server('REMOTE_ADDR', 'unknown'));
-                RedirectHelper::redirect('/admin/users');
-                return;
-            }
+            $this->requireCsrf('/admin/users', 'user creation');
 
             // Check rate limiting - max 5 user creation attempts per hour
             if (!$this->checkRateLimit('user_create', 5, 3600)) {
@@ -357,13 +351,7 @@ class UserController extends AdminController
 
         // Handle form submission
         if (RequestHelper::isPost()) {
-            // Validate CSRF token
-            if (!CSRFHelper::validateRequest()) {
-                SessionHelper::setFlashMessage('Invalid CSRF token. Please try again.', 'error');
-                LogHelper::warning('CSRF validation failed for user edit from IP: ' . RequestHelper::server('REMOTE_ADDR', 'unknown'));
-                RedirectHelper::redirect('/admin/users');
-                return;
-            }
+            $this->requireCsrf('/admin/users', 'user edit');
 
             // Sanitize inputs
             $username = trim(RequestHelper::post('username'));
@@ -511,13 +499,7 @@ class UserController extends AdminController
 
         // Handle form submission
         if (RequestHelper::isPost() && RequestHelper::post('confirm_delete')) {
-            // Validate CSRF token
-            if (!CSRFHelper::validateRequest()) {
-                SessionHelper::setFlashMessage('Invalid CSRF token. Please try again.', 'error');
-                LogHelper::warning('CSRF validation failed for user deletion from IP: ' . RequestHelper::server('REMOTE_ADDR', 'unknown'));
-                RedirectHelper::redirect('/admin/users');
-                return;
-            }
+            $this->requireCsrf('/admin/users', 'user deletion');
 
             // Check rate limiting - max 5 delete attempts per hour
             if (!$this->checkRateLimit('user_delete', 5, 3600)) {

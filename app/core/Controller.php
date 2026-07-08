@@ -3,7 +3,9 @@
 namespace App\Core;
 
 use App\Core\View;
+use App\Helpers\CSRFHelper;
 use App\Helpers\LogHelper;
+use App\Helpers\RedirectHelper;
 use App\Helpers\SecurityHelper;
 use App\Services\RoleService;
 use App\Helpers\SessionHelper;
@@ -152,8 +154,29 @@ abstract class Controller
      */
     protected function redirect($url)
     {
-        header('Location: ' . $url, true, 303);
-        exit;
+        RedirectHelper::redirect($url);
+    }
+
+    /**
+     * Validate the CSRF token of the current request.
+     * On failure: flash message + security log + redirect (terminates the request).
+     *
+     * @param string $redirectUrl Where to send the user when the token is invalid
+     * @param string $context Short label for the security log (e.g. "plugin activation")
+     * @return bool True when the token is valid
+     */
+    protected function requireCsrf(string $redirectUrl, string $context = 'request'): bool
+    {
+        if (CSRFHelper::validateRequest()) {
+            return true;
+        }
+
+        SessionHelper::setFlashMessage('Invalid CSRF token. Please try again.', 'error');
+        LogHelper::warning(
+            'CSRF validation failed for ' . $context . ' from IP: ' . RequestHelper::server('REMOTE_ADDR', 'unknown')
+        );
+        RedirectHelper::redirect($redirectUrl);
+        return false;
     }
 
     /**

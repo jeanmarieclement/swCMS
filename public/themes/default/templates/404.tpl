@@ -1,7 +1,7 @@
 {* Template per errore 404 *}
 {extends file="layout.tpl"}
 
-{block name="title"}Pagina Non Trovata - {$site_name}{/block}
+{block name="title"}Pagina Non Trovata - {$site_name|escape}{/block}
 
 {block name="content"}
 <div class="container error-container text-center py-5">

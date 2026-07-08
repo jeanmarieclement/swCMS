@@ -18,6 +18,22 @@ class MediaModel extends Model
     ];
     private $maxFileSize = 52428800; // 50MB
 
+    /** MIME types accepted per extension (checked against actual file content via finfo) */
+    private $allowedMimeTypes = [
+        'jpg' => ['image/jpeg'], 'jpeg' => ['image/jpeg'],
+        'png' => ['image/png'], 'gif' => ['image/gif'], 'webp' => ['image/webp'],
+        'pdf' => ['application/pdf'],
+        'doc' => ['application/msword'],
+        'docx' => ['application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/zip'],
+        'xls' => ['application/vnd.ms-excel'],
+        'xlsx' => ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/zip'],
+        'ppt' => ['application/vnd.ms-powerpoint'],
+        'pptx' => ['application/vnd.openxmlformats-officedocument.presentationml.presentation', 'application/zip'],
+        'txt' => ['text/plain'], 'csv' => ['text/plain', 'text/csv'],
+        'mp4' => ['video/mp4'], 'webm' => ['video/webm'], 'ogv' => ['video/ogg', 'application/ogg'],
+        'mp3' => ['audio/mpeg'], 'wav' => ['audio/wav', 'audio/x-wav'], 'ogg' => ['audio/ogg', 'application/ogg'],
+    ];
+
     public function __construct()
     {
         parent::__construct();
@@ -101,6 +117,21 @@ class MediaModel extends Model
         }
         if ($file['size'] > $this->maxFileSize) {
             throw new \Exception('File size exceeds the allowed limit');
+        }
+
+        // Verify the actual file content matches the declared extension
+        if (!empty($file['tmp_name']) && is_file($file['tmp_name'])) {
+            $finfo = new \finfo(FILEINFO_MIME_TYPE);
+            $realMime = $finfo->file($file['tmp_name']);
+            $allowedMimes = $this->allowedMimeTypes[$extension] ?? [];
+            if ($realMime === false || !in_array($realMime, $allowedMimes, true)) {
+                LogHelper::warning('Upload rejected: MIME mismatch', [
+                    'file' => $file['name'],
+                    'extension' => $extension,
+                    'detected_mime' => $realMime ?: 'unknown'
+                ]);
+                throw new \Exception('File content does not match its extension');
+            }
         }
         return [
             'name' => $file['name'],

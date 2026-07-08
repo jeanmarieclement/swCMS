@@ -31,7 +31,7 @@ class CommentController extends BaseController
             }
 
             // Validate CSRF token
-            if (!isset($_POST['csrf_token']) || !\App\Helpers\SecurityHelper::verify_csrf_token($_POST['csrf_token'])) {
+            if (!\App\Helpers\CSRFHelper::validateRequest()) {
                 SessionHelper::setFlashMessage('Invalid CSRF token. Please try again.', 'error');
                 RedirectHelper::redirect('/');
                 return;

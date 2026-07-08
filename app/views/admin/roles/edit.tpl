@@ -77,6 +77,7 @@
 
 
 <form method="POST" action="/admin/roles/edit/{$role.id}">
+    <input type="hidden" name="csrf_token" value="{$csrf_token}">
     <div class="row">
         <div class="col-lg-8">
             {* Permission Groups *}

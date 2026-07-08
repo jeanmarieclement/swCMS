@@ -32,30 +32,45 @@ class CommentsController extends AdminController
 
     public function approveAction()
     {
-        $id = $this->getParam('id');
-        if ($id) {
-            $commentsModel = new Comments();
-            $commentsModel->updateStatus($id, 'approved');
-        }
-        $this->redirect('/admin/comments');
+        $this->moderate('approved', 'comment approval');
     }
 
     public function spamAction()
     {
-        $id = $this->getParam('id');
-        if ($id) {
-            $commentsModel = new Comments();
-            $commentsModel->updateStatus($id, 'spam');
-        }
-        $this->redirect('/admin/comments');
+        $this->moderate('spam', 'comment spam flag');
     }
 
     public function deleteAction()
     {
-        $id = $this->getParam('id');
+        if (!RequestHelper::isPost()) {
+            $this->redirect('/admin/comments');
+            return;
+        }
+        $this->requireCsrf('/admin/comments', 'comment deletion');
+
+        $id = RequestHelper::post('id', 0, 'int');
         if ($id) {
             $commentsModel = new Comments();
             $commentsModel->delete($id);
+        }
+        $this->redirect('/admin/comments');
+    }
+
+    /**
+     * Shared moderation handler (approve / spam)
+     */
+    private function moderate(string $status, string $context): void
+    {
+        if (!RequestHelper::isPost()) {
+            $this->redirect('/admin/comments');
+            return;
+        }
+        $this->requireCsrf('/admin/comments', $context);
+
+        $id = RequestHelper::post('id', 0, 'int');
+        if ($id) {
+            $commentsModel = new Comments();
+            $commentsModel->updateStatus($id, $status);
         }
         $this->redirect('/admin/comments');
     }
@@ -69,13 +84,7 @@ class CommentsController extends AdminController
         $formData = [];
 
         if (RequestHelper::isPost()) {
-            // Validate CSRF token
-            if (!CSRFHelper::validateRequest()) {
-                SessionHelper::setFlashMessage('Invalid CSRF token. Please try again.', 'error');
-                LogHelper::warning('CSRF validation failed for comment reply from IP: ' . RequestHelper::server('REMOTE_ADDR', 'unknown'));
-                $this->redirect('/admin/comments/reply?id=' . $parentId);
-                return;
-            }
+            $this->requireCsrf('/admin/comments/reply?id=' . $parentId, 'comment reply');
 
             // Process reply form submission
             $replyData = [

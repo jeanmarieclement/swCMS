@@ -56,13 +56,7 @@ class ProfileController extends AdminController
 
         // Handle form submission
         if (RequestHelper::isPost()) {
-            // Validate CSRF token
-            if (!CSRFHelper::validateRequest()) {
-                SessionHelper::setFlashMessage('Invalid CSRF token. Please try again.', 'error');
-                LogHelper::warning('CSRF validation failed for profile update from IP: ' . RequestHelper::server('REMOTE_ADDR', 'unknown'));
-                RedirectHelper::redirect('/admin/profile');
-                return;
-            }
+            $this->requireCsrf('/admin/profile', 'profile update');
 
             // Sanitize inputs
             $username = trim(RequestHelper::post('username'));

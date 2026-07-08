@@ -23,6 +23,7 @@
     {/if}
     
     <form action="/comments/store" method="POST" class="comment-form">
+        <input type="hidden" name="csrf_token" value="{$csrf_token}">
         <input type="hidden" name="post_id" value="{$post.id|default:''}">
         <input type="hidden" name="page_id" value="{$page.id|default:''}">
         <input type="hidden" name="parent_id" id="parent_id" value="">

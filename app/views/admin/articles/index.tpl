@@ -201,29 +201,32 @@
 
 <script>
     $(document).ready(function() {
-     
-        
+
+        // Submit a POST request with CSRF token to the given URL
+        function postAction(url) {
+            var form = $('<form>', { method: 'POST', action: url });
+            form.append($('<input>', { type: 'hidden', name: 'csrf_token', value: '{$csrf_token}' }));
+            form.appendTo('body').trigger('submit');
+        }
+
         // Trash article
         $('.trash-article').on('click', function() {
             if (confirm('Are you sure you want to move this article to trash?')) {
-                var articleId = $(this).data('id');
-                window.location.href = '{$admin_url}/articles/status/' + articleId + '/trash';
+                postAction('{$admin_url}/articles/status/' + $(this).data('id') + '/trash');
             }
         });
-        
+
         // Restore article
         $('.restore-article').on('click', function() {
             if (confirm('Are you sure you want to restore this article?')) {
-                var articleId = $(this).data('id');
-                window.location.href = '{$admin_url}/articles/status/' + articleId + '/draft';
+                postAction('{$admin_url}/articles/status/' + $(this).data('id') + '/draft');
             }
         });
-        
+
         // Delete article permanently
         $('.delete-article').on('click', function() {
             if (confirm('Are you sure you want to permanently delete this article? This action cannot be undone!')) {
-                var articleId = $(this).data('id');
-                window.location.href = '{$admin_url}/articles/delete/' + articleId;
+                postAction('{$admin_url}/articles/delete/' + $(this).data('id'));
             }
         });
     });

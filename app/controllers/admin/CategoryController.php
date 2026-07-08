@@ -68,6 +68,8 @@ class CategoryController extends AdminController
      */
     public function storeAction()
     {
+        $this->requireCsrf($this->settings['SITE_URL'] . '/admin/categories', 'category creation');
+
         $name = $this->getParam('name', '', 'POST');
         $slug = $this->getParam('slug', '', 'POST');
         $description = $this->getParam('description', '', 'POST');
@@ -129,6 +131,8 @@ class CategoryController extends AdminController
      */
     public function updateAction()
     {
+        $this->requireCsrf($this->settings['SITE_URL'] . '/admin/categories', 'category update');
+
         $id = isset($this->params[0]) ? (int)$this->params[0] : 0;
         if ($id <= 0) {
             SessionHelper::setFlashMessage('Invalid category ID', 'error');
@@ -198,6 +202,8 @@ class CategoryController extends AdminController
 
     public function destroyAction()
     {
+        $this->requireCsrf($this->settings['SITE_URL'] . '/admin/categories', 'category deletion');
+
         $id = isset($this->params[0]) ? (int)$this->params[0] : 0;
         if ($id <= 0) {
             SessionHelper::setFlashMessage('Invalid category ID', 'error');
@@ -221,6 +227,10 @@ class CategoryController extends AdminController
     public function ajaxCreateAction()
     {
         header('Content-Type: application/json');
+        if (!\App\Helpers\CSRFHelper::validateRequest()) {
+            echo json_encode(['success' => false, 'error' => 'Invalid CSRF token']);
+            exit;
+        }
         $input = json_decode(file_get_contents('php://input'), true);
         $name = trim($input['name'] ?? '');
         $slug = trim($input['slug'] ?? '');

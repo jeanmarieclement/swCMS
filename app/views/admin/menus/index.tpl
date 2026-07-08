@@ -123,7 +123,18 @@
 <script>
 function confirmDelete(id, title) {
     if (confirm('Sei sicuro di voler eliminare il menu "' + title + '"?\n\nQuesta azione eliminerà anche tutti i sottomenu.')) {
-        window.location.href = '/admin/menus/delete/' + id;
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '/admin/menus/delete/' + id;
+
+        const csrf = document.createElement('input');
+        csrf.type = 'hidden';
+        csrf.name = 'csrf_token';
+        csrf.value = '{$csrf_token}';
+        form.appendChild(csrf);
+
+        document.body.appendChild(form);
+        form.submit();
     }
 }
 </script>

@@ -128,13 +128,7 @@ class PageController extends AdminController
             return;
         }
 
-        // Validate CSRF token
-        if (!CSRFHelper::validateRequest()) {
-            SessionHelper::setFlashMessage('Invalid CSRF token', 'error');
-            LogHelper::warning('CSRF validation failed for page creation from IP: ' . RequestHelper::server('REMOTE_ADDR', 'unknown'));
-            RedirectHelper::redirect($this->settings['ADMIN_URL'] . '/pages/create');
-            return;
-        }
+        $this->requireCsrf($this->settings['ADMIN_URL'] . '/pages/create', 'page creation');
 
         // Validate required fields
         $title = RequestHelper::post('title', '');
@@ -278,13 +272,7 @@ class PageController extends AdminController
             return;
         }
 
-        // Validate CSRF token
-        if (!CSRFHelper::validateRequest()) {
-            SessionHelper::setFlashMessage('Invalid CSRF token', 'error');
-            LogHelper::warning('CSRF validation failed for page update from IP: ' . RequestHelper::server('REMOTE_ADDR', 'unknown'));
-            RedirectHelper::redirect($this->settings['ADMIN_URL'] . '/pages/edit/' . $id);
-            return;
-        }
+        $this->requireCsrf($this->settings['ADMIN_URL'] . '/pages/edit/' . $id, 'page update');
 
         // Validate required fields
         $title = RequestHelper::post('title', '');
@@ -413,13 +401,7 @@ class PageController extends AdminController
             return;
         }
 
-        // Validate CSRF token
-        if (!CSRFHelper::validateRequest()) {
-            SessionHelper::setFlashMessage('Invalid CSRF token', 'error');
-            LogHelper::warning('CSRF validation failed for page deletion from IP: ' . RequestHelper::server('REMOTE_ADDR', 'unknown'));
-            RedirectHelper::redirect($this->settings['ADMIN_URL'] . '/pages');
-            return;
-        }
+        $this->requireCsrf($this->settings['ADMIN_URL'] . '/pages', 'page deletion');
 
         // Get existing page to check if it exists
         $page = $this->pageModel->getById($id);
@@ -454,13 +436,7 @@ class PageController extends AdminController
             return;
         }
 
-        // Validate CSRF token
-        if (!CSRFHelper::validateRequest()) {
-            SessionHelper::setFlashMessage('Invalid CSRF token', 'error');
-            LogHelper::warning('CSRF validation failed for page status change from IP: ' . RequestHelper::server('REMOTE_ADDR', 'unknown'));
-            RedirectHelper::redirect($this->settings['ADMIN_URL'] . '/pages');
-            return;
-        }
+        $this->requireCsrf($this->settings['ADMIN_URL'] . '/pages', 'page status change');
 
         // Get page ID and status from POST data
         $id = RequestHelper::post('id', 0, 'int');
@@ -704,13 +680,7 @@ class PageController extends AdminController
             return;
         }
 
-        // Validate CSRF token
-        if (!CSRFHelper::validateRequest()) {
-            SessionHelper::setFlashMessage('Invalid CSRF token', 'error');
-            LogHelper::warning('CSRF validation failed for page revision restore from IP: ' . RequestHelper::server('REMOTE_ADDR', 'unknown'));
-            RedirectHelper::redirect($this->settings['ADMIN_URL'] . '/pages/revisions/' . $pageId);
-            return;
-        }
+        $this->requireCsrf($this->settings['ADMIN_URL'] . '/pages/revisions/' . $pageId, 'page revision restore');
 
         // Get page data
         $page = $this->pageModel->getById($pageId);
@@ -763,13 +733,7 @@ class PageController extends AdminController
             return;
         }
 
-        // Validate CSRF token
-        if (!CSRFHelper::validateRequest()) {
-            SessionHelper::setFlashMessage('Invalid CSRF token', 'error');
-            LogHelper::warning('CSRF validation failed for page revision deletion from IP: ' . RequestHelper::server('REMOTE_ADDR', 'unknown'));
-            RedirectHelper::redirect($this->settings['ADMIN_URL'] . '/pages/revisions/' . $pageId);
-            return;
-        }
+        $this->requireCsrf($this->settings['ADMIN_URL'] . '/pages/revisions/' . $pageId, 'page revision deletion');
 
         // Get page data
         $page = $this->pageModel->getById($pageId);

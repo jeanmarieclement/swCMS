@@ -73,6 +73,8 @@ class TagController extends AdminController
      */
     public function storeAction(): void
     {
+        $this->requireCsrf('/admin/tags', 'tag creation');
+
         $name = $this->getParam('name', '', 'POST');
         $slug = $this->getParam('slug', '', 'POST');
         $description = $this->getParam('description', '', 'POST');
@@ -145,6 +147,8 @@ class TagController extends AdminController
      */
     public function updateAction(): void
     {
+        $this->requireCsrf('/admin/tags', 'tag update');
+
         $id = $this->getParam('id', null, 'POST');
         $name = $this->getParam('name', '', 'POST');
         $slug = $this->getParam('slug', '', 'POST');
@@ -194,6 +198,8 @@ class TagController extends AdminController
      */
     public function deleteAction(): void
     {
+        $this->requireCsrf('/admin/tags', 'tag deletion');
+
         $id = $this->getParam('id', null, 'POST');
         if ($id) {
             $this->tagModel->delete($id);
@@ -212,6 +218,12 @@ class TagController extends AdminController
      */
     public function ajaxCreateAction(): void
     {
+        header('Content-Type: application/json');
+        if (!\App\Helpers\CSRFHelper::validateRequest()) {
+            echo json_encode(['success' => false, 'errors' => ['Invalid CSRF token']]);
+            exit;
+        }
+
         $name = $this->getParam('name', '', 'POST');
         $slug = $this->getParam('slug', '', 'POST');
         $description = $this->getParam('description', '', 'POST');

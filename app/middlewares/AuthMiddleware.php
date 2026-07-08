@@ -28,18 +28,20 @@ class AuthMiddleware
             return false;
         }
 
-        // Check for session timeout
+        // Check for session timeout (default 30 minutes when the setting is missing/invalid)
+        $timeout = (int) \App\Helpers\SystemSettingsHelper::get('SESSION_TIMEOUT');
+        if ($timeout <= 0) {
+            $timeout = 1800;
+        }
         if (SessionHelper::hasValue('last_activity')) {
-            $timeout = \App\Helpers\SystemSettingsHelper::get('SESSION_TIMEOUT');
-            if (time() - SessionHelper::getValue('last_activity') > $timeout) {
+            if (time() - (int) SessionHelper::getValue('last_activity') > $timeout) {
                 // Session expired, destroy it
                 self::logout();
                 return false;
             }
-
-            // Update last activity time
-            SessionHelper::setValue('last_activity', time());
         }
+        // Update last activity time (also initializes it for pre-existing sessions)
+        SessionHelper::setValue('last_activity', time());
 
         return true;
     }

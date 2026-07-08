@@ -31,6 +31,7 @@
 
 
     <form method="POST" action="/admin/backup-manager/settings">
+                <input type="hidden" name="csrf_token" value="{$csrf_token}">
         <div class="row">
             <div class="col-12 row gx-3">
             

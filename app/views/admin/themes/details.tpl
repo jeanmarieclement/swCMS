@@ -70,6 +70,7 @@
         </div>
         {if $theme.name != $active_theme}
             <form method="POST" action="/admin/themes/activate" style="display: inline;">
+                <input type="hidden" name="csrf_token" value="{$csrf_token}">
                 <input type="hidden" name="theme" value="{$theme.name}">
                 <button type="submit" class="btn btn-sm btn-success" 
                         onclick="return confirm('Are you sure you want to activate this theme?')">
@@ -247,6 +248,7 @@
                 <div class="d-grid gap-2">
                     {if $theme.name != $active_theme}
                         <form method="POST" action="/admin/themes/activate">
+                            <input type="hidden" name="csrf_token" value="{$csrf_token}">
                             <input type="hidden" name="theme" value="{$theme.name}">
                             <button type="submit" class="btn btn-success w-100" 
                                     onclick="return confirm('Are you sure you want to activate this theme?')">

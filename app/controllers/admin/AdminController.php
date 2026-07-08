@@ -66,14 +66,15 @@ class AdminController extends Controller
             ]);
             $this->setFlashMessage('error', 'You don\'t have permission to access this section');
 
-            // Avoid redirect loop - if we're already on the dashboard, redirect to a different page
+            // Avoid redirect loop - if we're already on the dashboard, show the error page
             if ($template === 'admin/dashboard') {
-                // Accesso non autorizzato: mostra pagina 403 personalizzata
-                $this->render('errors/403', [
+                http_response_code(403);
+                // parent::render skips checkTemplateAccess (would deny recursively)
+                parent::render('errors/unauthorized', [
                     'title' => 'Accesso Negato',
                     'error_code' => 403
-                ], 'admin');
-                return;
+                ]);
+                exit;
             } else {
                 RedirectHelper::redirect('/admin/dashboard');
             }

@@ -131,10 +131,15 @@ class RoleController extends AdminController
         }
 
         // Handle form submission
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        if (\App\Helpers\RequestHelper::isPost()) {
+            $this->requireCsrf('/admin/roles', 'role permissions update');
+
             try {
                 // Get permissions from POST data
-                $permissions = isset($_POST['permissions']) ? $_POST['permissions'] : [];
+                $permissions = \App\Helpers\RequestHelper::all('post')['permissions'] ?? [];
+                if (!is_array($permissions)) {
+                    $permissions = [];
+                }
 
                 // Check if we should grant all permissions
                 if (in_array('all', $permissions)) {

@@ -59,7 +59,7 @@ class BackupController {
      */
     public function download() {
         try {
-            $backupId = $_GET['id'] ?? null;
+            $backupId = \App\Helpers\RequestHelper::get('id', null, 'int');
             if (!$backupId) {
                 throw new \Exception('Backup ID required');
             }
@@ -207,8 +207,8 @@ class BackupController {
      */
     public function list() {
         try {
-            $page = $_GET['page'] ?? 1;
-            $limit = $_GET['limit'] ?? 20;
+            $page = max(1, (int) \App\Helpers\RequestHelper::get('page', 1, 'int'));
+            $limit = max(1, min(100, (int) \App\Helpers\RequestHelper::get('limit', 20, 'int')));
             $offset = ($page - 1) * $limit;
             
             $backups = $this->backupService->getBackupList($limit, $offset);

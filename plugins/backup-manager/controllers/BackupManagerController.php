@@ -198,6 +198,7 @@ class BackupManagerController extends AdminController
     public function settingsAction()
     {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $this->requireCsrf('/admin/backup-manager/settings', 'backup settings save');
             try {
                 $settings = [
                     'enabled' => isset($_POST['enabled']),
@@ -252,6 +253,7 @@ class BackupManagerController extends AdminController
     public function schedulesAction()
     {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+            $this->requireCsrf('/admin/backup-manager/schedules', 'backup schedule change');
             $action = $_POST['action'] ?? '';
             
             try {

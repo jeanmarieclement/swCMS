@@ -18,34 +18,33 @@ class SecurityHelper
 {
     /**
      * Generate or retrieve the CSRF token
+     * @deprecated Delegates to CSRFHelper::getToken() — single token implementation
      * @return string
      */
     public static function csrf_token()
     {
-        if (!SessionHelper::hasValue('csrf_token')) {
-            SessionHelper::setValue('csrf_token', bin2hex(random_bytes(32)));
-        }
-        return SessionHelper::getValue('csrf_token');
+        return CSRFHelper::getToken();
     }
 
     /**
      * Generate a hidden CSRF field for forms
+     * @deprecated Delegates to CSRFHelper::getTokenField()
      * @return string
      */
     public static function csrf_field()
     {
-        $token = self::csrf_token();
-        return '<input type="hidden" name="csrf_token" value="' . $token . '">';
+        return CSRFHelper::getTokenField();
     }
 
     /**
      * Verify a CSRF token
+     * @deprecated Delegates to CSRFHelper::validateToken()
      * @param string $token
      * @return bool
      */
     public static function verify_csrf_token($token)
     {
-        return SessionHelper::hasValue('csrf_token') && hash_equals(SessionHelper::getValue('csrf_token'), $token);
+        return CSRFHelper::validateToken((string) $token);
     }
 
     /**

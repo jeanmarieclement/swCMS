@@ -62,7 +62,7 @@
         </a>
         {if $page.status != 'published'}
             <form method="POST" action="{$admin_url}/pages/status" style="display:inline;">
-                <input type="hidden" name="csrf_token" value="{App\Helpers\SecurityHelper::csrf_token()}">
+                <input type="hidden" name="csrf_token" value="{$csrf_token}">
                 <input type="hidden" name="id" value="{$page.id}">
                 <input type="hidden" name="status" value="published">
                 <button type="submit" class="btn btn-success">

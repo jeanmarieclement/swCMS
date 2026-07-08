@@ -89,24 +89,36 @@
                                 <div class="col-md-4 text-end">
                                     <div class="btn-group-vertical btn-group-sm" role="group">
                                         {if $comment.status != 'approved'}
-                                            <a href="/admin/comments/approve?id={$comment.id}" class="btn btn-outline-success" title="Approve">
-                                                <i class="fa fa-check-circle"></i> Approve
-                                            </a>
+                                            <form method="POST" action="/admin/comments/approve" class="d-inline">
+                                                <input type="hidden" name="csrf_token" value="{$csrf_token}">
+                                                <input type="hidden" name="id" value="{$comment.id}">
+                                                <button type="submit" class="btn btn-outline-success" title="Approve">
+                                                    <i class="fa fa-check-circle"></i> Approve
+                                                </button>
+                                            </form>
                                         {/if}
                                         {if $comment.status != 'spam'}
-                                            <a href="/admin/comments/spam?id={$comment.id}" class="btn btn-outline-warning" title="Mark as Spam">
-                                                <i class="fa fa-flag"></i> Spam
-                                            </a>
+                                            <form method="POST" action="/admin/comments/spam" class="d-inline">
+                                                <input type="hidden" name="csrf_token" value="{$csrf_token}">
+                                                <input type="hidden" name="id" value="{$comment.id}">
+                                                <button type="submit" class="btn btn-outline-warning" title="Mark as Spam">
+                                                    <i class="fa fa-flag"></i> Spam
+                                                </button>
+                                            </form>
                                         {/if}
                                         {if $comment.status == 'approved'}
                                             <a href="/admin/comments/reply?id={$comment.id}" class="btn btn-outline-primary" title="Reply">
                                                 <i class="fa fa-reply"></i> Reply
                                             </a>
                                         {/if}
-                                        <a href="/admin/comments/delete?id={$comment.id}" class="btn btn-outline-danger" title="Delete" 
-                                           onclick="return confirm('Delete this comment?');">
-                                            <i class="fa fa-trash"></i> Delete
-                                        </a>
+                                        <form method="POST" action="/admin/comments/delete" class="d-inline"
+                                              onsubmit="return confirm('Delete this comment?');">
+                                            <input type="hidden" name="csrf_token" value="{$csrf_token}">
+                                            <input type="hidden" name="id" value="{$comment.id}">
+                                            <button type="submit" class="btn btn-outline-danger" title="Delete">
+                                                <i class="fa fa-trash"></i> Delete
+                                            </button>
+                                        </form>
                                     </div>
                                 </div>
                             </div>
@@ -198,15 +210,27 @@
                     <td>{$comment.created_at|date_format:"%d/%m/%Y %H:%M"}</td>
                     <td>
                         {if $comment.status != 'approved'}
-                            <a href="/admin/comments/approve?id={$comment.id}" class="btn btn-sm btn-outline-success" title="Approve"><i class="fa fa-check-circle"></i></a>
+                            <form method="POST" action="/admin/comments/approve" class="d-inline">
+                                <input type="hidden" name="csrf_token" value="{$csrf_token}">
+                                <input type="hidden" name="id" value="{$comment.id}">
+                                <button type="submit" class="btn btn-sm btn-outline-success" title="Approve"><i class="fa fa-check-circle"></i></button>
+                            </form>
                         {/if}
                         {if $comment.status != 'spam'}
-                            <a href="/admin/comments/spam?id={$comment.id}" class="btn btn-sm btn-outline-warning" title="Mark as Spam"><i class="fa fa-flag"></i></a>
+                            <form method="POST" action="/admin/comments/spam" class="d-inline">
+                                <input type="hidden" name="csrf_token" value="{$csrf_token}">
+                                <input type="hidden" name="id" value="{$comment.id}">
+                                <button type="submit" class="btn btn-sm btn-outline-warning" title="Mark as Spam"><i class="fa fa-flag"></i></button>
+                            </form>
                         {/if}
                         {if $comment.status == 'approved'}
                             <a href="/admin/comments/reply?id={$comment.id}" class="btn btn-sm btn-outline-primary" title="Reply"><i class="fa fa-reply"></i></a>
                         {/if}
-                        <a href="/admin/comments/delete?id={$comment.id}" class="btn btn-sm btn-outline-danger" title="Delete" onclick="return confirm('Delete this comment?');"><i class="fa fa-trash"></i></a>
+                        <form method="POST" action="/admin/comments/delete" class="d-inline" onsubmit="return confirm('Delete this comment?');">
+                            <input type="hidden" name="csrf_token" value="{$csrf_token}">
+                            <input type="hidden" name="id" value="{$comment.id}">
+                            <button type="submit" class="btn btn-sm btn-outline-danger" title="Delete"><i class="fa fa-trash"></i></button>
+                        </form>
                     </td>
                 </tr>
                 {/foreach}

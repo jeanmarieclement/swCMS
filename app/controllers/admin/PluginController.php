@@ -57,13 +57,7 @@ class PluginController extends AdminController
             return;
         }
 
-        // Validate CSRF token
-        if (!CSRFHelper::validateRequest()) {
-            $this->setFlashMessage('error', 'Invalid CSRF token. Please try again.');
-            LogHelper::warning('CSRF validation failed for plugin activation from IP: ' . RequestHelper::server('REMOTE_ADDR', 'unknown'));
-            RedirectHelper::redirect('/admin/plugins');
-            return;
-        }
+        $this->requireCsrf('/admin/plugins', 'plugin activation');
 
         $pluginName = RequestHelper::post('plugin', '');
 
@@ -101,13 +95,7 @@ class PluginController extends AdminController
             return;
         }
 
-        // Validate CSRF token
-        if (!CSRFHelper::validateRequest()) {
-            $this->setFlashMessage('error', 'Invalid CSRF token. Please try again.');
-            LogHelper::warning('CSRF validation failed for plugin deactivation from IP: ' . RequestHelper::server('REMOTE_ADDR', 'unknown'));
-            RedirectHelper::redirect('/admin/plugins');
-            return;
-        }
+        $this->requireCsrf('/admin/plugins', 'plugin deactivation');
 
         $pluginName = RequestHelper::post('plugin', '');
 
@@ -191,13 +179,7 @@ class PluginController extends AdminController
     public function generateAction()
     {
         if (RequestHelper::isPost()) {
-            // Validate CSRF token
-            if (!CSRFHelper::validateRequest()) {
-                $this->setFlashMessage('error', 'Invalid CSRF token. Please try again.');
-                LogHelper::warning('CSRF validation failed for plugin generation from IP: ' . RequestHelper::server('REMOTE_ADDR', 'unknown'));
-                RedirectHelper::redirect('/admin/plugins/generate');
-                return;
-            }
+            $this->requireCsrf('/admin/plugins/generate', 'plugin generation');
 
             $config = [
                 'name' => RequestHelper::post('name', ''),
@@ -293,13 +275,7 @@ class PluginController extends AdminController
 
             // Handle form submission
             if (RequestHelper::isPost()) {
-                // Validate CSRF token
-                if (!CSRFHelper::validateRequest()) {
-                    $this->setFlashMessage('error', 'Invalid CSRF token. Please try again.');
-                    LogHelper::warning('CSRF validation failed for plugin configuration from IP: ' . RequestHelper::server('REMOTE_ADDR', 'unknown'));
-                    RedirectHelper::redirect("/admin/plugins/configure?plugin=$pluginName");
-                    return;
-                }
+                $this->requireCsrf("/admin/plugins/configure?plugin=$pluginName", 'plugin configuration');
 
                 $settings = RequestHelper::post('settings', [], 'raw');
                 $result = $this->pluginService->savePluginSettings($pluginName, $settings);

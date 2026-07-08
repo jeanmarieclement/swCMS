@@ -110,13 +110,7 @@ class ArticleController extends AdminController
 
         // Handle form submission
         if (RequestHelper::isPost()) {
-            // Validate CSRF token
-            if (!CSRFHelper::validateRequest()) {
-                SessionHelper::setFlashMessage('Invalid CSRF token. Please try again.', 'error');
-                LogHelper::warning('CSRF validation failed for article edit from IP: ' . RequestHelper::server('REMOTE_ADDR', 'unknown'));
-                RedirectHelper::redirect('/admin/articles/edit/' . $id);
-                return;
-            }
+            $this->requireCsrf('/admin/articles/edit/' . $id, 'article edit');
 
             $postCategories = RequestHelper::post('categories');
             $postTags = RequestHelper::post('tags');
@@ -254,13 +248,7 @@ class ArticleController extends AdminController
 
         // Handle form submission
         if (RequestHelper::isPost()) {
-            // Validate CSRF token
-            if (!CSRFHelper::validateRequest()) {
-                SessionHelper::setFlashMessage('Invalid CSRF token. Please try again.', 'error');
-                LogHelper::warning('CSRF validation failed for article creation from IP: ' . RequestHelper::server('REMOTE_ADDR', 'unknown'));
-                RedirectHelper::redirect('/admin/articles/create');
-                return;
-            }
+            $this->requireCsrf('/admin/articles/create', 'article creation');
 
             $postCategories = RequestHelper::post('categories');
             $postTags = RequestHelper::post('tags');
@@ -307,6 +295,13 @@ class ArticleController extends AdminController
      */
     public function deleteAction()
     {
+        if (!RequestHelper::isPost()) {
+            SessionHelper::setFlashMessage('Invalid request method', 'error');
+            RedirectHelper::redirect($this->settings['SITE_URL'] . '/admin/articles');
+            return;
+        }
+        $this->requireCsrf($this->settings['SITE_URL'] . '/admin/articles', 'article deletion');
+
         // Get the article ID from the URL
         $articleId = (int)$this->getParam('id', 0);
 
@@ -351,6 +346,13 @@ class ArticleController extends AdminController
      */
     public function statusAction()
     {
+        if (!RequestHelper::isPost()) {
+            SessionHelper::setFlashMessage('Invalid request method', 'error');
+            RedirectHelper::redirect($this->settings['SITE_URL'] . '/admin/articles');
+            return;
+        }
+        $this->requireCsrf($this->settings['SITE_URL'] . '/admin/articles', 'article status change');
+
         // Get the article ID and new status from the URL
         $articleId = (int)$this->getParam('id', isset($this->params[0]) ? (int)$this->params[0] : 0);
         $status = $this->getParam('status', isset($this->params[1]) ? $this->params[1] : '');

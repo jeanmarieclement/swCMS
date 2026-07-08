@@ -11,6 +11,7 @@
     </div>
 
     <form class="mars-comment-form" method="post" action="/comments/store" id="comment-form">
+        <input type="hidden" name="csrf_token" value="{$csrf_token}">
         <input type="hidden" name="post_id" value="{if isset($article)}{$article.id}{elseif isset($post)}{$post.id}{/if}">
         <input type="hidden" name="page_id" value="{if isset($page)}{$page.id}{/if}">
         <input type="hidden" name="parent_id" value="" id="parent_id">

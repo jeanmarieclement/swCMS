@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="swCMS Admin Panel">
     <meta name="author" content="swCMS">
-    <title>{block name="title"}Admin Panel{/block} | {$site_name}</title>
+    <title>{block name="title"}Admin Panel{/block} | {$site_name|escape}</title>
     
     <!-- Bootstrap CSS -->
     <link href="{$site_url}/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
@@ -31,7 +31,7 @@
 <body>
     <!-- Top Navigation -->
     <header class="navbar navbar-dark sticky-top bg-dark flex-md-nowrap p-0 shadow">
-        <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3" href="{$admin_url}">{$site_name} Admin</a>
+        <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3" href="{$admin_url}">{$site_name|escape} Admin</a>
         <button class="navbar-toggler position-absolute d-md-none collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#sidebarMenu" aria-controls="sidebarMenu" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>

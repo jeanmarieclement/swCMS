@@ -7,6 +7,7 @@ use App\Models\Settings;
 use App\Controllers\Admin\AdminController;
 use App\Helpers\LogHelper;
 use App\Helpers\RedirectHelper;
+use App\Helpers\RequestHelper;
 use App\Helpers\SessionHelper;
 
 /**
@@ -14,6 +15,17 @@ use App\Helpers\SessionHelper;
  */
 class SettingsController extends AdminController
 {
+    /** Keys the settings form is allowed to write (matches admin/settings.tpl) */
+    private const ALLOWED_KEYS = [
+        'site_title', 'site_description', 'site_language', 'site_timezone',
+        'SITE_NAME', 'SITE_URL', 'ADMIN_URL', 'THEME_ACTIVE',
+        'homepage_mode', 'homepage_page',
+        'meta_description', 'meta_keywords',
+        'posts_per_page', 'comments_enabled', 'ALLOW_REGISTRATION',
+        'MAIL_FROM', 'MAIL_FROM_NAME', 'SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASS',
+        'SESSION_TIMEOUT', 'DEBUG_MODE', 'TIMEZONE', 'LANGUAGE',
+    ];
+
     protected $page;
     protected $clsSettings;
 
@@ -53,8 +65,15 @@ class SettingsController extends AdminController
 
     public function saveAction()
     {
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            foreach ($_POST['settings'] as $key => $value) {
+        if (RequestHelper::isPost()) {
+            $this->requireCsrf($this->settings['ADMIN_URL'] . '/settings', 'settings save');
+
+            $submitted = RequestHelper::all('post')['settings'] ?? [];
+            foreach ($submitted as $key => $value) {
+                if (!in_array($key, self::ALLOWED_KEYS, true) || is_array($value)) {
+                    LogHelper::warning('Settings save: skipped disallowed key "' . $key . '"');
+                    continue;
+                }
                 $this->clsSettings->set($key, $value);
             }
             SessionHelper::setFlashMessage('Impostazioni salvate correttamente.', 'success');

@@ -25,21 +25,27 @@
             </button>
             
            {if isset($article.id) && (!isset($article.status) || $article.status != 'published')}
-               <a href="{$admin_url}/articles/status/{$article.id}/published" class="btn btn-success"
-                   onclick="return confirm('Are you sure you want to publish this article?');">
-                   <i class="fas fa-paper-plane"></i> Publish
-               </a>
+               <form method="POST" action="{$admin_url}/articles/status/{$article.id}/published" class="d-grid"
+                     onsubmit="return confirm('Are you sure you want to publish this article?');">
+                   <input type="hidden" name="csrf_token" value="{$csrf_token}">
+                   <button type="submit" class="btn btn-success">
+                       <i class="fas fa-paper-plane"></i> Publish
+                   </button>
+               </form>
            {/if}
-            
+
             <a href="{$admin_url}/articles" class="btn btn-light">
                 <i class="fas fa-times"></i> Cancel
             </a>
-            
+
             {if isset($article.id) && (!isset($article.status) || $article.status != 'trash')}
-                <a href="{$admin_url}/articles/status/{$article.id}/trash" class="btn btn-danger"
-                   onclick="return confirm('Are you sure you want to move this article to trash?');">
-                    <i class="fas fa-trash"></i> Move to Trash
-                </a>
+                <form method="POST" action="{$admin_url}/articles/status/{$article.id}/trash" class="d-grid"
+                      onsubmit="return confirm('Are you sure you want to move this article to trash?');">
+                    <input type="hidden" name="csrf_token" value="{$csrf_token}">
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash"></i> Move to Trash
+                    </button>
+                </form>
             {/if}
         </div>
     </div>

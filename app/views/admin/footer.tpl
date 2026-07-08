@@ -3,7 +3,7 @@
         <div class="container-fluid">
             <div class="row">
                 <div class="col-md-6">
-                    <p class="mb-0 text-muted">&copy; {$current_year|default:"2025"} {$site_name}. All rights reserved.</p>
+                    <p class="mb-0 text-muted">&copy; {$current_year|default:"2025"} {$site_name|escape}. All rights reserved.</p>
                 </div>
                 <div class="col-md-6 text-end">
                     <p class="mb-0 text-muted">Powered by <a href="#" class="text-decoration-none">swCMS</a> v{$system_info.version|default:"1.0.0"}</p>

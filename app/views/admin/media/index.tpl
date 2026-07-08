@@ -175,7 +175,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <form id="upload-form" action="{$site_url}/admin/media/upload" method="post" enctype="multipart/form-data">
-                {App\Helpers\SecurityHelper::csrf_field()}
+                <input type="hidden" name="csrf_token" value="{$csrf_token}">
                 <div class="modal-header">
                     <h5 class="modal-title">Carica file</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
@@ -244,7 +244,7 @@ $(document).ready(function() {
             type: 'POST',
             headers: { 'X-Requested-With': 'XMLHttpRequest' },
             data: {
-                csrf_token: '{App\Helpers\SecurityHelper::csrf_token()}'
+                csrf_token: '{$csrf_token}'
             },
             success: function(resp) {
                 if (resp.success) {
@@ -384,7 +384,7 @@ document.addEventListener('DOMContentLoaded', function() {
             formData.append('files[]', file);
         });
         // Add CSRF token
-        formData.append('csrf_token', '{App\Helpers\SecurityHelper::csrf_token()}');
+        formData.append('csrf_token', '{$csrf_token}');
 
         const xhr = new XMLHttpRequest();
         xhr.open('POST', this.action, true);
