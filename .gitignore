@@ -74,13 +74,15 @@ auth.json
 # =============================================================================
 
 # Smarty cache and compiled templates
-/App/Views/templates_c/
-/App/Views/cache/
-/App/Views/compiled/
+/app/views/templates_c/
+/app/views/cache/
+/app/views/compiled/
 
 # Application cache
-/App/cache/*
-!/App/cache/.gitkeep
+/app/Cache/data/
+
+# Installation flag and runtime data
+/data/.installed
 
 # =============================================================================
 # LOG FILES
