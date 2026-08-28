@@ -24,6 +24,7 @@ class RequestHelper
         'bool' => FILTER_VALIDATE_BOOLEAN,
         'ip' => FILTER_VALIDATE_IP,
         'raw' => 'raw', // No filtering
+        'array' => 'array', // Recursively sanitized array
     ];
 
     /**
@@ -129,6 +130,17 @@ class RequestHelper
 
         $value = $source[$key];
 
+        // Array input (field[]=x) is only accepted by the filters that expect one;
+        // every other filter treats it as invalid input rather than passing it to
+        // string functions that do not accept arrays.
+        if ($filter === 'array') {
+            return is_array($value) ? self::sanitizeArray($value) : $default;
+        }
+
+        if (is_array($value) && $filter !== 'raw') {
+            return $default;
+        }
+
         return self::sanitize($value, $filter);
     }
 
@@ -152,9 +164,14 @@ class RequestHelper
             return $value;
         }
 
+        // Non-scalar values cannot be sanitized as a string
+        if (!is_scalar($value) && $value !== null) {
+            return null;
+        }
+
         // String filter - use htmlspecialchars for XSS protection (PHP 8.1+ compatible)
         if ($filter === 'string') {
-            return htmlspecialchars(strip_tags($value), ENT_QUOTES, 'UTF-8');
+            return htmlspecialchars(strip_tags((string) $value), ENT_QUOTES, 'UTF-8');
         }
 
         // Validation filters (int, email, url, etc.)
@@ -164,7 +181,7 @@ class RequestHelper
         }
 
         // Default fallback - sanitize as string
-        return htmlspecialchars(strip_tags($value), ENT_QUOTES, 'UTF-8');
+        return htmlspecialchars(strip_tags((string) $value), ENT_QUOTES, 'UTF-8');
     }
 
     /**
