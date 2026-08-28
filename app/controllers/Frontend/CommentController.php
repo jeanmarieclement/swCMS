@@ -5,6 +5,7 @@ namespace App\Controllers\Frontend;
 use App\Controllers\Frontend\BaseController;
 use App\Models\Comments;
 use App\Helpers\SessionHelper;
+use App\Helpers\AuthHelper;
 use App\Helpers\RedirectHelper;
 
 class CommentController extends BaseController
@@ -114,8 +115,8 @@ class CommentController extends BaseController
             if ($userId) {
                 $commentData['user_id'] = $userId;
                 // Get user info from session for logged users
-                $userDisplayName = SessionHelper::getValue('display_name') ?? SessionHelper::getValue('username') ?? 'Utente registrato';
-                $userEmail = SessionHelper::getValue('email');
+                $userDisplayName = AuthHelper::getCurrentUserDisplayName() ?? 'Utente registrato';
+                $userEmail = AuthHelper::getCurrentUserEmail();
 
                 $commentData['author_name'] = $userDisplayName;
                 if ($userEmail) {

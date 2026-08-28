@@ -38,4 +38,28 @@ class AuthHelper
     {
         return SessionHelper::hasValue('user_id') ? SessionHelper::getValue('user_id') : null;
     }
+
+    /**
+     * Get the current user's display name, falling back to the username
+     *
+     * Reads the keys login writes ('user_display_name', 'user_username'), so
+     * callers do not have to remember the prefix.
+     *
+     * @return string|null
+     */
+    public static function getCurrentUserDisplayName()
+    {
+        return SessionHelper::getValue('user_display_name')
+            ?? SessionHelper::getValue('user_username');
+    }
+
+    /**
+     * Get the current user's email address
+     *
+     * @return string|null
+     */
+    public static function getCurrentUserEmail()
+    {
+        return SessionHelper::getValue('user_email');
+    }
 }

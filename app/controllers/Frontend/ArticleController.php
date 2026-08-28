@@ -6,6 +6,7 @@ use App\Controllers\Frontend\BaseController;
 use App\Models\Post;
 use App\Models\Comments;
 use App\Helpers\SessionHelper;
+use App\Helpers\AuthHelper;
 
 /**
  * ArticleController gestisce la visualizzazione degli articoli pubblici
@@ -78,7 +79,7 @@ class ArticleController extends BaseController
 
         // Get current user info for comments
         $userId = SessionHelper::getValue('user_id');
-        $userDisplayName = SessionHelper::getValue('display_name') ?? SessionHelper::getValue('username');
+        $userDisplayName = AuthHelper::getCurrentUserDisplayName();
 
         $this->render('article', [
             'article' => $article,
