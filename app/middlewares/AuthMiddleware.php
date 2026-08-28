@@ -22,9 +22,10 @@ class AuthMiddleware
      */
     public static function isAuthenticated()
     {
-        // Check if user session exists
+        // Check if user session exists. An anonymous visitor has no session to end:
+        // destroying it here would throw away the CSRF token, any flash message and
+        // the return URL that requireAuth() is about to store.
         if (!SessionHelper::hasValue('user_id') || !SessionHelper::hasValue('user_role')) {
-            self::logout();
             return false;
         }
 
@@ -73,6 +74,12 @@ class AuthMiddleware
     public static function requireAuth()
     {
         if (!self::isAuthenticated()) {
+            // A timed-out session has just been destroyed, so make sure a session is
+            // active before writing to it, otherwise the return URL goes nowhere.
+            if (session_status() !== PHP_SESSION_ACTIVE) {
+                session_start();
+            }
+
             // Store intended URL for redirect after login
             SessionHelper::setValue('redirect_after_login', RequestHelper::server('REQUEST_URI'));
 
