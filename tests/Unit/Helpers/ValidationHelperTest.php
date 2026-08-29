@@ -314,4 +314,46 @@ class ValidationHelperTest extends TestCase
         $this->assertFalse($result['valid']);
         $this->assertArrayHasKey('field', $result['errors']);
     }
+
+    public function testLengthRulesRejectAMissingFieldInsteadOfFatalling()
+    {
+        // The rules AuthController uses to register a user. With the password
+        // field absent the value is null, and the length helpers are typed
+        // `string`: they must not be handed the null.
+        $result = ValidationHelper::validate([], [
+            'password' => ['required', 'min:8']
+        ]);
+
+        $this->assertFalse($result['valid']);
+        $this->assertArrayHasKey('password', $result['errors']);
+    }
+
+    public function testStringRulesRejectAnArrayValueInsteadOfFatalling()
+    {
+        // password[]=x is rejected to null by the request layer, but a rule
+        // list may also be handed an array directly.
+        $result = ValidationHelper::validate(['username' => ['x']], [
+            'username' => ['required', 'username']
+        ]);
+
+        $this->assertFalse($result['valid']);
+        $this->assertArrayHasKey('username', $result['errors']);
+    }
+
+    public function testInRuleIsNotGivenAnIntegerParameter()
+    {
+        // 'in' takes a list, so the rule parameter must not be cast to int the
+        // way min:8 / max:8 are.
+        $result = ValidationHelper::validate(['role' => 'admin'], [
+            'role' => ['in:admin,editor']
+        ]);
+
+        $this->assertTrue($result['valid']);
+
+        $result = ValidationHelper::validate(['role' => 'ghost'], [
+            'role' => ['in:admin,editor']
+        ]);
+
+        $this->assertFalse($result['valid']);
+    }
 }

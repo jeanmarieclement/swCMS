@@ -218,14 +218,22 @@ class RequestHelper
         $sanitized = [];
 
         foreach ($data as $key => $value) {
-            // Keys are user input too: settings[<img src=x onerror=...>]=y
-            // must not put attacker markup into a key untouched.
-            $sanitizedKey = is_string($key) ? self::sanitize($key, 'string') : $key;
+            // Keys are user input too: settings[<img src=x onerror=...>]=y must
+            // not carry attacker markup through untouched. Sanitizing a key is
+            // not reversible though, and it is not injective — 'NAME<x' strips
+            // down to 'NAME' — so rewriting it would let an unexpected key
+            // impersonate an expected one and overwrite it, defeating the
+            // allowlists callers apply to key names. A key that does not
+            // survive sanitization unchanged is dropped instead.
+            // Integer keys (from name[]=x lists) are not user-controlled text.
+            if (is_string($key) && self::sanitize($key, 'string') !== $key) {
+                continue;
+            }
 
             if (is_array($value)) {
-                $sanitized[$sanitizedKey] = self::sanitizeArray($value);
+                $sanitized[$key] = self::sanitizeArray($value);
             } else {
-                $sanitized[$sanitizedKey] = self::sanitize($value, 'string');
+                $sanitized[$key] = self::sanitize($value, 'string');
             }
         }
 

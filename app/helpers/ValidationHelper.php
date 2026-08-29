@@ -144,14 +144,23 @@ class ValidationHelper
             foreach ($fieldRules as $rule) {
                 if (is_string($rule)) {
                     // Simple rule like 'required', 'email', or Laravel-style
-                    // 'min:8' / 'max:8'
+                    // 'min:8' / 'max:8' / 'in:admin,editor'
                     [$ruleName, $ruleParam] = array_pad(explode(':', $rule, 2), 2, null);
-                    $ruleParams = $ruleParam === null ? [] : [(int) $ruleParam];
                     $ruleName = match ($ruleName) {
                         'min' => 'min_length',
                         'max' => 'max_length',
                         default => $ruleName
                     };
+
+                    if ($ruleParam === null) {
+                        $ruleParams = [];
+                    } elseif ($ruleName === 'min_length' || $ruleName === 'max_length') {
+                        $ruleParams = [(int) $ruleParam];
+                    } else {
+                        // List rules such as 'in' take their values as a list,
+                        // so the parameter must not be cast to a number
+                        $ruleParams = [array_map('trim', explode(',', $ruleParam))];
+                    }
                 } elseif (is_array($rule)) {
                     // Rule with parameters like ['min_length', 8]
                     $ruleName = $rule[0];
@@ -160,21 +169,31 @@ class ValidationHelper
                     continue;
                 }
 
-                $valid = match ($ruleName) {
-                    'required' => self::required($value),
-                    'email' => filter_var($value, FILTER_VALIDATE_EMAIL) !== false,
-                    'url' => filter_var($value, FILTER_VALIDATE_URL) !== false,
-                    'int' => filter_var($value, FILTER_VALIDATE_INT) !== false,
-                    'min_length' => self::minLength($value, $ruleParams[0] ?? 0),
-                    'max_length' => self::maxLength($value, $ruleParams[0] ?? 255),
-                    'in' => self::in($value, $ruleParams[0] ?? []),
-                    'slug' => self::slug($value),
-                    'username' => self::username($value),
-                    // An unrecognized rule name is a bug in the rule list, not a
-                    // pass: failing closed surfaces it instead of silently
-                    // skipping validation the caller thought was happening.
-                    default => false
-                };
+                // These rules are typed `string`. A missing field is null and a
+                // field posted as name[]=x is an array: either would raise a
+                // TypeError on the way in, so they fail the rule instead.
+                // 'required' is what reports a missing field.
+                $stringRules = ['min_length', 'max_length', 'slug', 'username'];
+
+                if (in_array($ruleName, $stringRules, true) && !is_string($value)) {
+                    $valid = false;
+                } else {
+                    $valid = match ($ruleName) {
+                        'required' => self::required($value),
+                        'email' => filter_var($value, FILTER_VALIDATE_EMAIL) !== false,
+                        'url' => filter_var($value, FILTER_VALIDATE_URL) !== false,
+                        'int' => filter_var($value, FILTER_VALIDATE_INT) !== false,
+                        'min_length' => self::minLength($value, $ruleParams[0] ?? 0),
+                        'max_length' => self::maxLength($value, $ruleParams[0] ?? 255),
+                        'in' => self::in($value, $ruleParams[0] ?? []),
+                        'slug' => self::slug($value),
+                        'username' => self::username($value),
+                        // An unrecognized rule name is a bug in the rule list,
+                        // not a pass: failing closed surfaces it instead of
+                        // silently skipping validation the caller expected.
+                        default => false
+                    };
+                }
 
                 if (!$valid) {
                     $fieldErrors[] = "Field '{$field}' failed validation rule '{$ruleName}'";

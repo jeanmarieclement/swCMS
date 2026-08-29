@@ -214,27 +214,53 @@ class RequestHelperTest extends TestCase
         $this->assertEquals('test@example.com', $result['user']['email']);
     }
 
-    public function testAllSanitizesArrayKeysAsWellAsValues()
+    public function testAllDropsKeysCarryingMarkup()
     {
         // Array keys are user input just like values: settings[<img src=x
-        // onerror=alert(1)>]=y must not put attacker markup in a key.
+        // onerror=alert(1)>]=y must not carry attacker markup through.
         $_POST = ['<img src=x onerror=alert(1)>' => 'value'];
 
         $result = RequestHelper::all('post');
 
-        $keys = array_keys($result);
-        $this->assertStringNotContainsString('<img', $keys[0]);
-        $this->assertStringNotContainsString('onerror', $keys[0]);
+        $this->assertSame([], $result);
     }
 
-    public function testArrayFilterSanitizesKeysAsWellAsValues()
+    public function testArrayFilterDropsKeysCarryingMarkup()
     {
-        $_POST['settings'] = ['<script>xss</script>' => 'value'];
+        $_POST['settings'] = ['<script>xss</script>' => 'value', 'safe' => 'kept'];
 
         $result = RequestHelper::post('settings', [], 'array');
 
-        $keys = array_keys($result);
-        $this->assertStringNotContainsString('<script>', $keys[0]);
+        $this->assertSame(['safe' => 'kept'], $result);
+    }
+
+    public function testASanitizedKeyNeverOverwritesALegitimateOne()
+    {
+        // Sanitizing a key is not injective: 'SITE_NAME<x' strips down to
+        // 'SITE_NAME'. Rewriting it would let an unexpected key impersonate an
+        // expected one and win, defeating allowlists that test the key name.
+        $_POST = ['SITE_NAME' => 'legitimate', 'SITE_NAME<x' => 'injected'];
+
+        $result = RequestHelper::all('post');
+
+        $this->assertEquals('legitimate', $result['SITE_NAME']);
+    }
+
+    public function testKeysThatCannotSurviveSanitizationAreDropped()
+    {
+        $_POST = ['<img src=x onerror=alert(1)>' => 'value', 'clean_key' => 'kept'];
+
+        $result = RequestHelper::all('post');
+
+        $this->assertEquals(['clean_key' => 'kept'], $result);
+    }
+
+    public function testNumericKeysArePreserved()
+    {
+        // A list like tags[]=a&tags[]=b has integer keys, which must survive
+        $_POST['tags'] = ['a', 'b'];
+
+        $this->assertEquals(['a', 'b'], RequestHelper::post('tags', [], 'array'));
     }
 
     public function testRawFilterReturnsUnmodifiedValue()
