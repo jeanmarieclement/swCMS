@@ -199,10 +199,14 @@ class RequestHelper
         $sanitized = [];
 
         foreach ($data as $key => $value) {
+            // Keys are user input too: settings[<img src=x onerror=...>]=y
+            // must not put attacker markup into a key untouched.
+            $sanitizedKey = is_string($key) ? self::sanitize($key, 'string') : $key;
+
             if (is_array($value)) {
-                $sanitized[$key] = self::sanitizeArray($value);
+                $sanitized[$sanitizedKey] = self::sanitizeArray($value);
             } else {
-                $sanitized[$key] = self::sanitize($value, 'string');
+                $sanitized[$sanitizedKey] = self::sanitize($value, 'string');
             }
         }
 

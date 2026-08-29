@@ -182,6 +182,29 @@ class RequestHelperTest extends TestCase
         $this->assertEquals('test@example.com', $result['user']['email']);
     }
 
+    public function testAllSanitizesArrayKeysAsWellAsValues()
+    {
+        // Array keys are user input just like values: settings[<img src=x
+        // onerror=alert(1)>]=y must not put attacker markup in a key.
+        $_POST = ['<img src=x onerror=alert(1)>' => 'value'];
+
+        $result = RequestHelper::all('post');
+
+        $keys = array_keys($result);
+        $this->assertStringNotContainsString('<img', $keys[0]);
+        $this->assertStringNotContainsString('onerror', $keys[0]);
+    }
+
+    public function testArrayFilterSanitizesKeysAsWellAsValues()
+    {
+        $_POST['settings'] = ['<script>xss</script>' => 'value'];
+
+        $result = RequestHelper::post('settings', [], 'array');
+
+        $keys = array_keys($result);
+        $this->assertStringNotContainsString('<script>', $keys[0]);
+    }
+
     public function testRawFilterReturnsUnmodifiedValue()
     {
         $_GET['raw'] = '<script>test</script>';
