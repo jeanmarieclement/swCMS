@@ -7,6 +7,7 @@ use App\Helpers\SessionHelper;
 use App\Controllers\Frontend\BaseController;
 use App\Helpers\LogHelper;
 use App\Models\User;
+use App\Models\PasswordReset;
 use App\Helpers\HookHelper;
 use App\Helpers\RequestHelper;
 use App\Helpers\CSRFHelper;
@@ -21,15 +22,18 @@ class AuthController extends BaseController
 {
     private $userModel;
 
+    private $passwordResetModel;
+
 
     /**
      * AuthController constructor.
-     * Initializes the user model.
+     * Initializes the user and password reset models.
      */
     public function __construct($params = [])
     {
         parent::__construct($params);
         $this->userModel = new User();
+        $this->passwordResetModel = new PasswordReset();
     }
 
 
@@ -394,11 +398,10 @@ class AuthController extends BaseController
                 $tokenHash = password_hash($token, PASSWORD_BCRYPT);
                 $expiresAt = date('Y-m-d H:i:s', time() + 3600); // 1 hour expiration
 
-                // Store reset token in database or session
-                // For this implementation, we'll use session storage
-                SessionHelper::setValue('password_reset_token_' . $user['id'], $tokenHash);
-                SessionHelper::setValue('password_reset_expires_' . $user['id'], $expiresAt);
-                SessionHelper::setValue('password_reset_email_' . $user['id'], $email);
+                // Persist the token: the emailed link has to work from a browser that
+                // never saw this session. Storing it here also supersedes any token
+                // the user requested earlier.
+                $this->passwordResetModel->create($user['id'], $tokenHash, $expiresAt);
 
                 // Fire password reset requested hook
                 HookHelper::doAction('password_reset_requested', $user, $token, RequestHelper::server('REMOTE_ADDR', 'unknown'));
@@ -501,32 +504,13 @@ class AuthController extends BaseController
                 return;
             }
 
-            // Verify token
-            $storedTokenHash = SessionHelper::getValue('password_reset_token_' . $user['id']);
-            $expiresAt = SessionHelper::getValue('password_reset_expires_' . $user['id']);
-            $storedEmail = SessionHelper::getValue('password_reset_email_' . $user['id']);
+            // Verify the token against the stored hash. findValidByToken() rejects
+            // tokens that are expired, already used, or belong to another user, so a
+            // single generic message covers every failure without leaking which.
+            $resetRecord = $this->passwordResetModel->findValidByToken($user['id'], $token);
 
-            if (!$storedTokenHash || !$expiresAt || $storedEmail !== $email) {
+            if (!$resetRecord) {
                 SessionHelper::setFlashMessage('Invalid or expired reset link.', 'error');
-                RedirectHelper::redirect('/auth/forgot-password');
-                return;
-            }
-
-            // Check if token expired
-            if (strtotime($expiresAt) < time()) {
-                // Clean up expired token
-                SessionHelper::removeValue('password_reset_token_' . $user['id']);
-                SessionHelper::removeValue('password_reset_expires_' . $user['id']);
-                SessionHelper::removeValue('password_reset_email_' . $user['id']);
-
-                SessionHelper::setFlashMessage('Reset link has expired. Please request a new one.', 'error');
-                RedirectHelper::redirect('/auth/forgot-password');
-                return;
-            }
-
-            // Verify token hash
-            if (!password_verify($token, $storedTokenHash)) {
-                SessionHelper::setFlashMessage('Invalid reset link.', 'error');
                 RedirectHelper::redirect('/auth/forgot-password');
                 return;
             }
@@ -538,10 +522,8 @@ class AuthController extends BaseController
                 ]);
 
                 if ($updateResult) {
-                    // Clean up token data
-                    SessionHelper::removeValue('password_reset_token_' . $user['id']);
-                    SessionHelper::removeValue('password_reset_expires_' . $user['id']);
-                    SessionHelper::removeValue('password_reset_email_' . $user['id']);
+                    // Burn the token so the link cannot be replayed
+                    $this->passwordResetModel->markUsed($resetRecord['id']);
 
                     // Fire password reset successful hook
                     HookHelper::doAction('password_reset_successful', $user, RequestHelper::server('REMOTE_ADDR', 'unknown'));

@@ -7,6 +7,7 @@ use App\Models\Page;
 use App\Models\Comments;
 use App\Helpers\SessionHelper;
 use App\Helpers\SeoHelper;
+use App\Helpers\AuthHelper;
 
 /**
  * PageController manages the display of public static pages
@@ -76,7 +77,7 @@ class PageController extends BaseController
 
         // Get current user info for comments
         $userId = SessionHelper::getValue('user_id');
-        $userDisplayName = SessionHelper::getValue('display_name') ?? SessionHelper::getValue('username');
+        $userDisplayName = AuthHelper::getCurrentUserDisplayName();
 
         $this->render('page', [
             'page' => $page,
