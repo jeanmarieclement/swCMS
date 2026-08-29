@@ -12,23 +12,9 @@
         </div>
     </footer>
 
-    <!-- Bootstrap JS Bundle with Popper -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
-    <!-- jQuery (for plugins that might need it) -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    
-    <!-- DataTables -->
-    <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
-    <link href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css" rel="stylesheet">
-    
-    <!-- Chart.js for admin dashboard charts -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
-    
-    <!-- Custom JS -->
-    <script src="{$site_url}/js/admin.js"></script>
-    
+    {* Bootstrap, jQuery, DataTables and admin.js are loaded from public/vendor/
+       by layout.tpl, which includes this file: no CDN copies, no duplicates. *}
+
     <!-- Initialize TinyMCE if needed -->
     {if isset($use_tinymce) && $use_tinymce}
     <script>
@@ -40,5 +26,4 @@
         });
     </script>
     {/if}
-</body>
-</html>
+

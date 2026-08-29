@@ -19,9 +19,14 @@ class PluginService
     private $menuManager;
     private $routesManager;
 
-    public function __construct()
+    /**
+     * @param string|null $pluginsPath Plugin directory, defaults to the bundled one
+     */
+    public function __construct(?string $pluginsPath = null)
     {
-        $this->pluginsPath = __DIR__ . '/../../plugins/';
+        $this->pluginsPath = $pluginsPath === null
+            ? __DIR__ . '/../../plugins/'
+            : rtrim($pluginsPath, '/') . '/';
         $this->db = Database::getInstance();
         $this->menuManager = new PluginMenuManager();
         $this->routesManager = new PluginRoutesManager();
@@ -86,7 +91,12 @@ class PluginService
             'main_file' => null,
             'has_settings' => false,
             'has_hooks' => false,
-            'files' => []
+            'files' => [],
+            // Depends and Conflicts are optional headers: the parser only writes
+            // them when the line is present, and the admin templates read them
+            // unguarded, so they have to exist as empty arrays.
+            'depends' => [],
+            'conflicts' => []
         ];
 
         // Check for main plugin file

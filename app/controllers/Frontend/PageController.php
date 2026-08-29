@@ -6,6 +6,7 @@ use App\Controllers\Frontend\BaseController;
 use App\Models\Page;
 use App\Models\Comments;
 use App\Helpers\SessionHelper;
+use App\Helpers\SeoHelper;
 
 /**
  * PageController manages the display of public static pages
@@ -80,7 +81,11 @@ class PageController extends BaseController
         $this->render('page', [
             'page' => $page,
             'page_title' => $page['title'],
-            'meta_description' => substr(strip_tags($page['content']), 0, 150),
+            'meta_description' => SeoHelper::metaDescription($page['content'] ?? ''),
+            'canonical' => SeoHelper::canonicalUrl(
+                $this->settings['SITE_URL'] ?? '',
+                'page/' . ($page['slug'] ?? '')
+            ),
             'comments_enabled' => $commentsEnabled,
             'comments' => $comments,
             'total_comments' => $totalComments,
