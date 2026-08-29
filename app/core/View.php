@@ -6,6 +6,7 @@ use App\Helpers\LogHelper;
 use Smarty\Smarty;
 use App\Helpers\SessionHelper;
 use App\Helpers\SystemSettingsHelper;
+use App\Helpers\RequestHelper;
 use App\Core\HookSystem;
 
 /**
@@ -249,7 +250,7 @@ class View
 
                 // Get template content and allow plugins to modify it
                 ob_start();
-                $this->smarty->display($template . '.tpl');
+                $this->smarty->display($template . '.tpl', self::cacheIdForRequest());
                 $content = ob_get_clean();
 
                 // Apply content filters
@@ -416,6 +417,32 @@ class View
     }
 
     /**
+     * Build the Smarty cache id for the current request
+     *
+     * Smarty keys a cached page by template name alone, so without this every
+     * URL rendered through the same template would share a single cached page.
+     *
+     * @param string|null $uri Request URI, defaults to the current one
+     * @return string
+     */
+    public static function cacheIdForRequest($uri = null)
+    {
+        if ($uri === null) {
+            $uri = RequestHelper::server('REQUEST_URI', '/');
+        }
+
+        $path = parse_url($uri, PHP_URL_PATH);
+        $query = parse_url($uri, PHP_URL_QUERY);
+
+        $key = ($path === null || $path === false ? '/' : $path)
+            . ($query === null || $query === false ? '' : '?' . $query);
+
+        // Hashed so the id never contains '|', which Smarty reads as the cache
+        // group separator, nor anything else awkward in a cache filename.
+        return sha1($key);
+    }
+
+    /**
      * Configure caching settings based on environment
      */
     private function configureCaching()
@@ -426,11 +453,25 @@ class View
             $this->smarty->caching = Smarty::CACHING_OFF;
             $this->smarty->force_compile = true;
             $this->smarty->compile_check = true;
-        } else {
-            $this->smarty->caching = Smarty::CACHING_LIFETIME_CURRENT;
-            $this->smarty->cache_lifetime = 3600;
-            $this->smarty->compile_check = false;
+            return;
         }
+
+        $this->smarty->compile_check = false;
+
+        // Full-page caching is opt-in through PAGE_CACHE, which .env.example has
+        // always defaulted to false. It bakes whatever the first visitor saw into
+        // the page every later visitor gets, and the frontend templates embed the
+        // CSRF token and flash messages, so it is only safe once those regions are
+        // wrapped in {nocache}.
+        $pageCache = defined('PAGE_CACHE') ? PAGE_CACHE : false;
+
+        if (!$pageCache) {
+            $this->smarty->caching = Smarty::CACHING_OFF;
+            return;
+        }
+
+        $this->smarty->caching = Smarty::CACHING_LIFETIME_CURRENT;
+        $this->smarty->cache_lifetime = defined('PAGE_CACHE_LIFETIME') ? (int) PAGE_CACHE_LIFETIME : 1800;
     }
 
     /**

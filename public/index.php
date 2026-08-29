@@ -5,6 +5,7 @@
  */
 
 use App\Core\Autoloader;
+use App\Helpers\CacheHeaderHelper;
 use App\Controllers\InstallController;
 use App\Core\ErrorHandler;
 use App\Helpers\LogHelper;
@@ -95,7 +96,14 @@ if ($isHttps) {
     ini_set('session.cookie_secure', 1);
 }
 
-// Initialize session with secure settings
+// Initialize session with secure settings.
+// PHP's default cache limiter ('nocache') stamps no-store, Pragma: no-cache and
+// its 1981 Expires sentinel on every request that starts a session — which here
+// is every request the CMS serves. That is right for the admin panel, but on the
+// public side it stops the browser reusing anything and disables the
+// back/forward cache. State the policy per area instead.
+session_cache_limiter('');
+header('Cache-Control: ' . CacheHeaderHelper::policyForCurrentRequest());
 session_start();
 
 // Initialize CSRF token if it doesn't exist

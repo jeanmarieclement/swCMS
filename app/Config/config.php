@@ -65,3 +65,9 @@ ini_set('session.cookie_secure', 0); // Set to 1 if using HTTPS
 define('CACHE_DRIVER', env('CACHE_DRIVER', 'file')); // file or database
 define('CACHE_TTL', env('CACHE_TTL', 3600)); // Default TTL in seconds (1 hour)
 define('CACHE_PATH', ROOT_PATH . '/storage/cache');
+
+// Smarty full-page cache. Off by default: a cached page keeps the CSRF token
+// and flash messages of whoever rendered it first, so it is only safe once the
+// templates wrap those regions in {nocache}.
+define('PAGE_CACHE', filter_var(env('PAGE_CACHE', false), FILTER_VALIDATE_BOOLEAN));
+define('PAGE_CACHE_LIFETIME', (int) env('PAGE_CACHE_LIFETIME', 1800));
