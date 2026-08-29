@@ -216,4 +216,77 @@ class RequestHelperTest extends TestCase
         $result = RequestHelper::get('price', null, 'float');
         $this->assertNull($result);
     }
+
+    public function testGetRejectsArrayInputForStringFilter()
+    {
+        $_GET['name'] = ['x'];
+        $result = RequestHelper::get('name', 'default');
+        $this->assertEquals('default', $result);
+    }
+
+    public function testPostRejectsArrayInputForStringFilter()
+    {
+        $_POST['name'] = ['<script>xss</script>'];
+        $result = RequestHelper::post('name');
+        $this->assertNull($result);
+    }
+
+    public function testGetRejectsArrayInputForValidationFilter()
+    {
+        $_GET['id'] = ['1', '2'];
+        $result = RequestHelper::get('id', null, 'int');
+        $this->assertNull($result);
+    }
+
+    public function testInputRejectsArrayInput()
+    {
+        $_REQUEST['test'] = ['a' => 'b'];
+        $result = RequestHelper::input('test', 'default');
+        $this->assertEquals('default', $result);
+    }
+
+    public function testRawFilterStillReturnsArray()
+    {
+        $_POST['settings'] = ['key' => 'value'];
+        $result = RequestHelper::post('settings', [], 'raw');
+        $this->assertEquals(['key' => 'value'], $result);
+    }
+
+    public function testArrayFilterSanitizesValues()
+    {
+        $_POST['tags'] = ['<script>xss</script>', 'plain'];
+        $result = RequestHelper::post('tags', [], 'array');
+        $this->assertEquals(['xss', 'plain'], $result);
+    }
+
+    public function testArrayFilterSanitizesNestedValues()
+    {
+        $_POST['user'] = ['profile' => ['bio' => '<b>hi</b>']];
+        $result = RequestHelper::post('user', [], 'array');
+        $this->assertEquals(['profile' => ['bio' => 'hi']], $result);
+    }
+
+    public function testArrayFilterRejectsScalar()
+    {
+        $_POST['tags'] = 'not-an-array';
+        $result = RequestHelper::post('tags', [], 'array');
+        $this->assertEquals([], $result);
+    }
+
+    public function testArrayFilterKeepsMultiValueFormFields()
+    {
+        // How the article form posts its checkboxes and its multi-select:
+        // categories[]=3&categories[]=5&tags[]=php
+        $_POST['categories'] = ['3', '5'];
+        $_POST['tags'] = ['php'];
+
+        $this->assertEquals(['3', '5'], RequestHelper::post('categories', [], 'array'));
+        $this->assertEquals(['php'], RequestHelper::post('tags', [], 'array'));
+    }
+
+    public function testArrayFilterReturnsTheDefaultWhenTheFieldIsAbsent()
+    {
+        // No checkbox ticked: the field is not submitted at all
+        $this->assertEquals([], RequestHelper::post('categories', [], 'array'));
+    }
 }

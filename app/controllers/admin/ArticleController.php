@@ -112,8 +112,11 @@ class ArticleController extends AdminController
         if (RequestHelper::isPost()) {
             $this->requireCsrf('/admin/articles/edit/' . $id, 'article edit');
 
-            $postCategories = RequestHelper::post('categories');
-            $postTags = RequestHelper::post('tags');
+            // categories[] and tags[] arrive as arrays: the default string filter
+            // rejects them, which would silently clear the article's categories
+            // and tags on every save.
+            $postCategories = RequestHelper::post('categories', [], 'array');
+            $postTags = RequestHelper::post('tags', [], 'array');
             $this->saveData($id, $postCategories, $postTags);
         }
 
@@ -250,8 +253,11 @@ class ArticleController extends AdminController
         if (RequestHelper::isPost()) {
             $this->requireCsrf('/admin/articles/create', 'article creation');
 
-            $postCategories = RequestHelper::post('categories');
-            $postTags = RequestHelper::post('tags');
+            // categories[] and tags[] arrive as arrays: the default string filter
+            // rejects them, which would silently clear the article's categories
+            // and tags on every save.
+            $postCategories = RequestHelper::post('categories', [], 'array');
+            $postTags = RequestHelper::post('tags', [], 'array');
 
             $this->saveData(0, $postCategories, $postTags);
         }
