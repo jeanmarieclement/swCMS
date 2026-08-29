@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="tests/bootstrap.php"
+         cacheResultFile=".phpunit.result.cache"
+         colors="true"
+         convertErrorsToExceptions="true"
+         convertNoticesToExceptions="true"
+         convertWarningsToExceptions="true"
+         beStrictAboutOutputDuringTests="false"
+         failOnWarning="false"
+         stopOnFailure="false">
+    <testsuites>
+        <testsuite name="Unit">
+            <directory>tests/Unit</directory>
+        </testsuite>
+        <testsuite name="Integration">
+            <directory>tests/Integration</directory>
+        </testsuite>
+        <testsuite name="Functional">
+            <directory>tests/Functional</directory>
+        </testsuite>
+    </testsuites>
+
+    <coverage>
+        <include>
+            <directory suffix=".php">app</directory>
+        </include>
+    </coverage>
+
+    <!--
+        The database driver is deliberately not set here. tests/bootstrap.php reads
+        it from the environment and falls back to MySQL, which is what the app
+        container provides, so running phpunit inside the container tests against
+        the real database.
+
+        On a host without MySQL, set DB_DRIVER=sqlite and the bootstrap builds an
+        in-memory database instead; the Unit suite is the one that runs that way.
+    -->
+</phpunit>
