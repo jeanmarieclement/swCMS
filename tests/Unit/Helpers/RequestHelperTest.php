@@ -272,4 +272,21 @@ class RequestHelperTest extends TestCase
         $result = RequestHelper::post('tags', [], 'array');
         $this->assertEquals([], $result);
     }
+
+    public function testArrayFilterKeepsMultiValueFormFields()
+    {
+        // How the article form posts its checkboxes and its multi-select:
+        // categories[]=3&categories[]=5&tags[]=php
+        $_POST['categories'] = ['3', '5'];
+        $_POST['tags'] = ['php'];
+
+        $this->assertEquals(['3', '5'], RequestHelper::post('categories', [], 'array'));
+        $this->assertEquals(['php'], RequestHelper::post('tags', [], 'array'));
+    }
+
+    public function testArrayFilterReturnsTheDefaultWhenTheFieldIsAbsent()
+    {
+        // No checkbox ticked: the field is not submitted at all
+        $this->assertEquals([], RequestHelper::post('categories', [], 'array'));
+    }
 }
