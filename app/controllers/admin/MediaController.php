@@ -66,8 +66,13 @@ class MediaController extends AdminController
      * @param int $id Media item ID
      * @return void
      */
-    public function viewAction($id)
+    public function viewAction($id = 0)
     {
+        // The router dispatches actions with no arguments and passes the route
+        // captures as $this->params, the way the sibling actions read them.
+        if (empty($id)) {
+            $id = $this->params[0] ?? 0;
+        }
         if (empty($id) || !is_numeric($id)) {
             RedirectHelper::redirect('/admin/media');
         }
