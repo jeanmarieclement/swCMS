@@ -280,4 +280,38 @@ class ValidationHelperTest extends TestCase
         $result = ValidationHelper::validate($data, $rules);
         $this->assertFalse($result['valid']);
     }
+
+    public function testValidateSupportsLaravelStyleMinRule()
+    {
+        // AuthController's registration rules use 'min:8' for the password field
+        $rules = ['password' => ['required', 'min:8']];
+
+        $result = ValidationHelper::validate(['password' => 'short'], $rules);
+        $this->assertFalse($result['valid']);
+        $this->assertArrayHasKey('password', $result['errors']);
+
+        $result = ValidationHelper::validate(['password' => 'longenough'], $rules);
+        $this->assertTrue($result['valid']);
+    }
+
+    public function testValidateSupportsLaravelStyleMaxRule()
+    {
+        $rules = ['title' => ['max:5']];
+
+        $result = ValidationHelper::validate(['title' => 'toolong'], $rules);
+        $this->assertFalse($result['valid']);
+
+        $result = ValidationHelper::validate(['title' => 'ok'], $rules);
+        $this->assertTrue($result['valid']);
+    }
+
+    public function testValidateRejectsUnknownRuleInsteadOfSilentlyPassing()
+    {
+        $result = ValidationHelper::validate(['field' => 'anything'], [
+            'field' => ['totally_bogus_rule']
+        ]);
+
+        $this->assertFalse($result['valid']);
+        $this->assertArrayHasKey('field', $result['errors']);
+    }
 }

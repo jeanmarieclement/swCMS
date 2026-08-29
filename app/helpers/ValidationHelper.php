@@ -143,9 +143,15 @@ class ValidationHelper
 
             foreach ($fieldRules as $rule) {
                 if (is_string($rule)) {
-                    // Simple rule like 'required', 'email'
-                    $ruleName = $rule;
-                    $ruleParams = [];
+                    // Simple rule like 'required', 'email', or Laravel-style
+                    // 'min:8' / 'max:8'
+                    [$ruleName, $ruleParam] = array_pad(explode(':', $rule, 2), 2, null);
+                    $ruleParams = $ruleParam === null ? [] : [(int) $ruleParam];
+                    $ruleName = match ($ruleName) {
+                        'min' => 'min_length',
+                        'max' => 'max_length',
+                        default => $ruleName
+                    };
                 } elseif (is_array($rule)) {
                     // Rule with parameters like ['min_length', 8]
                     $ruleName = $rule[0];
@@ -164,7 +170,10 @@ class ValidationHelper
                     'in' => self::in($value, $ruleParams[0] ?? []),
                     'slug' => self::slug($value),
                     'username' => self::username($value),
-                    default => true
+                    // An unrecognized rule name is a bug in the rule list, not a
+                    // pass: failing closed surfaces it instead of silently
+                    // skipping validation the caller thought was happening.
+                    default => false
                 };
 
                 if (!$valid) {
