@@ -236,8 +236,8 @@ class UserController extends AdminController
             $username = trim(RequestHelper::post('username'));
             $email = trim(RequestHelper::post('email', null, 'email'));
             $displayName = trim(RequestHelper::post('display_name'));
-            $password = RequestHelper::post('password', null, 'raw');
-            $confirmPassword = RequestHelper::post('password_confirm', null, 'raw');
+            $password = RequestHelper::post('password', null, 'password');
+            $confirmPassword = RequestHelper::post('password_confirm', null, 'password');
             $role = trim(RequestHelper::post('role'));
 
             // Comprehensive input validation
@@ -357,8 +357,8 @@ class UserController extends AdminController
             $username = trim(RequestHelper::post('username'));
             $email = trim(RequestHelper::post('email', null, 'email'));
             $displayName = trim(RequestHelper::post('display_name'));
-            $password = RequestHelper::post('password', null, 'raw');
-            $confirmPassword = RequestHelper::post('password_confirm', null, 'raw');
+            $password = RequestHelper::post('password', null, 'password');
+            $confirmPassword = RequestHelper::post('password_confirm', null, 'password');
             $role = trim(RequestHelper::post('role'));
 
             // If password is being changed, apply rate limiting

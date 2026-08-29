@@ -25,6 +25,7 @@ class RequestHelper
         'ip' => FILTER_VALIDATE_IP,
         'raw' => 'raw', // No filtering
         'array' => 'array', // Recursively sanitized array
+        'password' => 'password', // Unmodified like raw, but rejects arrays
     ];
 
     /**
@@ -159,8 +160,11 @@ class RequestHelper
 
         $filterType = self::FILTERS[$filter];
 
-        // Raw filter - return value without any modification
-        if ($filter === 'raw') {
+        // Raw and password filters - return value without any modification.
+        // 'password' differs from 'raw' only in the array guard in
+        // getFromSource(), which 'raw' is deliberately exempt from
+        // (PluginController::configure() needs it for genuine array input).
+        if ($filter === 'raw' || $filter === 'password') {
             return $value;
         }
 

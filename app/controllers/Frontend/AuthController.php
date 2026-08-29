@@ -69,7 +69,7 @@ class AuthController extends BaseController
                 LogHelper::warning('CSRF validation failed for login attempt from IP: ' . RequestHelper::server('REMOTE_ADDR', 'unknown'));
             } else {
                 $email = RequestHelper::post('email', null, 'email');
-                $password = RequestHelper::post('password', null, 'raw');
+                $password = RequestHelper::post('password', null, 'password');
 
                 // Fire login attempt hook
                 HookHelper::doAction('login_attempt', $email, RequestHelper::server('REMOTE_ADDR', 'unknown'));
@@ -240,8 +240,8 @@ class AuthController extends BaseController
                 $username = RequestHelper::post('username');
                 $email = RequestHelper::post('email', null, 'email');
                 $displayName = RequestHelper::post('display_name');
-                $password = RequestHelper::post('password', null, 'raw');
-                $confirmPassword = RequestHelper::post('confirm_password', null, 'raw');
+                $password = RequestHelper::post('password', null, 'password');
+                $confirmPassword = RequestHelper::post('confirm_password', null, 'password');
 
                 // Validate input using ValidationHelper
                 $validationErrors = ValidationHelper::validate([
@@ -473,8 +473,8 @@ class AuthController extends BaseController
 
             $token = RequestHelper::post('token');
             $email = RequestHelper::post('email', null, 'email');
-            $password = RequestHelper::post('password', null, 'raw');
-            $confirmPassword = RequestHelper::post('confirm_password', null, 'raw');
+            $password = RequestHelper::post('password', null, 'password');
+            $confirmPassword = RequestHelper::post('confirm_password', null, 'password');
 
             // Validate inputs
             if (empty($token) || empty($email) || empty($password)) {

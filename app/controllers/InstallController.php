@@ -491,7 +491,7 @@ class InstallController
         }
 
         // Get password with raw filter to preserve special characters
-        $password = RequestHelper::post('admin_password', '', 'raw');
+        $password = RequestHelper::post('admin_password', '', 'password');
 
         // Validate password strength using User model validation
         // We need to instantiate User model to use its validation method
@@ -525,7 +525,7 @@ class InstallController
         $this->config['admin'] = [
             'username' => RequestHelper::post('admin_username', ''),
             'email' => RequestHelper::post('admin_email', '', 'email'),
-            'password' => password_hash(RequestHelper::post('admin_password', '', 'raw'), PASSWORD_DEFAULT)
+            'password' => password_hash(RequestHelper::post('admin_password', '', 'password'), PASSWORD_DEFAULT)
         ];
         $this->saveInstallConfig();
     }

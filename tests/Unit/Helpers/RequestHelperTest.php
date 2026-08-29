@@ -289,4 +289,25 @@ class RequestHelperTest extends TestCase
         // No checkbox ticked: the field is not submitted at all
         $this->assertEquals([], RequestHelper::post('categories', [], 'array'));
     }
+
+    public function testPasswordFilterReturnsValueUnmodified()
+    {
+        // Passwords must never be mangled by htmlspecialchars/strip_tags: a
+        // password containing '<' or '&' has to survive verbatim so it still
+        // matches the hash it was registered with.
+        $_POST['password'] = 'a<b>&"c';
+        $result = RequestHelper::post('password', null, 'password');
+        $this->assertEquals('a<b>&"c', $result);
+    }
+
+    public function testPasswordFilterRejectsArrayInput()
+    {
+        // password[]=x must not reach password_verify()/password_hash() as an
+        // array: unlike 'raw' (which PluginController::configure() genuinely
+        // needs for array input), 'password' rejects arrays like every other
+        // scalar filter.
+        $_POST['password'] = ['x'];
+        $result = RequestHelper::post('password', null, 'password');
+        $this->assertNull($result);
+    }
 }
