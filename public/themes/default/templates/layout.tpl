@@ -7,6 +7,12 @@
     <title>{block name="title"}{if isset($settings.site_title)}{$settings.site_title|escape}{else}swCMS{/if}{/block}</title>
     <meta name="description" content="{block name="description"}Un moderno CMS costruito con PHP{/block}">
     <meta name="keywords" content="{block name="keywords"}CMS, PHP, Content Management{/block}">
+
+    {* Canonical URL: set by the controllers that know the page's own address *}
+    {if isset($canonical) && $canonical}
+        <link rel="canonical" href="{$canonical|escape}">
+        <meta property="og:url" content="{$canonical|escape}">
+    {/if}
     
     {* CSS Dependencies *}
     <link rel="stylesheet" href="{$settings.SITE_URL}/vendor/bootstrap/css/bootstrap.min.css">

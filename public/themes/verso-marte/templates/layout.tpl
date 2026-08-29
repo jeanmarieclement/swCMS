@@ -7,6 +7,12 @@
     <title>{block name="title"}{if isset($settings.site_title)}{$settings.site_title|escape}{else}Verso Marte{/if}{/block}</title>
     <meta name="description" content="{block name="description"}Esplora il viaggio verso Marte attraverso scienza, tecnologia e immaginazione{/block}">
     <meta name="keywords" content="{block name="keywords"}Marte, spazio, esplorazione spaziale, scienza, tecnologia{/block}">
+
+    {* Canonical URL: set by the controllers that know the page's own address *}
+    {if isset($canonical) && $canonical}
+        <link rel="canonical" href="{$canonical|escape}">
+        <meta property="og:url" content="{$canonical|escape}">
+    {/if}
     
     {* CSS Dependencies *}
     <link rel="stylesheet" href="{$settings.SITE_URL}/themes/verso-marte/css/style.css">
