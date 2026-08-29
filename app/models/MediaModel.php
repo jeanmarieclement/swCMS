@@ -34,10 +34,21 @@ class MediaModel extends Model
         'mp3' => ['audio/mpeg'], 'wav' => ['audio/wav', 'audio/x-wav'], 'ogg' => ['audio/ogg', 'application/ogg'],
     ];
 
-    public function __construct()
+    /**
+     * Constructor
+     *
+     * @param \PDO|null $pdo Optional connection, mainly for tests
+     */
+    public function __construct(\PDO $pdo = null)
     {
         parent::__construct();
         $this->table = 'media';
+
+        if ($pdo !== null) {
+            // An injected connection replaces the Database singleton, which lets
+            // the model be exercised against an in-memory SQLite database.
+            $this->db = $pdo;
+        }
     }
 
     /**
@@ -302,13 +313,18 @@ class MediaModel extends Model
 
 
     // Ottieni un media per ID
-    public function getById($id): object
+    public function getById($id): ?object
     {
         $sql = "SELECT * FROM media WHERE id = :id LIMIT 1";
         $stmt = $this->db->prepare($sql);
         $stmt->bindValue(':id', $id, $this->db::PARAM_INT);
         $stmt->execute();
-        return $stmt->fetch($this->db::FETCH_OBJ);
+
+        // fetch() returns false when no row matches: hand back null so callers
+        // can test the result instead of hitting a TypeError on the way out.
+        $media = $stmt->fetch($this->db::FETCH_OBJ);
+
+        return $media === false ? null : $media;
     }
 
     // Lista media con filtri e paginazione
@@ -439,10 +455,16 @@ class MediaModel extends Model
         if (file_exists($thumbPath)) {
             @unlink($thumbPath);
         }
-        // Reset featured_image nei post che usano questo media
-        $sql = "UPDATE posts SET featured_image = NULL WHERE featured_image = :media_id";
+        // Reset featured_image nei post che usano questo media.
+        // featured_image holds the public URL the media picker inserted, not an id
+        // and not a filesystem path; for images the picker stores the thumbnail URL,
+        // so both spellings have to be cleared.
+        $webPath = '/uploads/media/' . ltrim($media->filepath, '/') . $media->filename;
+        $thumbWebPath = '/uploads/media/' . ltrim($media->filepath, '/') . 'thumbs/' . $media->filename;
+        $sql = "UPDATE posts SET featured_image = NULL WHERE featured_image IN (:web_path, :thumb_web_path)";
         $stmt = $this->db->prepare($sql);
-        $stmt->bindValue(':media_id', $filePath, $this->db::PARAM_STR);
+        $stmt->bindValue(':web_path', $webPath, $this->db::PARAM_STR);
+        $stmt->bindValue(':thumb_web_path', $thumbWebPath, $this->db::PARAM_STR);
         $stmt->execute();
         // Cancella record dal database
         $this->delete($id);
