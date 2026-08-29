@@ -127,8 +127,8 @@ class RefactoredControllersSecurityTest extends TestCase
         $_POST['invalid'] = 'abc';
 
         $this->assertSame(123, RequestHelper::post('page_id', 0, 'int'));
-        // Note: validation returns null on failure, not the default
-        $this->assertNull(RequestHelper::post('invalid', 0, 'int'));
+        // Invalid input returns the caller's default (see #18), not a bare null
+        $this->assertSame(0, RequestHelper::post('invalid', 0, 'int'));
     }
 
     public function testRequestHelperPostEmailFilterValidatesEmail()
@@ -140,8 +140,8 @@ class RefactoredControllersSecurityTest extends TestCase
         $invalidEmail = RequestHelper::post('email_invalid', '', 'email');
 
         $this->assertEquals('user@example.com', $validEmail);
-        // Invalid email validation returns null
-        $this->assertNull($invalidEmail);
+        // Invalid input returns the caller's default (see #18), not a bare null
+        $this->assertEquals('', $invalidEmail);
     }
 
     public function testRequestHelperGetReturnsDefaultWhenKeyNotExists()

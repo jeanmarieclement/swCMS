@@ -142,7 +142,18 @@ class RequestHelper
             return $default;
         }
 
-        return self::sanitize($value, $filter);
+        $result = self::sanitize($value, $filter);
+
+        // A validation filter signals malformed input with null. Array input
+        // above already returns $default rather than a hardcoded null, so
+        // rejection is unified here too: every way a value can be rejected
+        // hands back the caller's default, never a bare null regardless of it.
+        $validationFilters = ['int', 'float', 'email', 'url', 'bool', 'ip'];
+        if ($result === null && in_array($filter, $validationFilters, true)) {
+            return $default;
+        }
+
+        return $result;
     }
 
     /**
@@ -178,8 +189,16 @@ class RequestHelper
             return htmlspecialchars(strip_tags((string) $value), ENT_QUOTES, 'UTF-8');
         }
 
+        // Bool needs FILTER_NULL_ON_FAILURE: without it, FILTER_VALIDATE_BOOLEAN
+        // returns false both for a valid falsy input ('0', 'off') and for
+        // garbage, so a caller could never tell "explicitly off" from
+        // "unparseable". With the flag, false and null are distinct again.
+        if ($filter === 'bool') {
+            return filter_var($value, $filterType, FILTER_NULL_ON_FAILURE);
+        }
+
         // Validation filters (int, email, url, etc.)
-        if (in_array($filter, ['int', 'float', 'email', 'url', 'bool', 'ip'])) {
+        if (in_array($filter, ['int', 'float', 'email', 'url', 'ip'])) {
             $result = filter_var($value, $filterType);
             return $result !== false ? $result : null;
         }

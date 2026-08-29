@@ -51,6 +51,38 @@ class RequestHelperTest extends TestCase
         $this->assertNull($result);
     }
 
+    public function testGetRejectsInvalidIntegerReturningTheCallerDefault()
+    {
+        // Every rejection should signal the same way as array input already
+        // does: with the caller's default, not always null regardless of it.
+        $_GET['id'] = 'abc';
+        $result = RequestHelper::get('id', 42, 'int');
+        $this->assertEquals(42, $result);
+    }
+
+    public function testBoolFilterAcceptsExplicitFalse()
+    {
+        // FILTER_VALIDATE_BOOLEAN returns false for a valid falsy input, which
+        // must not be indistinguishable from "not set" (the default).
+        $_GET['active'] = '0';
+        $result = RequestHelper::get('active', true, 'bool');
+        $this->assertFalse($result);
+    }
+
+    public function testBoolFilterAcceptsTheStringOff()
+    {
+        $_GET['active'] = 'off';
+        $result = RequestHelper::get('active', true, 'bool');
+        $this->assertFalse($result);
+    }
+
+    public function testBoolFilterRejectsGarbageReturningTheDefault()
+    {
+        $_GET['active'] = 'bogus';
+        $result = RequestHelper::get('active', true, 'bool');
+        $this->assertTrue($result);
+    }
+
     public function testGetValidatesEmail()
     {
         $_GET['email'] = 'test@example.com';
