@@ -62,8 +62,8 @@ class ProfileController extends AdminController
             $username = trim(RequestHelper::post('username'));
             $email = RequestHelper::post('email', null, 'email');
             $displayName = trim(RequestHelper::post('display_name'));
-            $password = RequestHelper::post('password', null, 'raw');
-            $confirmPassword = RequestHelper::post('confirm_password', null, 'raw');
+            $password = RequestHelper::post('password', null, 'password');
+            $confirmPassword = RequestHelper::post('confirm_password', null, 'password');
 
             // Validate input
             if (empty($username) || empty($email)) {

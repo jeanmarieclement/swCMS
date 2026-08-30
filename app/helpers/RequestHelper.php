@@ -25,6 +25,7 @@ class RequestHelper
         'ip' => FILTER_VALIDATE_IP,
         'raw' => 'raw', // No filtering
         'array' => 'array', // Recursively sanitized array
+        'password' => 'password', // Unmodified like raw, but rejects arrays
     ];
 
     /**
@@ -141,7 +142,18 @@ class RequestHelper
             return $default;
         }
 
-        return self::sanitize($value, $filter);
+        $result = self::sanitize($value, $filter);
+
+        // A validation filter signals malformed input with null. Array input
+        // above already returns $default rather than a hardcoded null, so
+        // rejection is unified here too: every way a value can be rejected
+        // hands back the caller's default, never a bare null regardless of it.
+        $validationFilters = ['int', 'float', 'email', 'url', 'bool', 'ip'];
+        if ($result === null && in_array($filter, $validationFilters, true)) {
+            return $default;
+        }
+
+        return $result;
     }
 
     /**
@@ -159,8 +171,11 @@ class RequestHelper
 
         $filterType = self::FILTERS[$filter];
 
-        // Raw filter - return value without any modification
-        if ($filter === 'raw') {
+        // Raw and password filters - return value without any modification.
+        // 'password' differs from 'raw' only in the array guard in
+        // getFromSource(), which 'raw' is deliberately exempt from
+        // (PluginController::configure() needs it for genuine array input).
+        if ($filter === 'raw' || $filter === 'password') {
             return $value;
         }
 
@@ -174,8 +189,16 @@ class RequestHelper
             return htmlspecialchars(strip_tags((string) $value), ENT_QUOTES, 'UTF-8');
         }
 
+        // Bool needs FILTER_NULL_ON_FAILURE: without it, FILTER_VALIDATE_BOOLEAN
+        // returns false both for a valid falsy input ('0', 'off') and for
+        // garbage, so a caller could never tell "explicitly off" from
+        // "unparseable". With the flag, false and null are distinct again.
+        if ($filter === 'bool') {
+            return filter_var($value, $filterType, FILTER_NULL_ON_FAILURE);
+        }
+
         // Validation filters (int, email, url, etc.)
-        if (in_array($filter, ['int', 'float', 'email', 'url', 'bool', 'ip'])) {
+        if (in_array($filter, ['int', 'float', 'email', 'url', 'ip'])) {
             $result = filter_var($value, $filterType);
             return $result !== false ? $result : null;
         }
@@ -195,6 +218,18 @@ class RequestHelper
         $sanitized = [];
 
         foreach ($data as $key => $value) {
+            // Keys are user input too: settings[<img src=x onerror=...>]=y must
+            // not carry attacker markup through untouched. Sanitizing a key is
+            // not reversible though, and it is not injective — 'NAME<x' strips
+            // down to 'NAME' — so rewriting it would let an unexpected key
+            // impersonate an expected one and overwrite it, defeating the
+            // allowlists callers apply to key names. A key that does not
+            // survive sanitization unchanged is dropped instead.
+            // Integer keys (from name[]=x lists) are not user-controlled text.
+            if (is_string($key) && self::sanitize($key, 'string') !== $key) {
+                continue;
+            }
+
             if (is_array($value)) {
                 $sanitized[$key] = self::sanitizeArray($value);
             } else {

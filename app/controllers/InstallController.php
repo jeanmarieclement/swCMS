@@ -377,7 +377,7 @@ class InstallController
                     RequestHelper::post('db_host', ''),
                     RequestHelper::post('db_port', 3306, 'int') ?: 3306
                 );
-                $pdo = new \PDO($dsn, RequestHelper::post('db_user', ''), RequestHelper::post('db_pass', '', 'raw'));
+                $pdo = new \PDO($dsn, RequestHelper::post('db_user', ''), RequestHelper::post('db_pass', '', 'password'));
 
                 // Test if database exists, create if not (db_name already validated in validateDatabaseConfig)
                 $dbName = $this->config['database']['name'] ?? '';
@@ -414,7 +414,7 @@ class InstallController
                 $this->errors[] = 'Please fill in all required database fields.';
                 return false;
             }
-            if (!preg_match('/^[A-Za-z0-9_]{1,64}$/', RequestHelper::post('db_name', '', 'raw'))) {
+            if (!preg_match('/^[A-Za-z0-9_]{1,64}$/', RequestHelper::post('db_name', ''))) {
                 $this->errors[] = 'Database name may only contain letters, numbers, and underscores (max 64 chars).';
                 return false;
             }
@@ -441,7 +441,7 @@ class InstallController
             'port' => RequestHelper::post('db_port', 3306, 'int') ?: 3306,
             'name' => RequestHelper::post('db_name', ''),
             'user' => RequestHelper::post('db_user', ''),
-            'pass' => RequestHelper::post('db_pass', '', 'raw'),
+            'pass' => RequestHelper::post('db_pass', '', 'password'),
             'sqlite_path' => RequestHelper::post('db_sqlite_path', DATA_PATH . '/database.sqlite')
         ];
         $this->saveInstallConfig();
@@ -491,7 +491,7 @@ class InstallController
         }
 
         // Get password with raw filter to preserve special characters
-        $password = RequestHelper::post('admin_password', '', 'raw');
+        $password = RequestHelper::post('admin_password', '', 'password');
 
         // Validate password strength using User model validation
         // We need to instantiate User model to use its validation method
@@ -525,7 +525,7 @@ class InstallController
         $this->config['admin'] = [
             'username' => RequestHelper::post('admin_username', ''),
             'email' => RequestHelper::post('admin_email', '', 'email'),
-            'password' => password_hash(RequestHelper::post('admin_password', '', 'raw'), PASSWORD_DEFAULT)
+            'password' => password_hash(RequestHelper::post('admin_password', '', 'password'), PASSWORD_DEFAULT)
         ];
         $this->saveInstallConfig();
     }

@@ -51,6 +51,38 @@ class RequestHelperTest extends TestCase
         $this->assertNull($result);
     }
 
+    public function testGetRejectsInvalidIntegerReturningTheCallerDefault()
+    {
+        // Every rejection should signal the same way as array input already
+        // does: with the caller's default, not always null regardless of it.
+        $_GET['id'] = 'abc';
+        $result = RequestHelper::get('id', 42, 'int');
+        $this->assertEquals(42, $result);
+    }
+
+    public function testBoolFilterAcceptsExplicitFalse()
+    {
+        // FILTER_VALIDATE_BOOLEAN returns false for a valid falsy input, which
+        // must not be indistinguishable from "not set" (the default).
+        $_GET['active'] = '0';
+        $result = RequestHelper::get('active', true, 'bool');
+        $this->assertFalse($result);
+    }
+
+    public function testBoolFilterAcceptsTheStringOff()
+    {
+        $_GET['active'] = 'off';
+        $result = RequestHelper::get('active', true, 'bool');
+        $this->assertFalse($result);
+    }
+
+    public function testBoolFilterRejectsGarbageReturningTheDefault()
+    {
+        $_GET['active'] = 'bogus';
+        $result = RequestHelper::get('active', true, 'bool');
+        $this->assertTrue($result);
+    }
+
     public function testGetValidatesEmail()
     {
         $_GET['email'] = 'test@example.com';
@@ -182,6 +214,55 @@ class RequestHelperTest extends TestCase
         $this->assertEquals('test@example.com', $result['user']['email']);
     }
 
+    public function testAllDropsKeysCarryingMarkup()
+    {
+        // Array keys are user input just like values: settings[<img src=x
+        // onerror=alert(1)>]=y must not carry attacker markup through.
+        $_POST = ['<img src=x onerror=alert(1)>' => 'value'];
+
+        $result = RequestHelper::all('post');
+
+        $this->assertSame([], $result);
+    }
+
+    public function testArrayFilterDropsKeysCarryingMarkup()
+    {
+        $_POST['settings'] = ['<script>xss</script>' => 'value', 'safe' => 'kept'];
+
+        $result = RequestHelper::post('settings', [], 'array');
+
+        $this->assertSame(['safe' => 'kept'], $result);
+    }
+
+    public function testASanitizedKeyNeverOverwritesALegitimateOne()
+    {
+        // Sanitizing a key is not injective: 'SITE_NAME<x' strips down to
+        // 'SITE_NAME'. Rewriting it would let an unexpected key impersonate an
+        // expected one and win, defeating allowlists that test the key name.
+        $_POST = ['SITE_NAME' => 'legitimate', 'SITE_NAME<x' => 'injected'];
+
+        $result = RequestHelper::all('post');
+
+        $this->assertEquals('legitimate', $result['SITE_NAME']);
+    }
+
+    public function testKeysThatCannotSurviveSanitizationAreDropped()
+    {
+        $_POST = ['<img src=x onerror=alert(1)>' => 'value', 'clean_key' => 'kept'];
+
+        $result = RequestHelper::all('post');
+
+        $this->assertEquals(['clean_key' => 'kept'], $result);
+    }
+
+    public function testNumericKeysArePreserved()
+    {
+        // A list like tags[]=a&tags[]=b has integer keys, which must survive
+        $_POST['tags'] = ['a', 'b'];
+
+        $this->assertEquals(['a', 'b'], RequestHelper::post('tags', [], 'array'));
+    }
+
     public function testRawFilterReturnsUnmodifiedValue()
     {
         $_GET['raw'] = '<script>test</script>';
@@ -288,5 +369,29 @@ class RequestHelperTest extends TestCase
     {
         // No checkbox ticked: the field is not submitted at all
         $this->assertEquals([], RequestHelper::post('categories', [], 'array'));
+    }
+
+    public function testPasswordFilterReturnsValueUnmodified()
+    {
+        // Passwords must never be mangled by htmlspecialchars/strip_tags: a
+        // password containing '<' or '&' has to survive verbatim so it still
+        // matches the hash it was registered with.
+        // Deliberately not credential-shaped: this is a mangling probe, not a
+        // sample password. Every character here is one the string filter would
+        // alter (strip_tags removes <b>, htmlspecialchars escapes & and ").
+        $_POST['password'] = 'a<b>&"c';
+        $result = RequestHelper::post('password', null, 'password');
+        $this->assertEquals('a<b>&"c', $result);
+    }
+
+    public function testPasswordFilterRejectsArrayInput()
+    {
+        // password[]=x must not reach password_verify()/password_hash() as an
+        // array: unlike 'raw' (which PluginController::configure() genuinely
+        // needs for array input), 'password' rejects arrays like every other
+        // scalar filter.
+        $_POST['password'] = ['x'];
+        $result = RequestHelper::post('password', null, 'password');
+        $this->assertNull($result);
     }
 }
