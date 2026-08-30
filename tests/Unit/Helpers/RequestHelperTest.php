@@ -376,6 +376,9 @@ class RequestHelperTest extends TestCase
         // Passwords must never be mangled by htmlspecialchars/strip_tags: a
         // password containing '<' or '&' has to survive verbatim so it still
         // matches the hash it was registered with.
+        // Deliberately not credential-shaped: this is a mangling probe, not a
+        // sample password. Every character here is one the string filter would
+        // alter (strip_tags removes <b>, htmlspecialchars escapes & and ").
         $_POST['password'] = 'a<b>&"c';
         $result = RequestHelper::post('password', null, 'password');
         $this->assertEquals('a<b>&"c', $result);
