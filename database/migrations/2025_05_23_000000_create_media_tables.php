@@ -57,7 +57,7 @@ class CreateMediaTables extends Migration
                 $this->db->exec("CREATE INDEX IF NOT EXISTS idx_media_relationships_related ON media_relationships(related_id, related_type);");
             } else {
                 // MySQL compatible CREATE TABLE for media
-                $this->exec("CREATE TABLE IF NOT EXISTS `media` (
+                $this->db->exec("CREATE TABLE IF NOT EXISTS `media` (
                     `id` int(11) NOT NULL AUTO_INCREMENT,
                     `user_id` int(11) NOT NULL,
                     `title` varchar(255) NOT NULL,
@@ -77,7 +77,7 @@ class CreateMediaTables extends Migration
                     KEY `filetype` (`filetype`)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;");
                 // MySQL compatible CREATE TABLE for media_relationships
-                $this->exec("CREATE TABLE IF NOT EXISTS `media_relationships` (
+                $this->db->exec("CREATE TABLE IF NOT EXISTS `media_relationships` (
                     `id` int(11) NOT NULL AUTO_INCREMENT,
                     `media_id` int(11) NOT NULL,
                     `related_id` int(11) NOT NULL,
