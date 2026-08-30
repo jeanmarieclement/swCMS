@@ -36,6 +36,10 @@ class SeedRoles extends Migration
             "INSERT INTO roles (name, description, level) VALUES (?, ?, ?)"
         );
 
+        if ($exists === false || $insert === false) {
+            $this->failed('prepare the role statements');
+        }
+
         foreach ($roles as [$name, $desc, $level]) {
             $exists->execute([$name]);
 
@@ -55,18 +59,47 @@ class SeedRoles extends Migration
      */
     private function removeDuplicateRoles(): void
     {
-        $keep = $this->db
-            ->query("SELECT MIN(id) FROM roles GROUP BY name")
-            ->fetchAll(\PDO::FETCH_COLUMN);
+        $statement = $this->db->query("SELECT MIN(id) FROM roles GROUP BY name");
+
+        if ($statement === false) {
+            $this->failed('read the existing roles');
+        }
+
+        $keep = $statement->fetchAll(\PDO::FETCH_COLUMN);
 
         if (empty($keep)) {
             return;
         }
 
         $placeholders = implode(',', array_fill(0, count($keep), '?'));
-        $this->db
-            ->prepare("DELETE FROM roles WHERE id NOT IN ({$placeholders})")
-            ->execute($keep);
+        $delete = $this->db->prepare("DELETE FROM roles WHERE id NOT IN ({$placeholders})");
+
+        if ($delete === false) {
+            $this->failed('remove duplicate roles');
+        }
+
+        $delete->execute($keep);
+    }
+
+    /**
+     * Report a statement that returned false instead of throwing.
+     *
+     * PDO only raises PDOException in exception mode. PHP 7.4 — still allowed
+     * by composer.json — defaults to ERRMODE_SILENT, and InstallController
+     * builds its connection without options, so there a failing statement
+     * returns false and the next call on it would raise an Error.
+     * MigrationRunner catches \Exception, not \Error, so that would escape as a
+     * fatal instead of being reported as a failed migration.
+     *
+     * @throws \RuntimeException
+     */
+    private function failed(string $what): void
+    {
+        $info = $this->db->errorInfo();
+
+        throw new \RuntimeException(
+            "SeedRoles could not {$what}: " . ($info[2] ?? 'unknown database error')
+        );
     }
 
     /**
@@ -83,17 +116,27 @@ class SeedRoles extends Migration
         $driver = $this->db->getAttribute(\PDO::ATTR_DRIVER_NAME);
 
         if ($driver === 'sqlite') {
-            $this->db->exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_roles_name ON roles(name)");
+            if ($this->db->exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_roles_name ON roles(name)") === false) {
+                $this->failed('create the unique index on roles(name)');
+            }
             return;
         }
 
+        // Both error modes have to be handled: exception mode throws, silent
+        // mode returns false and leaves the code on the handle.
         try {
-            $this->db->exec("CREATE UNIQUE INDEX idx_roles_name ON roles(name)");
-        } catch (\PDOException $e) {
-            // 1061: duplicate key name — the index is already there
-            if (($e->errorInfo[1] ?? null) !== 1061) {
-                throw $e;
+            if ($this->db->exec("CREATE UNIQUE INDEX idx_roles_name ON roles(name)") !== false) {
+                return;
             }
+
+            $code = $this->db->errorInfo()[1] ?? null;
+        } catch (\PDOException $e) {
+            $code = $e->errorInfo[1] ?? null;
+        }
+
+        // 1061: duplicate key name — the index is already there
+        if ((int) $code !== 1061) {
+            $this->failed('create the unique index on roles(name)');
         }
     }
 
