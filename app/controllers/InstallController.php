@@ -2,6 +2,7 @@
 
 namespace App\Controllers;
 
+use App\Core\InstallationState;
 use App\Helpers\RequestHelper;
 use App\Helpers\CSRFHelper;
 use App\Helpers\SessionHelper;
@@ -20,8 +21,17 @@ class InstallController
     public function __construct()
     {
         // Check if installation is already complete
-        $installFlagFile = ROOT_PATH . '/data/.installed';
-        if (file_exists($installFlagFile)) {
+        if (InstallationState::flagExists(ROOT_PATH)) {
+            $this->redirectToMainSite();
+        }
+
+        // The flag alone cannot be trusted: data/.installed is a dotfile and is
+        // routinely lost to an FTP deploy that skips hidden files, a backup
+        // restored without them, or a data/ that was never writable. Serving the
+        // wizard on a live site would let a visitor repoint the database and
+        // create an administrator, so the real state of the system decides.
+        if (InstallationState::environmentLooksInstalled(ROOT_PATH . '/.env')) {
+            $this->restoreInstallationFlag();
             $this->redirectToMainSite();
         }
 
@@ -741,6 +751,25 @@ class InstallController
 
         if (!file_put_contents($flagPath, $flagContent)) {
             throw new Exception('Could not create installation flag');
+        }
+    }
+
+    /**
+     * Put back a flag that was lost from an installation which is otherwise fine
+     *
+     * Best effort by design: if data/ is not writable the flag cannot be
+     * written, and that must not stop us refusing to run the wizard — refusing
+     * is the part that protects the site. The consequence of failing here is
+     * only that the check runs again on the next request.
+     *
+     * @return void
+     */
+    private function restoreInstallationFlag()
+    {
+        try {
+            $this->createInstallationFlag();
+        } catch (Exception $e) {
+            // data/ not writable: nothing more to do, the site is still protected
         }
     }
 
