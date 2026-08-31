@@ -26,6 +26,19 @@ class InstallationState
     public const REQUIRED_TABLES = ['users', 'settings', 'migrations'];
 
     /**
+     * Roles this application treats as administrative
+     *
+     * Must stay in step with what the rest of the application considers an
+     * administrator, otherwise a site whose only privileged account is not in
+     * this list would be reported as unfinished and get the wizard back:
+     * `AuthMiddleware::requireAdmin()` accepts both, `RoleService` short-circuits
+     * on both, and `RoleController` describes super_admin as full system access.
+     *
+     * @var string[]
+     */
+    public const ADMIN_ROLES = ['admin', 'super_admin'];
+
+    /**
      * Does the flag file exist?
      *
      * @param string $rootPath Application root
@@ -178,10 +191,14 @@ class InstallationState
      */
     private static function hasAdministrator(\PDO $pdo): bool
     {
-        try {
-            $statement = $pdo->query("SELECT COUNT(*) FROM users WHERE role = 'admin'");
+        $placeholders = implode(',', array_fill(0, count(self::ADMIN_ROLES), '?'));
 
-            if ($statement === false) {
+        try {
+            $statement = $pdo->prepare(
+                "SELECT COUNT(*) FROM users WHERE role IN ({$placeholders})"
+            );
+
+            if ($statement === false || $statement->execute(self::ADMIN_ROLES) === false) {
                 return false;
             }
 

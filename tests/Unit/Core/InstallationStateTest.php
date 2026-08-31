@@ -63,6 +63,35 @@ class InstallationStateTest extends TestCase
         $this->assertFalse(InstallationState::looksInstalled($pdo));
     }
 
+    public function testSchemaWhoseOnlyAdministratorIsASuperAdminIsInstalled()
+    {
+        // super_admin is a first-class administrative role in this application:
+        // AuthMiddleware::requireAdmin() accepts ['admin', 'super_admin'],
+        // RoleService::canAccessTemplate() short-circuits on both, and
+        // RoleController offers it as "Full system access with all
+        // administrative privileges". Recognising only 'admin' here would
+        // report such a site as unfinished and expose the wizard on it.
+        $pdo = $this->connection();
+        $this->createSchema($pdo);
+        $pdo->exec("INSERT INTO users (username, email, role) VALUES ('root', 'r@b.co', 'super_admin')");
+
+        $this->assertTrue(InstallationState::looksInstalled($pdo));
+    }
+
+    public function testEveryAdminRoleTheAppRecognisesCountsAsInstalled()
+    {
+        foreach (InstallationState::ADMIN_ROLES as $role) {
+            $pdo = $this->connection();
+            $this->createSchema($pdo);
+            $pdo->exec("INSERT INTO users (username, email, role) VALUES ('u', 'u@b.co', '{$role}')");
+
+            $this->assertTrue(
+                InstallationState::looksInstalled($pdo),
+                "Role '{$role}' is listed as administrative but does not mark the site installed"
+            );
+        }
+    }
+
     public function testSchemaWithOnlyNonAdminUsersIsNotInstalled()
     {
         $pdo = $this->connection();
