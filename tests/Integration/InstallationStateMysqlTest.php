@@ -123,6 +123,51 @@ class InstallationStateMysqlTest extends TestCase
         $this->assertTrue(InstallationState::looksInstalled($this->pdo));
     }
 
+    public function testInspectEnvironmentReadsARealMysqlEnvFile()
+    {
+        // Covers the whole path the installer actually takes: parse the .env,
+        // connect to MySQL with what it says, and inspect the schema. The unit
+        // tests exercise this against SQLite only.
+        $adminRoles = implode("','", InstallationState::ADMIN_ROLES);
+        $admins = (int) $this->pdo
+            ->query("SELECT COUNT(*) FROM users WHERE role IN ('{$adminRoles}')")
+            ->fetchColumn();
+
+        if ($admins === 0) {
+            $this->markTestSkipped('No administrator in this database: nothing to assert installed.');
+        }
+
+        $env = tempnam(sys_get_temp_dir(), 'env');
+        file_put_contents($env, implode("\n", [
+            'DB_DRIVER=mysql',
+            'DB_HOST=' . getenv('DB_HOST'),
+            'DB_PORT=' . (getenv('DB_PORT') ?: '3306'),
+            'DB_NAME=' . getenv('DB_NAME'),
+            'DB_USER=' . getenv('DB_USER'),
+            'DB_PASS=' . getenv('DB_PASS'),
+        ]) . "\n");
+
+        $state = InstallationState::inspectEnvironment($env);
+
+        unlink($env);
+
+        $this->assertEquals(InstallationState::STATE_INSTALLED, $state);
+    }
+
+    public function testAnEnvNamingAnUnreachableMysqlIsUnverifiableNotAbsent()
+    {
+        // The distinction that keeps a database outage from reopening the
+        // wizard on a live site.
+        $env = tempnam(sys_get_temp_dir(), 'env');
+        file_put_contents($env, "DB_DRIVER=mysql\nDB_HOST=127.0.0.1\nDB_PORT=1\nDB_NAME=x\nDB_USER=x\nDB_PASS=x\n");
+
+        $state = InstallationState::inspectEnvironment($env);
+
+        unlink($env);
+
+        $this->assertEquals(InstallationState::STATE_UNVERIFIABLE, $state);
+    }
+
     public function testSuperAdminAloneIsEnoughOnMysql()
     {
         $this->pdo->exec("CREATE TEMPORARY TABLE users (

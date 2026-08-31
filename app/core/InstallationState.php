@@ -38,6 +38,19 @@ class InstallationState
      */
     public const ADMIN_ROLES = ['admin', 'super_admin'];
 
+    /** No evidence of a previous installation: the wizard may run */
+    public const STATE_NOT_INSTALLED = 'not_installed';
+
+    /** A working installation was found: the wizard must not run */
+    public const STATE_INSTALLED = 'installed';
+
+    /**
+     * A previous installation is configured but could not be inspected — the
+     * database it names is unreachable. The wizard must not run on a guess:
+     * a transient outage would otherwise reopen it on a live site.
+     */
+    public const STATE_UNVERIFIABLE = 'unverifiable';
+
     /**
      * Does the flag file exist?
      *
@@ -47,30 +60,6 @@ class InstallationState
     public static function flagExists($rootPath): bool
     {
         return file_exists(rtrim($rootPath, '/') . '/data/.installed');
-    }
-
-    /**
-     * Does this connection hold a usable installation?
-     *
-     * True only when every required table is present and at least one
-     * administrator exists — a database where the migrations ran but the wizard
-     * never created the account is genuinely unfinished, and the wizard has to
-     * stay reachable for it.
-     *
-     * @param \PDO $pdo
-     * @return bool
-     */
-    public static function looksInstalled(\PDO $pdo): bool
-    {
-        $tables = self::listTables($pdo);
-
-        foreach (self::REQUIRED_TABLES as $required) {
-            if (!in_array($required, $tables, true)) {
-                return false;
-            }
-        }
-
-        return self::hasAdministrator($pdo);
     }
 
     /**
@@ -88,67 +77,148 @@ class InstallationState
             return [];
         }
 
-        $values = @parse_ini_file($envPath);
+        // INI_SCANNER_RAW, because a .env is not really an INI file. Under the
+        // default scanner a password containing & | ( ) makes the whole parse
+        // fail, and the bare words yes/no/on/off are converted to '1'/'' — both
+        // of which would report an installed site as unfinished.
+        $values = @parse_ini_file($envPath, false, INI_SCANNER_RAW);
 
         if ($values === false || empty($values['DB_NAME']) && empty($values['DB_SQLITE_PATH'])) {
             return [];
         }
 
+        $sqlitePath = $values['DB_SQLITE_PATH'] ?? '';
+
         return [
-            'driver' => $values['DB_DRIVER'] ?? 'mysql',
+            'driver' => strtolower($values['DB_DRIVER'] ?? 'mysql'),
             'host' => $values['DB_HOST'] ?? 'localhost',
             'port' => $values['DB_PORT'] ?? '3306',
             'name' => $values['DB_NAME'] ?? '',
             'user' => $values['DB_USER'] ?? '',
             'pass' => $values['DB_PASS'] ?? '',
-            'sqlite_path' => $values['DB_SQLITE_PATH'] ?? '',
+            'sqlite_path' => self::resolvePath($sqlitePath, dirname($envPath)),
         ];
+    }
+
+    /**
+     * Resolve a possibly relative path against the project root
+     *
+     * .env.example suggests `DB_SQLITE_PATH=./data/database.sqlite`, and the web
+     * entry point runs with the working directory set to public/, so a relative
+     * path left as-is would never be found.
+     *
+     * @param string $path
+     * @param string $basePath Directory the .env lives in
+     * @return string
+     */
+    private static function resolvePath($path, $basePath): string
+    {
+        if ($path === '') {
+            return '';
+        }
+
+        // Absolute POSIX path, or a Windows drive letter
+        if ($path[0] === '/' || preg_match('#^[A-Za-z]:[\\\\/]#', $path) === 1) {
+            return $path;
+        }
+
+        return rtrim($basePath, '/') . '/' . ltrim($path, './');
+    }
+
+    /**
+     * What does the configured environment say about installation?
+     *
+     * @param string $envPath Path to the .env file
+     * @return string One of the STATE_* constants
+     */
+    public static function inspectEnvironment($envPath): string
+    {
+        $config = self::databaseConfigFromEnvFile($envPath);
+
+        if (empty($config)) {
+            return self::STATE_NOT_INSTALLED;
+        }
+
+        $pdo = self::connect($config);
+
+        if ($pdo === null) {
+            // Something was configured here before; we simply cannot check it
+            // right now. Saying "not installed" would hand the wizard to
+            // whoever asks during a database outage.
+            return self::STATE_UNVERIFIABLE;
+        }
+
+        return self::looksInstalled($pdo) ? self::STATE_INSTALLED : self::STATE_NOT_INSTALLED;
     }
 
     /**
      * Is the database described by this .env file already installed?
      *
-     * A connection that cannot be made returns false on purpose: a broken or
-     * half-finished install has to leave the wizard reachable, or its owner
-     * would be locked out of the only tool that can repair it.
-     *
      * @param string $envPath Path to the .env file
-     * @return bool
+     * @return bool True only for a confirmed installation
      */
     public static function environmentLooksInstalled($envPath): bool
     {
-        $config = self::databaseConfigFromEnvFile($envPath);
+        return self::inspectEnvironment($envPath) === self::STATE_INSTALLED;
+    }
 
-        if (empty($config)) {
-            return false;
-        }
-
+    /**
+     * Open a connection for a parsed configuration
+     *
+     * @param array $config
+     * @return \PDO|null Null when the database cannot be reached
+     */
+    private static function connect(array $config)
+    {
         try {
             if ($config['driver'] === 'sqlite') {
                 if ($config['sqlite_path'] === '' || !is_file($config['sqlite_path'])) {
-                    return false;
+                    return null;
                 }
 
-                $pdo = new \PDO('sqlite:' . $config['sqlite_path']);
-            } else {
-                $dsn = sprintf(
-                    'mysql:host=%s;port=%s;dbname=%s;charset=utf8mb4',
-                    $config['host'],
-                    $config['port'],
-                    $config['name']
-                );
-                // Short timeout: this runs on a public request, and an
-                // unreachable host must not hang the page.
-                $pdo = new \PDO($dsn, $config['user'], $config['pass'], [
-                    \PDO::ATTR_TIMEOUT => 3,
-                    \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
-                ]);
+                return new \PDO('sqlite:' . $config['sqlite_path']);
             }
+
+            $dsn = sprintf(
+                'mysql:host=%s;port=%s;dbname=%s;charset=utf8mb4',
+                $config['host'],
+                $config['port'] !== '' ? $config['port'] : '3306',
+                $config['name']
+            );
+
+            // Short timeout: this runs on a public request, and an unreachable
+            // host must not hang the page.
+            return new \PDO($dsn, $config['user'], $config['pass'], [
+                \PDO::ATTR_TIMEOUT => 3,
+                \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION,
+            ]);
         } catch (\PDOException $e) {
-            return false;
+            return null;
+        }
+    }
+
+    /**
+     * Does this connection hold a usable installation?
+     *
+     * True only when every required table is present and at least one
+     * administrator exists — a database where the migrations ran but the wizard
+     * never created the account is genuinely unfinished, and the wizard has to
+     * stay reachable for it.
+     *
+     * @param \PDO $pdo
+     * @return bool
+     */
+    public static function looksInstalled(\PDO $pdo): bool
+    {
+        $tables = array_map('strtolower', self::listTables($pdo));
+
+        foreach (self::REQUIRED_TABLES as $required) {
+            if (!in_array(strtolower($required), $tables, true)) {
+                return false;
+            }
         }
 
-        return self::looksInstalled($pdo);
+        return self::hasAdministrator($pdo);
     }
 
     /**

@@ -30,9 +30,20 @@ class InstallController
         // restored without them, or a data/ that was never writable. Serving the
         // wizard on a live site would let a visitor repoint the database and
         // create an administrator, so the real state of the system decides.
-        if (InstallationState::environmentLooksInstalled(ROOT_PATH . '/.env')) {
+        $state = InstallationState::inspectEnvironment(ROOT_PATH . '/.env');
+
+        if ($state === InstallationState::STATE_INSTALLED) {
             $this->restoreInstallationFlag();
             $this->redirectToMainSite();
+        }
+
+        // A .env names a database we cannot reach. Running the wizard on that
+        // guess would hand it to whoever asks during an outage, so refuse and
+        // say what is wrong instead — the owner can fix the credentials, or
+        // remove the .env to start a genuinely new installation.
+        if ($state === InstallationState::STATE_UNVERIFIABLE) {
+            $this->showDatabaseUnreachableMessage();
+            exit;
         }
 
         $this->step = RequestHelper::get('step', 1, 'int') ?: 1;
@@ -764,6 +775,62 @@ class InstallController
      *
      * @return void
      */
+    /**
+     * Explain that a configured database could not be reached
+     *
+     * Shown instead of the wizard when .env names a database we cannot inspect:
+     * opening the wizard on that guess would expose it during an outage, while
+     * refusing silently would leave the owner with no idea what to do.
+     *
+     * @return void
+     */
+    private function showDatabaseUnreachableMessage()
+    {
+        http_response_code(503);
+        header('Content-Type: text/html; charset=UTF-8');
+        ?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Database Unreachable - swCMS</title>
+    <style>
+        body { font-family: system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+               background: #f8f9fa; margin: 0; padding: 40px 20px; color: #212529; }
+        .box { max-width: 620px; margin: 0 auto; background: #fff; padding: 32px;
+               border-radius: 8px; box-shadow: 0 0 20px rgba(0,0,0,.08); }
+        h1 { margin-top: 0; font-size: 1.4rem; }
+        code { background: #f1f3f5; padding: 2px 6px; border-radius: 4px; }
+        ul { line-height: 1.7; }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <h1>This site is configured, but its database cannot be reached</h1>
+        <p>
+            A <code>.env</code> file describes a database for this site, so swCMS was
+            installed here before. The database it names is not responding, so the
+            installation wizard has not been started: running it now could overwrite
+            a working site.
+        </p>
+        <p>What to check:</p>
+        <ul>
+            <li>the database server is running and reachable from this host;</li>
+            <li>the credentials in <code>.env</code> are still correct;</li>
+            <li>the file <code>data/.installed</code> is present — restoring it is enough
+                to bring the site back once the database answers.</li>
+        </ul>
+        <p>
+            To start a genuinely new installation instead, remove the <code>.env</code>
+            file and reload this page.
+        </p>
+    </div>
+</body>
+</html>
+        <?php
+    }
+
     private function restoreInstallationFlag()
     {
         try {
