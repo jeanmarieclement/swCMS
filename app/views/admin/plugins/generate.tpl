@@ -180,7 +180,7 @@
                         <div class="mb-3">
                             <label for="requires_php" class="form-label">PHP Version</label>
                             <input type="text" class="form-control" id="requires_php" name="requires_php" 
-                                   value="7.4.0" pattern="\d+\.\d+\.\d+">
+                                   value="8.0.0" pattern="\d+\.\d+\.\d+">
                         </div>
                     </div>
                 </div>

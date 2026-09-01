@@ -121,7 +121,7 @@ This package contains swCMS prepared for shared hosting environments without Com
 
 ## 📋 Requirements
 
-- PHP 7.4 or higher
+- PHP 8.0 or higher
 - PDO extension (MySQL/SQLite)
 - JSON extension
 - Write permissions on directories

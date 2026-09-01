@@ -14,6 +14,23 @@ use App\Core\HookSystem;
 use App\Services\PluginService;
 use App\Helpers\SystemSettingsHelper;
 
+// Minimum PHP version, checked before anything else is loaded.
+//
+// Most of the codebase uses match(), which is a *parse* error on PHP 7.x: the
+// file is never compiled, so a check placed inside the installer would never
+// run. Everything above this guard has to stay parseable on old PHP.
+define('SWCMS_MIN_PHP', '8.0.0');
+
+if (version_compare(PHP_VERSION, SWCMS_MIN_PHP, '<')) {
+    http_response_code(500);
+    header('Content-Type: text/plain; charset=UTF-8');
+    echo "swCMS requires PHP " . SWCMS_MIN_PHP . " or higher.\n";
+    echo "This server is running PHP " . PHP_VERSION . ".\n\n";
+    echo "Ask your hosting provider to switch this site to PHP 8.0 or newer,\n";
+    echo "or select a supported version in your hosting control panel.\n";
+    exit(1);
+}
+
 // Define the application path
 define('APP_PATH', dirname(__DIR__) . '/app');
 define('PUBLIC_PATH', __DIR__);

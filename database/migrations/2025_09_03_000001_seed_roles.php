@@ -84,10 +84,10 @@ class SeedRoles extends Migration
     /**
      * Report a statement that returned false instead of throwing.
      *
-     * PDO only raises PDOException in exception mode. PHP 7.4 — still allowed
-     * by composer.json — defaults to ERRMODE_SILENT, and InstallController
-     * builds its connection without options, so there a failing statement
-     * returns false and the next call on it would raise an Error.
+     * PDO only raises PDOException in exception mode. InstallController builds
+     * its connection without options, so it inherits whatever error mode the
+     * server defaults to; anything that hands us a silent connection makes a
+     * failing statement return false, and the next call on it raises an Error.
      * MigrationRunner catches \Exception, not \Error, so that would escape as a
      * fatal instead of being reported as a failed migration.
      *

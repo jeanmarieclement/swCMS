@@ -180,7 +180,7 @@ class PluginGeneratorService
             'PLUGIN_URI' => $config['plugin_uri'] ?? '',
             'PLUGIN_REQUIRES' => $config['requires'] ?? '1.0.0',
             'PLUGIN_TESTED_UP_TO' => $config['tested_up_to'] ?? '1.5.0',
-            'PLUGIN_REQUIRES_PHP' => $config['requires_php'] ?? '7.4.0',
+            'PLUGIN_REQUIRES_PHP' => $config['requires_php'] ?? '8.0.0',
             'PLUGIN_DEPENDS' => is_array($config['depends'] ?? []) ? implode(', ', $config['depends']) : '',
             'PLUGIN_CONFLICTS' => is_array($config['conflicts'] ?? []) ? implode(', ', $config['conflicts']) : '',
             'PLUGIN_PRIORITY' => $config['priority'] ?? '10',
@@ -781,7 +781,7 @@ This plugin was generated using the swCMS Plugin Generator. It provides a basic 
 ## Requirements
 
 - swCMS {{PLUGIN_REQUIRES}} or higher
-- PHP 7.4 or higher
+- PHP 8.0 or higher
 
 ## Configuration
 
