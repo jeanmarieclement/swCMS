@@ -58,11 +58,13 @@ class PhpVersionRequirementTest extends TestCase
         $constraint = $composer['require']['php'];
         $guard = $this->guardVersion();
 
-        // e.g. '^8.0' has to admit '8.0.0' and nothing below it.
+        // Open-ended on purpose: a caret constraint would stop Composer at the
+        // next major while the runtime guard, the installer screen and the
+        // README all say "8.0 or higher".
         [$major, $minor] = explode('.', $guard);
 
         $this->assertSame(
-            '^' . $major . '.' . $minor,
+            '>=' . $major . '.' . $minor,
             $constraint,
             'composer.json must require the same minimum PHP the runtime guard enforces'
         );
