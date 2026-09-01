@@ -250,7 +250,11 @@ class View
 
                 // Get template content and allow plugins to modify it
                 ob_start();
+                $restoreCaching = $this->suspendCachingForUncacheableRequest();
                 $this->smarty->display($template . '.tpl', self::cacheIdForRequest());
+                if ($restoreCaching !== null) {
+                    $this->smarty->caching = $restoreCaching;
+                }
                 $content = ob_get_clean();
 
                 // Apply content filters
@@ -432,14 +436,143 @@ class View
         }
 
         $path = parse_url($uri, PHP_URL_PATH);
-        $query = parse_url($uri, PHP_URL_QUERY);
+        $params = self::cacheableParamsFromUri($uri);
+
+        // Sorted, so ?page=2&sort=x and ?sort=x&page=2 are one cache entry
+        // rather than two copies of the same page.
+        ksort($params);
 
         $key = ($path === null || $path === false ? '/' : $path)
-            . ($query === null || $query === false ? '' : '?' . $query);
+            . ($params === [] ? '' : '?' . http_build_query($params));
 
         // Hashed so the id never contains '|', which Smarty reads as the cache
         // group separator, nor anything else awkward in a cache filename.
         return sha1($key);
+    }
+
+    /**
+     * Query parameters that are allowed to vary a cached page
+     *
+     * Anything outside this list is assumed not to change the rendered output,
+     * so it must not earn its own cache file. Plugins that route on their own
+     * parameters add them through the filter.
+     *
+     * @return array List of parameter names
+     */
+    public static function cacheableQueryParams()
+    {
+        $params = ['page'];
+
+        $filtered = HookSystem::getInstance()->applyFilters('page_cache_query_params', $params);
+
+        return is_array($filtered) ? array_values(array_filter($filtered, 'is_string')) : $params;
+    }
+
+    /**
+     * Extract the allowlisted query parameters from a URI
+     *
+     * @param string $uri
+     * @return array name => value
+     */
+    private static function cacheableParamsFromUri($uri)
+    {
+        $query = parse_url($uri, PHP_URL_QUERY);
+
+        if ($query === null || $query === false || $query === '') {
+            return [];
+        }
+
+        parse_str($query, $parsed);
+
+        return array_intersect_key($parsed, array_flip(self::cacheableQueryParams()));
+    }
+
+    /**
+     * Whether the current request may be served from, or stored in, the page cache
+     *
+     * The cache id is keyed on the path plus the allowlisted parameters only, so
+     * a request carrying anything else would otherwise be answered with a page
+     * rendered for different input. Rather than guess, such requests bypass the
+     * cache entirely: that also stops a crawler or a tracking link from minting
+     * an unbounded number of cache files with random query strings, which is
+     * what made this a filesystem-growth problem in the first place.
+     *
+     * @param string|null $uri Request URI, defaults to the current one
+     * @param string|null $method Request method, defaults to the current one
+     * @return bool
+     */
+    public static function isRequestCacheable($uri = null, $method = null)
+    {
+        if ($method === null) {
+            $method = RequestHelper::server('REQUEST_METHOD', 'GET');
+        }
+
+        // A cached POST response would be replayed to everyone who later GETs
+        // the same URL.
+        if (strtoupper((string) $method) !== 'GET') {
+            return false;
+        }
+
+        if ($uri === null) {
+            $uri = RequestHelper::server('REQUEST_URI', '/');
+        }
+
+        $query = parse_url($uri, PHP_URL_QUERY);
+
+        if ($query === null || $query === false || $query === '') {
+            return true;
+        }
+
+        parse_str($query, $parsed);
+
+        // Every parameter present has to be one we key the cache on.
+        return array_diff_key($parsed, array_flip(self::cacheableQueryParams())) === [];
+    }
+
+    /**
+     * Turn caching off for a request the cache id cannot represent
+     *
+     * @return int|null The caching mode to restore afterwards, or null if untouched
+     */
+    private function suspendCachingForUncacheableRequest()
+    {
+        if ($this->smarty->caching === Smarty::CACHING_OFF) {
+            return null;
+        }
+
+        if (self::isRequestCacheable()) {
+            return null;
+        }
+
+        $previous = $this->smarty->caching;
+        $this->smarty->caching = Smarty::CACHING_OFF;
+
+        return $previous;
+    }
+
+    /**
+     * Delete cache files that are past their lifetime
+     *
+     * Smarty stops *serving* an entry once it expires but never removes the
+     * file, so without this the cache directory only ever grows. Run on a small
+     * fraction of cached requests, in the spirit of PHP's own session GC.
+     *
+     * @return void
+     */
+    private function collectExpiredCache()
+    {
+        $probability = defined('PAGE_CACHE_GC_PROBABILITY') ? (int) PAGE_CACHE_GC_PROBABILITY : 100;
+
+        if ($probability < 1 || random_int(1, $probability) !== 1) {
+            return;
+        }
+
+        try {
+            // clearAllCache() with an age deletes only entries older than it.
+            $this->smarty->clearAllCache($this->smarty->cache_lifetime);
+        } catch (\Exception $e) {
+            LogHelper::warning('Page cache garbage collection failed: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -472,6 +605,8 @@ class View
 
         $this->smarty->caching = Smarty::CACHING_LIFETIME_CURRENT;
         $this->smarty->cache_lifetime = defined('PAGE_CACHE_LIFETIME') ? (int) PAGE_CACHE_LIFETIME : 1800;
+
+        $this->collectExpiredCache();
     }
 
     /**
@@ -522,9 +657,19 @@ class View
     public function clearCache($template = null)
     {
         if ($template) {
-            $this->smarty->clearCache($template . '.tpl');
-        } else {
-            $this->smarty->clearAllCache();
+            return $this->smarty->clearCache($template . '.tpl');
         }
+
+        return $this->smarty->clearAllCache();
+    }
+
+    /**
+     * Delete every compiled template
+     *
+     * @return int Number of files removed
+     */
+    public function clearCompiled()
+    {
+        return $this->smarty->clearCompiledTemplate();
     }
 }

@@ -71,3 +71,6 @@ define('CACHE_PATH', ROOT_PATH . '/storage/cache');
 // templates wrap those regions in {nocache}.
 define('PAGE_CACHE', filter_var(env('PAGE_CACHE', false), FILTER_VALIDATE_BOOLEAN));
 define('PAGE_CACHE_LIFETIME', (int) env('PAGE_CACHE_LIFETIME', 1800));
+// One in N cached requests sweeps expired entries out of the cache directory.
+// Smarty expires entries but never deletes their files. 0 disables the sweep.
+define('PAGE_CACHE_GC_PROBABILITY', (int) env('PAGE_CACHE_GC_PROBABILITY', 100));

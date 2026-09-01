@@ -144,31 +144,24 @@ class AdminController extends Controller
     public function clearCacheAction()
     {
         try {
-            // Get the compiled directory path
-            $compiledDir = __DIR__ . '/../../views/compiled/';
+            // Both halves matter: compiled templates are the code, the page cache
+            // holds rendered pages. Clearing only the former left stale pages
+            // being served after an edit, and left expired cache files behind.
+            $compiledDeleted = (int) $this->view->clearCompiled();
+            $cachedDeleted = (int) $this->view->clearCache();
 
-            if (is_dir($compiledDir)) {
-                // Clear all compiled template files
-                $files = glob($compiledDir . '*');
-                $deletedCount = 0;
+            LogHelper::info('Cache cleared', [
+                'compiled_deleted' => $compiledDeleted,
+                'cached_pages_deleted' => $cachedDeleted,
+                'user_id' => SessionHelper::getValue('user_id'),
+                'user_role' => SessionHelper::getValue('user_role')
+            ]);
 
-                foreach ($files as $file) {
-                    if (is_file($file)) {
-                        unlink($file);
-                        $deletedCount++;
-                    }
-                }
-
-                LogHelper::info('Cache cleared', [
-                    'files_deleted' => $deletedCount,
-                    'user_id' => SessionHelper::getValue('user_id'),
-                    'user_role' => SessionHelper::getValue('user_role')
-                ]);
-
-                $this->setFlashMessage('success', "Cache cleared successfully! {$deletedCount} compiled files deleted.");
-            } else {
-                $this->setFlashMessage('warning', 'Compiled cache directory not found.');
-            }
+            $this->setFlashMessage(
+                'success',
+                "Cache cleared successfully! {$compiledDeleted} compiled templates and "
+                . "{$cachedDeleted} cached pages deleted."
+            );
         } catch (Exception $e) {
             LogHelper::error('Failed to clear cache', [
                 'error' => $e->getMessage(),

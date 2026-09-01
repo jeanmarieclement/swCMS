@@ -58,6 +58,56 @@ class ViewCacheIdTest extends TestCase
         $this->assertNotEmpty(View::cacheIdForRequest(''));
     }
 
+    public function testUnknownParametersDoNotMintNewCacheEntries()
+    {
+        // Tracking parameters and cache busters do not change the rendered page,
+        // so they must not each get a cache file of their own.
+        $this->assertEquals(
+            View::cacheIdForRequest('/blog'),
+            View::cacheIdForRequest('/blog?utm_source=newsletter')
+        );
+
+        $this->assertEquals(
+            View::cacheIdForRequest('/blog?utm_source=a'),
+            View::cacheIdForRequest('/blog?utm_source=b')
+        );
+    }
+
+    public function testAllowlistedParametersAreOrderIndependent()
+    {
+        $this->assertEquals(
+            View::cacheIdForRequest('/blog?page=2&utm_source=x'),
+            View::cacheIdForRequest('/blog?utm_source=y&page=2')
+        );
+    }
+
+    public function testPageIsAllowlistedByDefault()
+    {
+        $this->assertContains('page', View::cacheableQueryParams());
+    }
+
+    public function testRequestsWithOnlyAllowlistedParametersAreCacheable()
+    {
+        $this->assertTrue(View::isRequestCacheable('/blog', 'GET'));
+        $this->assertTrue(View::isRequestCacheable('/blog?page=2', 'GET'));
+    }
+
+    public function testRequestsCarryingUnknownParametersBypassTheCache()
+    {
+        // The cache id ignores them, so serving a cached page could answer with
+        // output rendered for different input. Bypassing also keeps a crawler
+        // with random query strings from filling the disk.
+        $this->assertFalse(View::isRequestCacheable('/blog?utm_source=x', 'GET'));
+        $this->assertFalse(View::isRequestCacheable('/blog?page=2&utm_source=x', 'GET'));
+    }
+
+    public function testNonGetRequestsAreNeverCacheable()
+    {
+        $this->assertFalse(View::isRequestCacheable('/blog', 'POST'));
+        $this->assertFalse(View::isRequestCacheable('/blog', 'post'));
+        $this->assertFalse(View::isRequestCacheable('/blog', 'DELETE'));
+    }
+
     public function testFallsBackToTheCurrentRequestUri()
     {
         $_SERVER['REQUEST_URI'] = '/blog/from-server';
