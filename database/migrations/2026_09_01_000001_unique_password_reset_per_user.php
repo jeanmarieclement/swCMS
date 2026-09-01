@@ -94,8 +94,10 @@ class UniquePasswordResetPerUser extends Migration
         try {
             $this->db->exec("ALTER TABLE password_resets DROP INDEX idx_password_resets_user");
         } catch (\PDOException $e) {
-            // 1091: can't DROP; check that column/key exists. Anything else is real.
-            if ($e->getCode() !== '42000' && $e->errorInfo[1] !== 1091) {
+            // 1091: can't DROP; check that column/key exists — the only failure
+            // worth tolerating. Every other 42000 (no such table, denied, syntax)
+            // has to surface as a failed migration.
+            if ($e->getCode() !== '42000' || ($e->errorInfo[1] ?? null) !== 1091) {
                 throw $e;
             }
         }
