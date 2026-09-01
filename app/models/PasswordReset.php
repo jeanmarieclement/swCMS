@@ -46,18 +46,49 @@ class PasswordReset extends Model
      */
     public function create($userId, $tokenHash, $expiresAt)
     {
-        $this->deleteForUser($userId);
+        // The contract is that the new token replaces the old one. Two reset
+        // requests racing each other would otherwise interleave their DELETE
+        // and INSERT and leave the user with two live tokens.
+        $ownsTransaction = !$this->db->inTransaction();
 
-        $stmt = $this->db->prepare(
-            "INSERT INTO {$this->table} (user_id, token_hash, expires_at)
-             VALUES (:user_id, :token_hash, :expires_at)"
-        );
+        if ($ownsTransaction) {
+            $this->db->beginTransaction();
+        }
 
-        return $stmt->execute([
-            'user_id' => $userId,
-            'token_hash' => $tokenHash,
-            'expires_at' => $expiresAt
-        ]);
+        try {
+            $this->deleteForUser($userId);
+
+            $stmt = $this->db->prepare(
+                "INSERT INTO {$this->table} (user_id, token_hash, expires_at)
+                 VALUES (:user_id, :token_hash, :expires_at)"
+            );
+
+            $inserted = $stmt->execute([
+                'user_id' => $userId,
+                'token_hash' => $tokenHash,
+                'expires_at' => $expiresAt
+            ]);
+
+            if (!$inserted) {
+                if ($ownsTransaction) {
+                    $this->db->rollBack();
+                }
+
+                return false;
+            }
+
+            if ($ownsTransaction) {
+                $this->db->commit();
+            }
+
+            return true;
+        } catch (\Exception $e) {
+            if ($ownsTransaction && $this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+
+            throw $e;
+        }
     }
 
     /**
@@ -89,21 +120,30 @@ class PasswordReset extends Model
     }
 
     /**
-     * Mark a token as used so it cannot be replayed
+     * Claim a token, and report whether this caller is the one that got it
+     *
+     * The UPDATE is conditional on the token still being unused, so of two
+     * requests replaying the same reset link exactly one sees a row change.
+     * Callers must treat a false return as "this link is no longer valid" and
+     * abandon whatever they were about to do with it.
      *
      * @param int $id
-     * @return bool
+     * @return bool True only when this call is the one that consumed the token
      */
-    public function markUsed($id)
+    public function consume($id)
     {
         $stmt = $this->db->prepare(
-            "UPDATE {$this->table} SET used_at = :used_at WHERE id = :id"
+            "UPDATE {$this->table}
+             SET used_at = :used_at
+             WHERE id = :id AND used_at IS NULL"
         );
 
-        return $stmt->execute([
+        $stmt->execute([
             'used_at' => date('Y-m-d H:i:s'),
             'id' => $id
         ]);
+
+        return $stmt->rowCount() === 1;
     }
 
     /**

@@ -121,7 +121,69 @@ class PasswordResetTest extends TestCase
     {
         $this->model->create(7, password_hash('token-abc', PASSWORD_BCRYPT), $this->futureDate());
         $row = $this->model->findValidByToken(7, 'token-abc');
-        $this->model->markUsed($row['id']);
+        $this->model->consume($row['id']);
+
+        $this->assertNull($this->model->findValidByToken(7, 'token-abc'));
+    }
+
+    public function testConsumeReportsSuccessOnlyForTheCallerThatClaimsTheToken()
+    {
+        // Two requests replaying the same reset link both get past
+        // findValidByToken(); only one of them may go on to set a password.
+        $this->model->create(7, password_hash('token-abc', PASSWORD_BCRYPT), $this->futureDate());
+        $row = $this->model->findValidByToken(7, 'token-abc');
+
+        $this->assertTrue($this->model->consume($row['id']));
+        $this->assertFalse($this->model->consume($row['id']));
+    }
+
+    public function testConsumeReportsFailureForATokenThatDoesNotExist()
+    {
+        $this->assertFalse($this->model->consume(999));
+    }
+
+    public function testConsumeLeavesOtherTokensAlone()
+    {
+        $this->model->create(7, password_hash('token-abc', PASSWORD_BCRYPT), $this->futureDate());
+        $this->model->create(8, password_hash('token-def', PASSWORD_BCRYPT), $this->futureDate());
+
+        $mine = $this->model->findValidByToken(7, 'token-abc');
+        $this->model->consume($mine['id']);
+
+        $this->assertIsArray($this->model->findValidByToken(8, 'token-def'));
+    }
+
+    public function testCreateReplacesTheOldTokenAtomically()
+    {
+        $this->model->create(7, password_hash('old', PASSWORD_BCRYPT), $this->futureDate());
+        $this->model->create(7, password_hash('new', PASSWORD_BCRYPT), $this->futureDate());
+
+        $rows = $this->pdo
+            ->query("SELECT id FROM password_resets WHERE user_id = 7")
+            ->fetchAll();
+
+        $this->assertCount(1, $rows, 'A new token must supersede the previous one');
+        $this->assertNull($this->model->findValidByToken(7, 'old'));
+        $this->assertIsArray($this->model->findValidByToken(7, 'new'));
+    }
+
+    public function testCreateLeavesNoOpenTransactionBehind()
+    {
+        // create() manages its own transaction; a caller that later starts one
+        // must not trip over a connection that is still inside it.
+        $this->model->create(7, password_hash('token-abc', PASSWORD_BCRYPT), $this->futureDate());
+
+        $this->assertFalse($this->pdo->inTransaction());
+    }
+
+    public function testCreateJoinsAnAlreadyOpenTransactionInsteadOfNesting()
+    {
+        // Rolling the caller's transaction back must undo the token too: create()
+        // is not allowed to commit out from under it.
+        $this->pdo->beginTransaction();
+        $this->model->create(7, password_hash('token-abc', PASSWORD_BCRYPT), $this->futureDate());
+        $this->assertTrue($this->pdo->inTransaction(), 'create() must not commit the caller\'s transaction');
+        $this->pdo->rollBack();
 
         $this->assertNull($this->model->findValidByToken(7, 'token-abc'));
     }
