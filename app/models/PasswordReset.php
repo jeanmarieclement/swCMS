@@ -46,18 +46,47 @@ class PasswordReset extends Model
      */
     public function create($userId, $tokenHash, $expiresAt)
     {
-        $this->deleteForUser($userId);
+        // One statement, so the promised replacement cannot be interleaved with
+        // a competing request. A transaction alone would not do it: under READ
+        // COMMITTED two concurrent DELETE + INSERT pairs both find nothing to
+        // delete and both insert, leaving the user with two working links. The
+        // unique index on user_id (2026_09_01_000001) is what makes the upsert
+        // possible and the contract enforceable.
+        if ($this->driverName() === 'sqlite') {
+            $sql = "INSERT INTO {$this->table} (user_id, token_hash, expires_at)
+                    VALUES (:user_id, :token_hash, :expires_at)
+                    ON CONFLICT(user_id) DO UPDATE SET
+                        token_hash = excluded.token_hash,
+                        expires_at = excluded.expires_at,
+                        used_at = NULL,
+                        created_at = CURRENT_TIMESTAMP";
+        } else {
+            $sql = "INSERT INTO {$this->table} (user_id, token_hash, expires_at)
+                    VALUES (:user_id, :token_hash, :expires_at)
+                    ON DUPLICATE KEY UPDATE
+                        token_hash = VALUES(token_hash),
+                        expires_at = VALUES(expires_at),
+                        used_at = NULL,
+                        created_at = CURRENT_TIMESTAMP";
+        }
 
-        $stmt = $this->db->prepare(
-            "INSERT INTO {$this->table} (user_id, token_hash, expires_at)
-             VALUES (:user_id, :token_hash, :expires_at)"
-        );
+        $stmt = $this->db->prepare($sql);
 
         return $stmt->execute([
             'user_id' => $userId,
             'token_hash' => $tokenHash,
             'expires_at' => $expiresAt
         ]);
+    }
+
+    /**
+     * PDO driver behind the connection
+     *
+     * @return string
+     */
+    private function driverName()
+    {
+        return (string) $this->db->getAttribute(\PDO::ATTR_DRIVER_NAME);
     }
 
     /**
@@ -89,21 +118,37 @@ class PasswordReset extends Model
     }
 
     /**
-     * Mark a token as used so it cannot be replayed
+     * Claim a token, and report whether this caller is the one that got it
+     *
+     * The UPDATE is conditional on the token still being unused, so of two
+     * requests replaying the same reset link exactly one sees a row change.
+     * It is also conditional on the hash, because create() replaces a token in
+     * place: without that, a request that verified the old token and then lost
+     * the race to a fresh reset request would consume the *new* token and set a
+     * password with a link that had already been superseded.
+     *
+     * Callers must treat a false return as "this link is no longer valid" and
+     * abandon whatever they were about to do with it.
      *
      * @param int $id
-     * @return bool
+     * @param string $tokenHash The hash read when the token was verified
+     * @return bool True only when this call is the one that consumed the token
      */
-    public function markUsed($id)
+    public function consume($id, $tokenHash)
     {
         $stmt = $this->db->prepare(
-            "UPDATE {$this->table} SET used_at = :used_at WHERE id = :id"
+            "UPDATE {$this->table}
+             SET used_at = :used_at
+             WHERE id = :id AND used_at IS NULL AND token_hash = :token_hash"
         );
 
-        return $stmt->execute([
+        $stmt->execute([
             'used_at' => date('Y-m-d H:i:s'),
-            'id' => $id
+            'id' => $id,
+            'token_hash' => $tokenHash
         ]);
+
+        return $stmt->rowCount() === 1;
     }
 
     /**

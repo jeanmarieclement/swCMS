@@ -8,6 +8,7 @@ use App\Controllers\Frontend\BaseController;
 use App\Helpers\LogHelper;
 use App\Models\User;
 use App\Models\PasswordReset;
+use App\Core\Database\Database;
 use App\Helpers\HookHelper;
 use App\Helpers\RequestHelper;
 use App\Helpers\CSRFHelper;
@@ -515,28 +516,55 @@ class AuthController extends BaseController
                 return;
             }
 
-            // Update password
+            // Burning the token and writing the password have to succeed or fail
+            // together. Both models share the PDO singleton, so one transaction
+            // covers the pair: without it, two requests replaying the same link
+            // could both pass the check above and race to set the password, and a
+            // failed markUsed() would leave a changed password behind a link that
+            // still works.
+            $db = Database::getInstance();
+            $db->beginTransaction();
+
             try {
+                // Claim the token first. The UPDATE is conditional on it still
+                // being unused, so a concurrent request that got there first
+                // makes this return false and we stop before touching the
+                // password.
+                if (!$this->passwordResetModel->consume($resetRecord['id'], $resetRecord['token_hash'])) {
+                    $db->rollBack();
+                    SessionHelper::setFlashMessage('Invalid or expired reset link.', 'error');
+                    RedirectHelper::redirect('/auth/forgot-password');
+                    return;
+                }
+
                 $updateResult = $this->userModel->updateUser($user['id'], [
                     'password' => $password
                 ]);
 
-                if ($updateResult) {
-                    // Burn the token so the link cannot be replayed
-                    $this->passwordResetModel->markUsed($resetRecord['id']);
-
-                    // Fire password reset successful hook
-                    HookHelper::doAction('password_reset_successful', $user, RequestHelper::server('REMOTE_ADDR', 'unknown'));
-
-                    LogHelper::info('Password reset successful for: ' . $email);
-
-                    SessionHelper::setFlashMessage('Password reset successful. You can now login with your new password.', 'success');
-                    RedirectHelper::redirect('/auth/login');
-                } else {
+                if (!$updateResult) {
+                    // Rolling back releases the token, so the user can retry with
+                    // the same link rather than being locked out of a reset they
+                    // legitimately requested.
+                    $db->rollBack();
                     SessionHelper::setFlashMessage('Failed to reset password. Please try again.', 'error');
                     RedirectHelper::redirect('/auth/forgot-password');
+                    return;
                 }
+
+                $db->commit();
+
+                // Fire password reset successful hook
+                HookHelper::doAction('password_reset_successful', $user, RequestHelper::server('REMOTE_ADDR', 'unknown'));
+
+                LogHelper::info('Password reset successful for: ' . $email);
+
+                SessionHelper::setFlashMessage('Password reset successful. You can now login with your new password.', 'success');
+                RedirectHelper::redirect('/auth/login');
             } catch (\Exception $e) {
+                if ($db->inTransaction()) {
+                    $db->rollBack();
+                }
+
                 // Handle password policy violations
                 SessionHelper::setFlashMessage($e->getMessage(), 'error');
                 $this->render('auth/reset_password', [
