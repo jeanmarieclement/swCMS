@@ -644,19 +644,19 @@ class View
             return;
         }
 
-        $lifetime = (int) $this->smarty->cache_lifetime;
-
-        // clearAllCache() deletes entries older than the age it is given, and
-        // treats 0 as "older than now" — every entry. A non-positive lifetime
-        // means Smarty is not expiring anything on a schedule, so there is
-        // nothing for a sweep to collect and wiping the cache would be wrong.
-        if ($lifetime <= 0) {
+        // A negative lifetime means "never expires", so there is nothing to
+        // collect and a sweep would delete live entries.
+        if ((int) $this->smarty->cache_lifetime < 0) {
             return;
         }
 
         try {
-            // clearAllCache() with an age deletes only entries older than it.
-            $this->smarty->clearAllCache($lifetime);
+            // A negative age tells Smarty to read the lifetime stored in each
+            // cache file and delete the ones that are actually expired. Passing
+            // the current lifetime instead would treat it as a file-age
+            // threshold, so entries written under a shorter lifetime would
+            // survive their own expiry after PAGE_CACHE_LIFETIME was raised.
+            $this->smarty->clearAllCache(-1);
         } catch (\Exception $e) {
             LogHelper::warning('Page cache garbage collection failed: ' . $e->getMessage());
         }

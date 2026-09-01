@@ -162,7 +162,9 @@ class AdminController extends Controller
                 "Cache cleared successfully! {$compiledDeleted} compiled templates and "
                 . "{$cachedDeleted} cached pages deleted."
             );
-        } catch (Exception $e) {
+        } catch (\Throwable $e) {
+            // Unqualified, this would resolve to App\Controllers\Admin\Exception
+            // and let Smarty's own exception escape the action.
             LogHelper::error('Failed to clear cache', [
                 'error' => $e->getMessage(),
                 'user_id' => SessionHelper::getValue('user_id')
