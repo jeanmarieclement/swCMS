@@ -46,49 +46,47 @@ class PasswordReset extends Model
      */
     public function create($userId, $tokenHash, $expiresAt)
     {
-        // The contract is that the new token replaces the old one. Two reset
-        // requests racing each other would otherwise interleave their DELETE
-        // and INSERT and leave the user with two live tokens.
-        $ownsTransaction = !$this->db->inTransaction();
-
-        if ($ownsTransaction) {
-            $this->db->beginTransaction();
+        // One statement, so the promised replacement cannot be interleaved with
+        // a competing request. A transaction alone would not do it: under READ
+        // COMMITTED two concurrent DELETE + INSERT pairs both find nothing to
+        // delete and both insert, leaving the user with two working links. The
+        // unique index on user_id (2026_09_01_000001) is what makes the upsert
+        // possible and the contract enforceable.
+        if ($this->driverName() === 'sqlite') {
+            $sql = "INSERT INTO {$this->table} (user_id, token_hash, expires_at)
+                    VALUES (:user_id, :token_hash, :expires_at)
+                    ON CONFLICT(user_id) DO UPDATE SET
+                        token_hash = excluded.token_hash,
+                        expires_at = excluded.expires_at,
+                        used_at = NULL,
+                        created_at = CURRENT_TIMESTAMP";
+        } else {
+            $sql = "INSERT INTO {$this->table} (user_id, token_hash, expires_at)
+                    VALUES (:user_id, :token_hash, :expires_at)
+                    ON DUPLICATE KEY UPDATE
+                        token_hash = VALUES(token_hash),
+                        expires_at = VALUES(expires_at),
+                        used_at = NULL,
+                        created_at = CURRENT_TIMESTAMP";
         }
 
-        try {
-            $this->deleteForUser($userId);
+        $stmt = $this->db->prepare($sql);
 
-            $stmt = $this->db->prepare(
-                "INSERT INTO {$this->table} (user_id, token_hash, expires_at)
-                 VALUES (:user_id, :token_hash, :expires_at)"
-            );
+        return $stmt->execute([
+            'user_id' => $userId,
+            'token_hash' => $tokenHash,
+            'expires_at' => $expiresAt
+        ]);
+    }
 
-            $inserted = $stmt->execute([
-                'user_id' => $userId,
-                'token_hash' => $tokenHash,
-                'expires_at' => $expiresAt
-            ]);
-
-            if (!$inserted) {
-                if ($ownsTransaction) {
-                    $this->db->rollBack();
-                }
-
-                return false;
-            }
-
-            if ($ownsTransaction) {
-                $this->db->commit();
-            }
-
-            return true;
-        } catch (\Exception $e) {
-            if ($ownsTransaction && $this->db->inTransaction()) {
-                $this->db->rollBack();
-            }
-
-            throw $e;
-        }
+    /**
+     * PDO driver behind the connection
+     *
+     * @return string
+     */
+    private function driverName()
+    {
+        return (string) $this->db->getAttribute(\PDO::ATTR_DRIVER_NAME);
     }
 
     /**
