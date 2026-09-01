@@ -250,7 +250,16 @@ class View
 
                 // Get template content and allow plugins to modify it
                 ob_start();
-                $this->smarty->display($template . '.tpl', self::cacheIdForRequest());
+                $restoreCaching = $this->suspendCachingForUncacheableRequest();
+                try {
+                    $this->smarty->display($template . '.tpl', self::cacheIdForRequest());
+                } finally {
+                    // Without this, a template that throws would leave caching
+                    // switched off for every later render on this instance.
+                    if ($restoreCaching !== null) {
+                        $this->smarty->caching = $restoreCaching;
+                    }
+                }
                 $content = ob_get_clean();
 
                 // Apply content filters
@@ -432,14 +441,225 @@ class View
         }
 
         $path = parse_url($uri, PHP_URL_PATH);
-        $query = parse_url($uri, PHP_URL_QUERY);
+        $params = self::cacheableParamsFromUri($uri);
+
+        // Sorted, so ?page=2&sort=x and ?sort=x&page=2 are one cache entry
+        // rather than two copies of the same page.
+        ksort($params);
 
         $key = ($path === null || $path === false ? '/' : $path)
-            . ($query === null || $query === false ? '' : '?' . $query);
+            . ($params === [] ? '' : '?' . http_build_query($params));
 
         // Hashed so the id never contains '|', which Smarty reads as the cache
         // group separator, nor anything else awkward in a cache filename.
         return sha1($key);
+    }
+
+    /**
+     * Query parameters that are allowed to vary a cached page
+     *
+     * Each entry maps a parameter name to a pattern its value must match. The
+     * pattern is not decoration: the parameter is a dimension of the cache key,
+     * so anything that accepts arbitrary values lets a visitor mint arbitrary
+     * cache files. Pagination is therefore capped at five digits.
+     *
+     * Plugins that route on their own parameters register them through the
+     * page_cache_query_params filter; a parameter with no pattern here makes
+     * the request bypass the cache rather than share a page with different
+     * input.
+     *
+     * @return array name => value pattern
+     */
+    public static function cacheableQueryParams()
+    {
+        $params = [
+            'page' => '/^[1-9][0-9]{0,4}$/',
+            'comment_page' => '/^[1-9][0-9]{0,4}$/',
+        ];
+
+        $filtered = HookSystem::getInstance()->applyFilters('page_cache_query_params', $params);
+
+        return is_array($filtered) ? $filtered : $params;
+    }
+
+    /**
+     * Query parameters that are known not to change the page
+     *
+     * Analytics and ad-click parameters ride along on inbound links without
+     * affecting what is rendered. They are dropped from the cache key rather
+     * than making the request bypass the cache, so a campaign link is served
+     * from cache like any other and still does not mint an entry of its own.
+     *
+     * @return array List of parameter names
+     */
+    public static function ignorableQueryParams()
+    {
+        $params = [
+            'utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content', 'utm_id',
+            'gclid', 'gbraid', 'wbraid', 'dclid', 'fbclid', 'msclkid', 'ttclid', 'twclid',
+            'yclid', 'igshid', 'mc_cid', 'mc_eid', '_ga', '_gl', 'ref', 'referrer',
+        ];
+
+        $filtered = HookSystem::getInstance()->applyFilters('page_cache_ignored_query_params', $params);
+
+        return is_array($filtered) ? array_values(array_filter($filtered, 'is_string')) : $params;
+    }
+
+    /**
+     * Parse a URI's query string, dropping the parameters known to be irrelevant
+     *
+     * @param string $uri
+     * @return array name => value
+     */
+    private static function significantParamsFromUri($uri)
+    {
+        $query = parse_url($uri, PHP_URL_QUERY);
+
+        if ($query === null || $query === false || $query === '') {
+            return [];
+        }
+
+        parse_str($query, $parsed);
+
+        return array_diff_key($parsed, array_flip(self::ignorableQueryParams()));
+    }
+
+    /**
+     * Whether a value is acceptable for an allowlisted parameter
+     *
+     * @param mixed $value
+     * @param string $pattern
+     * @return bool
+     */
+    private static function isAcceptableParamValue($value, $pattern)
+    {
+        // Array-shaped input (?page[]=1) is neither renderable as a key nor
+        // meaningful to the routes that read these parameters.
+        if (!is_scalar($value)) {
+            return false;
+        }
+
+        return is_string($pattern) && preg_match($pattern, (string) $value) === 1;
+    }
+
+    /**
+     * Extract the allowlisted query parameters from a URI
+     *
+     * @param string $uri
+     * @return array name => value
+     */
+    private static function cacheableParamsFromUri($uri)
+    {
+        $allowed = self::cacheableQueryParams();
+        $params = [];
+
+        foreach (self::significantParamsFromUri($uri) as $name => $value) {
+            if (isset($allowed[$name]) && self::isAcceptableParamValue($value, $allowed[$name])) {
+                $params[$name] = $value;
+            }
+        }
+
+        return $params;
+    }
+
+    /**
+     * Whether the current request may be served from, or stored in, the page cache
+     *
+     * The cache id is keyed on the path plus the allowlisted parameters only, so
+     * a request carrying anything else would otherwise be answered with a page
+     * rendered for different input. Rather than guess, such requests bypass the
+     * cache entirely: that, together with the value patterns, is what stops a
+     * crawler or a tracking link from minting an unbounded number of cache
+     * files, which is what made this a filesystem-growth problem in the first
+     * place.
+     *
+     * @param string|null $uri Request URI, defaults to the current one
+     * @param string|null $method Request method, defaults to the current one
+     * @return bool
+     */
+    public static function isRequestCacheable($uri = null, $method = null)
+    {
+        if ($method === null) {
+            $method = RequestHelper::server('REQUEST_METHOD', 'GET');
+        }
+
+        // A cached POST response would be replayed to everyone who later GETs
+        // the same URL.
+        if (strtoupper((string) $method) !== 'GET') {
+            return false;
+        }
+
+        if ($uri === null) {
+            $uri = RequestHelper::server('REQUEST_URI', '/');
+        }
+
+        $allowed = self::cacheableQueryParams();
+
+        foreach (self::significantParamsFromUri($uri) as $name => $value) {
+            // Unknown to the cache key, or carrying a value the key was never
+            // meant to hold.
+            if (!isset($allowed[$name]) || !self::isAcceptableParamValue($value, $allowed[$name])) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Turn caching off for a request the cache id cannot represent
+     *
+     * @return int|null The caching mode to restore afterwards, or null if untouched
+     */
+    private function suspendCachingForUncacheableRequest()
+    {
+        if ($this->smarty->caching === Smarty::CACHING_OFF) {
+            return null;
+        }
+
+        if (self::isRequestCacheable()) {
+            return null;
+        }
+
+        $previous = $this->smarty->caching;
+        $this->smarty->caching = Smarty::CACHING_OFF;
+
+        return $previous;
+    }
+
+    /**
+     * Delete cache files that are past their lifetime
+     *
+     * Smarty stops *serving* an entry once it expires but never removes the
+     * file, so without this the cache directory only ever grows. Run on a small
+     * fraction of cached requests, in the spirit of PHP's own session GC.
+     *
+     * @return void
+     */
+    private function collectExpiredCache()
+    {
+        $probability = defined('PAGE_CACHE_GC_PROBABILITY') ? (int) PAGE_CACHE_GC_PROBABILITY : 100;
+
+        if ($probability < 1 || random_int(1, $probability) !== 1) {
+            return;
+        }
+
+        // A negative lifetime means "never expires", so there is nothing to
+        // collect and a sweep would delete live entries.
+        if ((int) $this->smarty->cache_lifetime < 0) {
+            return;
+        }
+
+        try {
+            // A negative age tells Smarty to read the lifetime stored in each
+            // cache file and delete the ones that are actually expired. Passing
+            // the current lifetime instead would treat it as a file-age
+            // threshold, so entries written under a shorter lifetime would
+            // survive their own expiry after PAGE_CACHE_LIFETIME was raised.
+            $this->smarty->clearAllCache(-1);
+        } catch (\Exception $e) {
+            LogHelper::warning('Page cache garbage collection failed: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -472,6 +692,8 @@ class View
 
         $this->smarty->caching = Smarty::CACHING_LIFETIME_CURRENT;
         $this->smarty->cache_lifetime = defined('PAGE_CACHE_LIFETIME') ? (int) PAGE_CACHE_LIFETIME : 1800;
+
+        $this->collectExpiredCache();
     }
 
     /**
@@ -522,9 +744,19 @@ class View
     public function clearCache($template = null)
     {
         if ($template) {
-            $this->smarty->clearCache($template . '.tpl');
-        } else {
-            $this->smarty->clearAllCache();
+            return $this->smarty->clearCache($template . '.tpl');
         }
+
+        return $this->smarty->clearAllCache();
+    }
+
+    /**
+     * Delete every compiled template
+     *
+     * @return int Number of files removed
+     */
+    public function clearCompiled()
+    {
+        return $this->smarty->clearCompiledTemplate();
     }
 }
