@@ -530,7 +530,7 @@ class AuthController extends BaseController
                 // being unused, so a concurrent request that got there first
                 // makes this return false and we stop before touching the
                 // password.
-                if (!$this->passwordResetModel->consume($resetRecord['id'])) {
+                if (!$this->passwordResetModel->consume($resetRecord['id'], $resetRecord['token_hash'])) {
                     $db->rollBack();
                     SessionHelper::setFlashMessage('Invalid or expired reset link.', 'error');
                     RedirectHelper::redirect('/auth/forgot-password');

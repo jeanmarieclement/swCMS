@@ -125,7 +125,7 @@ class PasswordResetTest extends TestCase
     {
         $this->model->create(7, password_hash('token-abc', PASSWORD_BCRYPT), $this->futureDate());
         $row = $this->model->findValidByToken(7, 'token-abc');
-        $this->model->consume($row['id']);
+        $this->model->consume($row['id'], $row['token_hash']);
 
         $this->assertNull($this->model->findValidByToken(7, 'token-abc'));
     }
@@ -137,13 +137,27 @@ class PasswordResetTest extends TestCase
         $this->model->create(7, password_hash('token-abc', PASSWORD_BCRYPT), $this->futureDate());
         $row = $this->model->findValidByToken(7, 'token-abc');
 
-        $this->assertTrue($this->model->consume($row['id']));
-        $this->assertFalse($this->model->consume($row['id']));
+        $this->assertTrue($this->model->consume($row['id'], $row['token_hash']));
+        $this->assertFalse($this->model->consume($row['id'], $row['token_hash']));
     }
 
     public function testConsumeReportsFailureForATokenThatDoesNotExist()
     {
-        $this->assertFalse($this->model->consume(999));
+        $this->assertFalse($this->model->consume(999, 'whatever'));
+    }
+
+    public function testConsumeRefusesATokenThatWasReplacedInPlace()
+    {
+        // create() reuses the row, so the id a stale request verified still
+        // exists and is unused — but it now points at a token that request
+        // never saw, and must not let it set a password.
+        $this->model->create(7, password_hash('first', PASSWORD_BCRYPT), $this->futureDate());
+        $stale = $this->model->findValidByToken(7, 'first');
+
+        $this->model->create(7, password_hash('second', PASSWORD_BCRYPT), $this->futureDate());
+
+        $this->assertFalse($this->model->consume($stale['id'], $stale['token_hash']));
+        $this->assertIsArray($this->model->findValidByToken(7, 'second'));
     }
 
     public function testConsumeLeavesOtherTokensAlone()
@@ -152,7 +166,7 @@ class PasswordResetTest extends TestCase
         $this->model->create(8, password_hash('token-def', PASSWORD_BCRYPT), $this->futureDate());
 
         $mine = $this->model->findValidByToken(7, 'token-abc');
-        $this->model->consume($mine['id']);
+        $this->model->consume($mine['id'], $mine['token_hash']);
 
         $this->assertIsArray($this->model->findValidByToken(8, 'token-def'));
     }
@@ -209,7 +223,7 @@ class PasswordResetTest extends TestCase
         // out a token that findValidByToken() then rejects as already used.
         $this->model->create(7, password_hash('first', PASSWORD_BCRYPT), $this->futureDate());
         $row = $this->model->findValidByToken(7, 'first');
-        $this->model->consume($row['id']);
+        $this->model->consume($row['id'], $row['token_hash']);
 
         $this->model->create(7, password_hash('second', PASSWORD_BCRYPT), $this->futureDate());
 

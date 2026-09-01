@@ -122,23 +122,30 @@ class PasswordReset extends Model
      *
      * The UPDATE is conditional on the token still being unused, so of two
      * requests replaying the same reset link exactly one sees a row change.
+     * It is also conditional on the hash, because create() replaces a token in
+     * place: without that, a request that verified the old token and then lost
+     * the race to a fresh reset request would consume the *new* token and set a
+     * password with a link that had already been superseded.
+     *
      * Callers must treat a false return as "this link is no longer valid" and
      * abandon whatever they were about to do with it.
      *
      * @param int $id
+     * @param string $tokenHash The hash read when the token was verified
      * @return bool True only when this call is the one that consumed the token
      */
-    public function consume($id)
+    public function consume($id, $tokenHash)
     {
         $stmt = $this->db->prepare(
             "UPDATE {$this->table}
              SET used_at = :used_at
-             WHERE id = :id AND used_at IS NULL"
+             WHERE id = :id AND used_at IS NULL AND token_hash = :token_hash"
         );
 
         $stmt->execute([
             'used_at' => date('Y-m-d H:i:s'),
-            'id' => $id
+            'id' => $id,
+            'token_hash' => $tokenHash
         ]);
 
         return $stmt->rowCount() === 1;
