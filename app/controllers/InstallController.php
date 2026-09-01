@@ -234,12 +234,17 @@ class InstallController
      */
     private function runSystemChecks()
     {
+        $minPhp = defined('SWCMS_MIN_PHP') ? SWCMS_MIN_PHP : '8.0.0';
+
         $checks = [
             [
+                // public/index.php already refuses to boot below this version,
+                // since match() makes most of the codebase unparseable on 7.x.
+                // Repeated here so the requirements screen states it explicitly.
                 'name' => 'PHP Version',
-                'description' => 'PHP 7.4 or higher required',
+                'description' => 'PHP ' . $minPhp . ' or higher required',
                 'required' => true,
-                'passed' => version_compare(PHP_VERSION, '7.4.0', '>='),
+                'passed' => version_compare(PHP_VERSION, $minPhp, '>='),
                 'value' => PHP_VERSION
             ],
             [

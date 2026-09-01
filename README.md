@@ -1,6 +1,6 @@
 # swCMS - Modular Content Management System
 
-[![PHP Version](https://img.shields.io/badge/PHP-7.4%2B-blue.svg)](https://php.net)
+[![PHP Version](https://img.shields.io/badge/PHP-8.0%2B-blue.svg)](https://php.net)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 A modern, modular Content Management System built with PHP and MVC architecture. Inspired by WordPress, swCMS offers a clean, extensible platform for managing content, users, and plugins with both frontend and administrative interfaces.
@@ -73,7 +73,7 @@ swCMS includes a built-in **Installation Wizard** that automatically configures 
 ### Manual Installation
 
 1. **Requirements**
-   - PHP 7.4 or higher
+   - PHP 8.0 or higher
    - MySQL 5.7+ or SQLite 3
    - Apache/Nginx web server
    - PDO extension (MySQL/SQLite)
@@ -361,7 +361,7 @@ chown -R www-data:www-data data logs public/uploads
 ```
 
 **System requirements not met**
-- Upgrade PHP to 7.4+ 
+- Upgrade PHP to 8.0+ 
 - Install required extensions: `php-pdo`, `php-json`
 - Check with: `php scripts/test_install.php`
 

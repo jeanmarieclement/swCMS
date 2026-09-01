@@ -177,7 +177,7 @@ class DependencyChecker
     {
         return [
             'requirements' => [
-                'PHP 7.4 or higher',
+                'PHP 8.0 or higher',
                 'PDO extension (MySQL or SQLite)',
                 'JSON extension',
                 'Write permissions on data/, logs/, public/uploads/ directories'

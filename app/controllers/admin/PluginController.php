@@ -191,7 +191,7 @@ class PluginController extends AdminController
                 'version' => RequestHelper::post('version', '1.0.0'),
                 'requires' => RequestHelper::post('requires', '1.0.0'),
                 'tested_up_to' => RequestHelper::post('tested_up_to', '1.5.0'),
-                'requires_php' => RequestHelper::post('requires_php', '7.4.0'),
+                'requires_php' => RequestHelper::post('requires_php', '8.0.0'),
                 'priority' => RequestHelper::post('priority', '10'),
                 'depends' => array_filter(explode(',', RequestHelper::post('depends', ''))),
                 'conflicts' => array_filter(explode(',', RequestHelper::post('conflicts', ''))),
