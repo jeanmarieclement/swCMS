@@ -38,25 +38,77 @@ class EnvFile
             return [];
         }
 
-        $parsed = @parse_ini_string(self::stripComments($contents), false, INI_SCANNER_NORMAL);
+        $stripped = self::stripComments($contents);
+        $parsed = @parse_ini_string($stripped, false, INI_SCANNER_NORMAL);
 
-        if ($parsed === false) {
-            // Not fatal: the caller falls back to defaults. Say so somewhere,
-            // rather than leaving an admin to guess why their settings are
-            // ignored.
-            error_log('swCMS: could not parse ' . $path . ' — check for stray quotes or unescaped characters.');
-
-            return [];
+        if ($parsed !== false) {
+            return $parsed;
         }
 
-        return $parsed;
+        // The ini parser rejects perfectly ordinary .env values — an unquoted
+        // '=' inside a key or token, a bare '&' or '|' — and it rejects the
+        // whole file, not the offending line. Falling back to a line reader
+        // keeps one awkward value from silently wiping out the database
+        // settings underneath it.
+        $lines = self::parseLines($stripped);
+
+        if ($lines === []) {
+            error_log('swCMS: could not read any setting from ' . $path);
+        }
+
+        return $lines;
     }
 
     /**
-     * Drop whole-line comments, which the ini parser would choke on
+     * Read KEY=VALUE lines without the ini parser's opinions
      *
-     * Only full-line comments: a '#' after a value can legitimately be part of
-     * a password or a URL fragment, and guessing there would corrupt settings.
+     * @param string $contents Already stripped of comments
+     * @return array
+     */
+    private static function parseLines($contents)
+    {
+        $values = [];
+
+        foreach (preg_split('/\R/', $contents) as $line) {
+            $separator = strpos($line, '=');
+
+            if ($separator === false) {
+                continue;
+            }
+
+            $name = trim(substr($line, 0, $separator));
+
+            if ($name === '') {
+                continue;
+            }
+
+            $values[$name] = self::unquote(trim(substr($line, $separator + 1)));
+        }
+
+        return $values;
+    }
+
+    /**
+     * Strip one matching pair of surrounding quotes
+     *
+     * @param string $value
+     * @return string
+     */
+    private static function unquote($value)
+    {
+        if (strlen($value) >= 2) {
+            $first = $value[0];
+
+            if (($first === '"' || $first === "'") && substr($value, -1) === $first) {
+                return substr($value, 1, -1);
+            }
+        }
+
+        return $value;
+    }
+
+    /**
+     * Drop the comments, which the ini parser would choke on or swallow whole
      *
      * @param string $contents
      * @return string
@@ -73,9 +125,48 @@ class EnvFile
                 continue;
             }
 
-            $kept[] = $line;
+            $kept[] = self::stripTrailingComment($line);
         }
 
         return implode("\n", $kept);
+    }
+
+    /**
+     * Remove a trailing comment, leaving '#' inside a value alone
+     *
+     * A comment has to be introduced by whitespace — DB_PASS=p#ss is a password,
+     * DB_PORT=3306 # the port is a comment — and a '#' inside quotes is part of
+     * the value wherever it sits.
+     *
+     * @param string $line
+     * @return string
+     */
+    private static function stripTrailingComment($line)
+    {
+        $quote = null;
+        $length = strlen($line);
+
+        for ($i = 0; $i < $length; $i++) {
+            $character = $line[$i];
+
+            if ($quote !== null) {
+                if ($character === $quote) {
+                    $quote = null;
+                }
+
+                continue;
+            }
+
+            if ($character === '"' || $character === "'") {
+                $quote = $character;
+                continue;
+            }
+
+            if ($character === '#' && $i > 0 && ($line[$i - 1] === ' ' || $line[$i - 1] === "\t")) {
+                return rtrim(substr($line, 0, $i));
+            }
+        }
+
+        return $line;
     }
 }

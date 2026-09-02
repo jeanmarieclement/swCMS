@@ -57,14 +57,38 @@ class EnvFileTest extends TestCase
         $this->assertSame('pa#ss', EnvFile::parse($this->tmp)['DB_PASS']);
     }
 
+    public function testATrailingCommentIsNotPartOfTheValue()
+    {
+        file_put_contents($this->tmp, "DB_PORT=3306 # the MySQL port\nDB_PASS=p#ss\n");
+
+        $parsed = EnvFile::parse($this->tmp);
+
+        $this->assertSame('3306', $parsed['DB_PORT']);
+        // No whitespace before it, so this one is a password, not a comment.
+        $this->assertSame('p#ss', $parsed['DB_PASS']);
+    }
+
+    public function testAValueTheIniParserRejectsDoesNotDiscardTheRest()
+    {
+        // parse_ini_string() fails the whole file over a bare '=' in a value.
+        // The database settings underneath must survive it.
+        file_put_contents($this->tmp, "APP_KEY=base64:abcd==\nDB_NAME=swcms\nDB_USER=swcms_user\n");
+
+        $parsed = EnvFile::parse($this->tmp);
+
+        $this->assertSame('swcms', $parsed['DB_NAME']);
+        $this->assertSame('swcms_user', $parsed['DB_USER']);
+        $this->assertSame('base64:abcd==', $parsed['APP_KEY']);
+    }
+
     public function testAMissingFileIsNotAnError()
     {
         $this->assertSame([], EnvFile::parse('/nonexistent/.env'));
     }
 
-    public function testAnUnparseableFileYieldsNothingRatherThanFatalling()
+    public function testAFileWithNoSettingsAtAllYieldsNothing()
     {
-        file_put_contents($this->tmp, "DB_NAME=\"unterminated\nDB_USER=\n[\n");
+        file_put_contents($this->tmp, "# nothing but commentary\n\n");
 
         $this->assertSame([], EnvFile::parse($this->tmp));
     }
