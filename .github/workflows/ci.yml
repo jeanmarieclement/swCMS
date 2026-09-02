@@ -11,7 +11,9 @@ permissions:
 
 concurrency:
   group: ci-${{ github.ref }}
-  cancel-in-progress: true
+  # Superseded pull request pushes are worth cancelling; a run on main is not,
+  # since its result is the record of whether that commit was ever green.
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   tests:
@@ -36,7 +38,7 @@ jobs:
         ports:
           - 3306:3306
         options: >-
-          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot_password"
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uswcms_user -pswcms_password"
           --health-interval=5s
           --health-timeout=5s
           --health-retries=20
@@ -52,8 +54,12 @@ jobs:
           coverage: none
 
       - name: Install dependencies
-        # composer.lock is not committed, so this resolves fresh every run.
         run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Audit runtime dependencies
+        # Only the packages that ship in a release. A dev-tool advisory is worth
+        # knowing about but must not block a change that has nothing to do with it.
+        run: composer audit --locked --no-dev
 
       - name: Write .env for the test database
         run: |
@@ -67,13 +73,18 @@ jobs:
             echo "DB_PASS=swcms_password"
           } >> .env
 
+      - name: Ensure a MySQL client is available
+        # Present on the current runner images, installed here so a future image
+        # dropping it turns into a clear step failure rather than a mystery.
+        run: command -v mysql || (sudo apt-get update && sudo apt-get install -y mysql-client)
+
       - name: Load the base schema
         # The same SQL the dev container runs on first boot; migrations expect
         # the tables it creates to already exist.
         run: |
           for sql in docker/mysql/init/*.sql; do
             echo "Importing $sql"
-            mysql -h 127.0.0.1 -P 3306 -uroot -proot_password swcms < "$sql"
+            mysql -h 127.0.0.1 -P 3306 -uswcms_user -pswcms_password swcms < "$sql"
           done
 
       - name: Run migrations

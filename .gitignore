@@ -41,8 +41,11 @@ Thumbs.db
 # PHP DEPENDENCIES AND COMPOSER
 # =============================================================================
 /vendor/
-composer.lock
 auth.json
+
+# composer.lock IS committed: the release workflow vendors dependencies into the
+# published archive, so the versions that were tested have to be the versions
+# that ship.
 
 # Exception: Keep autoload and manually installed libraries
 !/vendor/autoload.php

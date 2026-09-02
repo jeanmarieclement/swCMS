@@ -5,8 +5,10 @@ on:
     tags:
       - 'v*.*.*'
 
+# Read by default; only the job that publishes gets write, so a compromised
+# dependency running under phpunit cannot push to the repository.
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   verify:
@@ -56,7 +58,7 @@ jobs:
         ports:
           - 3306:3306
         options: >-
-          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot_password"
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uswcms_user -pswcms_password"
           --health-interval=5s
           --health-timeout=5s
           --health-retries=20
@@ -75,6 +77,9 @@ jobs:
       - name: Install dependencies
         run: composer install --prefer-dist --no-interaction --no-progress
 
+      - name: Audit runtime dependencies
+        run: composer audit --locked --no-dev
+
       - name: Write .env for the test database
         run: |
           cp .env.example .env
@@ -87,10 +92,15 @@ jobs:
             echo "DB_PASS=swcms_password"
           } >> .env
 
+      - name: Ensure a MySQL client is available
+        # Present on the current runner images, installed here so a future image
+        # dropping it turns into a clear step failure rather than a mystery.
+        run: command -v mysql || (sudo apt-get update && sudo apt-get install -y mysql-client)
+
       - name: Load the base schema
         run: |
           for sql in docker/mysql/init/*.sql; do
-            mysql -h 127.0.0.1 -P 3306 -uroot -proot_password swcms < "$sql"
+            mysql -h 127.0.0.1 -P 3306 -uswcms_user -pswcms_password swcms < "$sql"
           done
 
       - name: Run migrations
@@ -117,12 +127,16 @@ jobs:
     name: Package and publish
     needs: [verify, tests]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
 
     steps:
       - uses: actions/checkout@v4
         with:
-          # Full history, so the changelog can diff against the previous tag.
+          # Full history and every tag, so the changelog can diff against the
+          # previous release rather than reporting each tag as the first.
           fetch-depth: 0
+          fetch-tags: true
 
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
@@ -144,7 +158,9 @@ jobs:
           git archive HEAD | tar -x -C "build/${name}"
 
           # Runtime dependencies only, and an optimised autoloader: whoever
-          # unpacks this on shared hosting has no Composer to run.
+          # unpacks this on shared hosting has no Composer to run. The committed
+          # composer.lock travels in the archive, so the versions that were
+          # tested a job earlier are exactly the versions that ship.
           composer install --no-dev --optimize-autoloader --no-interaction --no-progress \
             --working-dir="build/${name}"
 
