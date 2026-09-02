@@ -83,6 +83,9 @@ jobs:
       - name: Write .env for the test database
         run: |
           cp .env.example .env
+          # A newline first: without it the first appended key would glue onto
+          # the example's last line and the whole file would stop parsing.
+          printf '\n' >> .env
           {
             echo "DB_DRIVER=mysql"
             echo "DB_HOST=127.0.0.1"
