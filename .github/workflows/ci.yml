@@ -1,0 +1,120 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    name: Tests (PHP ${{ matrix.php }})
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        # 8.0 is the floor composer.json and public/index.php enforce; the rest
+        # are the versions a shared host is likely to offer.
+        php: ['8.0', '8.1', '8.2', '8.3', '8.4']
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_DATABASE: swcms
+          MYSQL_USER: swcms_user
+          MYSQL_PASSWORD: swcms_password
+          MYSQL_ROOT_PASSWORD: root_password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot_password"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          extensions: pdo, pdo_mysql, pdo_sqlite, mbstring, json, gd, zip
+          coverage: none
+
+      - name: Install dependencies
+        # composer.lock is not committed, so this resolves fresh every run.
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Write .env for the test database
+        run: |
+          cp .env.example .env
+          {
+            echo "DB_DRIVER=mysql"
+            echo "DB_HOST=127.0.0.1"
+            echo "DB_PORT=3306"
+            echo "DB_NAME=swcms"
+            echo "DB_USER=swcms_user"
+            echo "DB_PASS=swcms_password"
+          } >> .env
+
+      - name: Load the base schema
+        # The same SQL the dev container runs on first boot; migrations expect
+        # the tables it creates to already exist.
+        run: |
+          for sql in docker/mysql/init/*.sql; do
+            echo "Importing $sql"
+            mysql -h 127.0.0.1 -P 3306 -uroot -proot_password swcms < "$sql"
+          done
+
+      - name: Run migrations
+        env:
+          DB_DRIVER: mysql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_NAME: swcms
+          DB_USER: swcms_user
+          DB_PASS: swcms_password
+        run: php database/migrate.php up
+
+      - name: Run the test suite
+        env:
+          DB_DRIVER: mysql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_NAME: swcms
+          DB_USER: swcms_user
+          DB_PASS: swcms_password
+        run: php vendor/bin/phpunit
+
+  coding-standards:
+    name: PSR-12
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.1'
+          coverage: none
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Check coding standards
+        # Reported, not enforced: app/ carries a large pre-existing PSR-12 debt
+        # (see the tracking issue), so failing here would redden every build
+        # without telling anyone anything new about the change under review.
+        continue-on-error: true
+        run: composer cs-check

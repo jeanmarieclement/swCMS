@@ -1,0 +1,207 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  verify:
+    name: Verify the tag
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check the tag against VERSION and composer.json
+        id: version
+        run: |
+          set -euo pipefail
+          tag="${GITHUB_REF_NAME#v}"
+          file="$(tr -d '[:space:]' < VERSION)"
+          composer_version="$(php -r 'echo json_decode(file_get_contents("composer.json"), true)["version"] ?? "";')"
+
+          echo "tag=$tag file=$file composer=$composer_version"
+
+          if [ "$tag" != "$file" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match the VERSION file ($file). Bump VERSION before tagging."
+            exit 1
+          fi
+
+          if [ "$tag" != "$composer_version" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match composer.json version ($composer_version)."
+            exit 1
+          fi
+
+          echo "version=$tag" >> "$GITHUB_OUTPUT"
+
+  tests:
+    name: Tests
+    needs: verify
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_DATABASE: swcms
+          MYSQL_USER: swcms_user
+          MYSQL_PASSWORD: swcms_password
+          MYSQL_ROOT_PASSWORD: root_password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot_password"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          # The floor the release promises to run on.
+          php-version: '8.0'
+          extensions: pdo, pdo_mysql, pdo_sqlite, mbstring, json, gd, zip
+          coverage: none
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Write .env for the test database
+        run: |
+          cp .env.example .env
+          {
+            echo "DB_DRIVER=mysql"
+            echo "DB_HOST=127.0.0.1"
+            echo "DB_PORT=3306"
+            echo "DB_NAME=swcms"
+            echo "DB_USER=swcms_user"
+            echo "DB_PASS=swcms_password"
+          } >> .env
+
+      - name: Load the base schema
+        run: |
+          for sql in docker/mysql/init/*.sql; do
+            mysql -h 127.0.0.1 -P 3306 -uroot -proot_password swcms < "$sql"
+          done
+
+      - name: Run migrations
+        env:
+          DB_DRIVER: mysql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_NAME: swcms
+          DB_USER: swcms_user
+          DB_PASS: swcms_password
+        run: php database/migrate.php up
+
+      - name: Run the test suite
+        env:
+          DB_DRIVER: mysql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_NAME: swcms
+          DB_USER: swcms_user
+          DB_PASS: swcms_password
+        run: php vendor/bin/phpunit
+
+  release:
+    name: Package and publish
+    needs: [verify, tests]
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Full history, so the changelog can diff against the previous tag.
+          fetch-depth: 0
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.0'
+          extensions: pdo, mbstring, json, zip
+          coverage: none
+
+      - name: Build the release tree
+        env:
+          VERSION: ${{ needs.verify.outputs.version }}
+        run: |
+          set -euo pipefail
+          name="swcms-${VERSION}"
+
+          # git archive honours the export-ignore attributes in .gitattributes,
+          # so development-only paths never reach the package.
+          mkdir -p "build/${name}"
+          git archive HEAD | tar -x -C "build/${name}"
+
+          # Runtime dependencies only, and an optimised autoloader: whoever
+          # unpacks this on shared hosting has no Composer to run.
+          composer install --no-dev --optimize-autoloader --no-interaction --no-progress \
+            --working-dir="build/${name}"
+
+          # Directories the app writes to, which git does not carry because they
+          # only ever held ignored files.
+          mkdir -p "build/${name}/data" "build/${name}/logs" \
+                   "build/${name}/public/uploads" "build/${name}/app/views/compiled" \
+                   "build/${name}/app/views/cache"
+
+          echo "PACKAGE_NAME=${name}" >> "$GITHUB_ENV"
+
+      - name: Create the archives
+        run: |
+          set -euo pipefail
+          cd build
+          zip -qr "${PACKAGE_NAME}.zip" "${PACKAGE_NAME}"
+          tar -czf "${PACKAGE_NAME}.tar.gz" "${PACKAGE_NAME}"
+          sha256sum "${PACKAGE_NAME}.zip" "${PACKAGE_NAME}.tar.gz" > "${PACKAGE_NAME}.sha256"
+          ls -la
+
+      - name: Build the release notes
+        env:
+          VERSION: ${{ needs.verify.outputs.version }}
+        run: |
+          set -euo pipefail
+          previous="$(git tag --sort=-version:refname | grep -v "^${GITHUB_REF_NAME}$" | head -n1 || true)"
+
+          {
+            echo "## swCMS ${VERSION}"
+            echo
+            if [ -n "$previous" ]; then
+              echo "### Changes since ${previous}"
+              echo
+              git log --no-merges --pretty='- %s' "${previous}..${GITHUB_REF_NAME}"
+              echo
+              echo "**Full changelog**: https://github.com/${GITHUB_REPOSITORY}/compare/${previous}...${GITHUB_REF_NAME}"
+            else
+              echo "First tagged release."
+            fi
+            echo
+            echo "### Install"
+            echo
+            echo "Download the archive, unpack it into the web root, point the browser at the site"
+            echo "and the installer runs. Dependencies are already vendored; PHP 8.0 or higher is required."
+            echo
+            echo "Verify the download against \`${PACKAGE_NAME}.sha256\`."
+          } > build/RELEASE_NOTES.md
+
+          cat build/RELEASE_NOTES.md
+
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" \
+            --title "swCMS ${GITHUB_REF_NAME}" \
+            --notes-file build/RELEASE_NOTES.md \
+            "build/${PACKAGE_NAME}.zip" \
+            "build/${PACKAGE_NAME}.tar.gz" \
+            "build/${PACKAGE_NAME}.sha256"

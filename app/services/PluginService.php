@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Helpers\SystemSettingsHelper;
+use App\Core\Version;
 use App\Helpers\LogHelper;
 use App\Core\Database\Database;
 use App\Services\PluginMenuManager;
@@ -533,7 +534,7 @@ class PluginService
     {
         // Check CMS version
         if (!empty($plugin['requires'])) {
-            $cmsVersion = SystemSettingsHelper::get('CMS_VERSION') ?? '1.0.0';
+            $cmsVersion = SystemSettingsHelper::get('CMS_VERSION') ?? Version::current();
             if (!$this->versionCompare($cmsVersion, $plugin['requires'], '>=')) {
                 throw new \Exception("Plugin '{$plugin['name']}' requires CMS version {$plugin['requires']} or higher. Current version: $cmsVersion");
             }
@@ -549,7 +550,7 @@ class PluginService
 
         // Check if tested up to version
         if (!empty($plugin['tested_up_to'])) {
-            $cmsVersion = SystemSettingsHelper::get('CMS_VERSION') ?? '1.0.0';
+            $cmsVersion = SystemSettingsHelper::get('CMS_VERSION') ?? Version::current();
             if (!$this->versionCompare($cmsVersion, $plugin['tested_up_to'], '<=')) {
                 LogHelper::warning("Plugin '{$plugin['name']}' has not been tested with CMS version $cmsVersion. Last tested version: {$plugin['tested_up_to']}");
             }
@@ -851,7 +852,7 @@ class PluginService
 
         // Check for warnings
         if (!empty($plugin['tested_up_to'])) {
-            $cmsVersion = SystemSettingsHelper::get('CMS_VERSION') ?? '1.0.0';
+            $cmsVersion = SystemSettingsHelper::get('CMS_VERSION') ?? Version::current();
             if (!$this->versionCompare($cmsVersion, $plugin['tested_up_to'], '<=')) {
                 $results['warnings'][] = "Plugin has not been tested with CMS version $cmsVersion";
             }

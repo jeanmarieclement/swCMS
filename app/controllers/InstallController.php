@@ -706,7 +706,7 @@ class InstallController
             'DEBUG_MODE' => ['0', 'Enable debug mode (production should be 0)'],
             'SESSION_TIMEOUT' => ['3600', 'Session timeout in seconds'],
             'INSTALLATION_DATE' => [date('Y-m-d H:i:s'), 'Date when CMS was installed'],
-            'CMS_VERSION' => ['1.0.0', 'Current CMS version'],
+            'CMS_VERSION' => [\App\Core\Version::current(), 'Current CMS version'],
         ];
 
         if ($this->config['database']['driver'] === 'mysql') {
