@@ -9,9 +9,15 @@ if (!defined('ROOT_PATH')) {
 }
 
 // Load environment variables from .env file if it exists
+//
+// EnvFile, not parse_ini_file(): PHP's ini parser rejects the '#' comments a
+// .env conventionally carries, so reading the file directly made a copy of
+// .env.example parse to nothing at all.
+require_once __DIR__ . '/../core/EnvFile.php';
+
 $envFile = ROOT_PATH . '/.env';
 if (file_exists($envFile)) {
-    $envVars = parse_ini_file($envFile);
+    $envVars = \App\Core\EnvFile::parse($envFile);
     if ($envVars) {
         foreach ($envVars as $key => $value) {
             if (!array_key_exists($key, $_ENV)) {
