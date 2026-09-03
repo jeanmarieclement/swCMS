@@ -44,7 +44,7 @@ jobs:
           --health-retries=20
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
@@ -115,7 +115,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Set up PHP
         uses: shivammathur/setup-php@v2
@@ -127,8 +127,17 @@ jobs:
         run: composer install --prefer-dist --no-interaction --no-progress
 
       - name: Check coding standards
-        # Reported, not enforced: app/ carries a large pre-existing PSR-12 debt
-        # (see the tracking issue), so failing here would redden every build
-        # without telling anyone anything new about the change under review.
-        continue-on-error: true
-        run: composer cs-check
+        # Reported, not enforced: app/ carries a large pre-existing PSR-12 debt,
+        # so failing here would redden every build without telling anyone
+        # anything new about the change under review. phpcs exits non-zero when
+        # it finds anything, hence the explicit success — continue-on-error
+        # would still stamp the run with a failed step.
+        run: |
+          php vendor/bin/phpcs --standard=PSR12 --report=full app/ || true
+          {
+            echo "### PSR-12"
+            echo
+            echo '```'
+            php vendor/bin/phpcs --standard=PSR12 --report=summary app/ | tail -n 20 || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
