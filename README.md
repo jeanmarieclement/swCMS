@@ -1,5 +1,6 @@
 # swCMS - Modular Content Management System
 
+[![CI](https://github.com/jeanmarieclement/swCMS/actions/workflows/ci.yml/badge.svg)](https://github.com/jeanmarieclement/swCMS/actions/workflows/ci.yml)
 [![PHP Version](https://img.shields.io/badge/PHP-8.0%2B-blue.svg)](https://php.net)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
@@ -266,6 +267,35 @@ composer install --dev
 # Run tests with coverage
 vendor/bin/phpunit --coverage-html coverage
 ```
+
+Every push and pull request to `main` runs the suite on PHP 8.0 through 8.4 against a
+real MySQL 8 service, so a change that only works on one version is caught before merge.
+
+## 📦 Releases
+
+Packaged releases are published automatically from Git tags. Each release carries a
+`.zip` and a `.tar.gz` with dependencies already vendored — unpack into the web root,
+open the site, and the installer runs. A `.sha256` file accompanies them.
+
+**Version source of truth**: the `VERSION` file at the repository root. `composer.json`
+carries the same value, `App\Core\Version::current()` reads it, and the installer seeds
+the `CMS_VERSION` setting from it.
+
+Cutting a release:
+
+```bash
+# 1. Bump VERSION and the "version" field in composer.json to the same value
+# 2. Commit that on main
+git tag v1.1.0
+git push origin v1.1.0
+```
+
+The workflow refuses to publish when the tag, `VERSION` and `composer.json` disagree,
+and runs the full test suite on PHP 8.0 before packaging anything. Release notes list
+the commits since the previous tag.
+
+Development-only paths (`tests/`, `docker/`, `.github/`, the Dockerfile, this file's
+companions) are excluded from the package through `export-ignore` in `.gitattributes`.
 
 ## 🔌 Plugin System
 

@@ -1,13 +1,19 @@
 -- Create database schema for swCMS
 
 -- Roles table
+-- `id` is the primary key, not `name`: the migrations address roles by id
+-- (2025_09_03_000001_seed_roles deduplicates on MIN(id)), so a database seeded
+-- from this file without it fails to migrate. `name` keeps a unique index
+-- because users.role is a foreign key onto it.
 CREATE TABLE IF NOT EXISTS `roles` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(50) NOT NULL,
   `level` int(11) NOT NULL,
   `description` varchar(255) DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`name`)
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uq_roles_name` (`name`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Users table
