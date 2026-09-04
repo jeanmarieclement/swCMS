@@ -30,7 +30,7 @@ class PluginService
             : rtrim($pluginsPath, '/') . '/';
         $this->db = Database::getInstance();
         $this->menuManager = new PluginMenuManager();
-        $this->routesManager = new PluginRoutesManager();
+        $this->routesManager = new PluginRoutesManager($this->pluginsPath);
 
         // Create plugins directory if it doesn't exist
         if (!is_dir($this->pluginsPath)) {
