@@ -132,7 +132,21 @@ class PluginRoutesManager
         ];
 
         // Route comuni
-        $commonActions = ['create', 'edit', 'delete', 'settings', 'download', 'upload', 'schedules', 'list', 'stats'];
+        $commonActions = [
+            'create',
+            'edit',
+            'delete',
+            'settings',
+            'download',
+            'upload',
+            'schedules',
+            'schedule',
+            'list',
+            'stats',
+            'restore',
+            'cleanup',
+            'cleanupTemp',
+        ];
 
         foreach ($commonActions as $action) {
             $routes[] = [
@@ -142,7 +156,7 @@ class PluginRoutesManager
             ];
 
             // Route con parametri ID
-            if (in_array($action, ['edit', 'delete', 'view'])) {
+            if (in_array($action, ['edit', 'delete', 'view', 'restore'])) {
                 $routes[] = [
                     'pattern' => "admin/{$baseUrl}/{$action}/([0-9]+)",
                     'controller' => $controllerName,
