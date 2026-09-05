@@ -119,7 +119,7 @@ class PluginRoutesManagerTest extends TestCase
         $this->assertContains('admin/backup-manager/restore', $patterns);
         $this->assertContains('admin/backup-manager/schedule', $patterns);
         $this->assertContains('admin/backup-manager/cleanup', $patterns);
-        $this->assertContains('admin/backup-manager/cleanupTemp', $patterns);
+        $this->assertNotContains('admin/backup-manager/cleanupTemp', $patterns);
         $this->assertSame('BackupManager', $routes[0]['controller']);
     }
 }

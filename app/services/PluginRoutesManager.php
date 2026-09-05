@@ -145,7 +145,6 @@ class PluginRoutesManager
             'stats',
             'restore',
             'cleanup',
-            'cleanupTemp',
         ];
 
         foreach ($commonActions as $action) {
@@ -156,7 +155,7 @@ class PluginRoutesManager
             ];
 
             // Route con parametri ID
-            if (in_array($action, ['edit', 'delete', 'view', 'restore'])) {
+            if (in_array($action, ['edit', 'delete', 'view'])) {
                 $routes[] = [
                     'pattern' => "admin/{$baseUrl}/{$action}/([0-9]+)",
                     'controller' => $controllerName,
