@@ -462,9 +462,20 @@ class PluginService
     public function loadActivePlugins(): void
     {
         $activePlugins = $this->getActivePlugins();
+        $routesChanged = false;
 
         foreach ($activePlugins as $pluginName) {
+            $pluginPath = $this->pluginsPath . $pluginName;
+
+            if (is_dir($pluginPath)) {
+                $routesChanged = $this->routesManager->ensurePluginRoutes($pluginName, $pluginPath) || $routesChanged;
+            }
+
             $this->loadPlugin($pluginName);
+        }
+
+        if ($routesChanged) {
+            $this->routesManager->generateRoutesFile();
         }
     }
 
