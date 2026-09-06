@@ -118,6 +118,9 @@ jobs:
 
       - name: Run the test suite
         env:
+          COMMENTS_MYSQL_ADMIN_DSN: 'mysql:host=127.0.0.1;port=3306'
+          COMMENTS_MYSQL_USER: root
+          COMMENTS_MYSQL_PASSWORD: root_password
           DB_DRIVER: mysql
           DB_HOST: 127.0.0.1
           DB_PORT: 3306
