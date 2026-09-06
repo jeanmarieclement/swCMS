@@ -17,12 +17,17 @@ class Router
     private $params = [];
     private $compiledRoutes = [];
     private static $routeCache = [];
+    private $pluginsPath;
 
     /**
+     * @param string|null $pluginsPath Plugin directory, defaults to the configured one
      * Constructor
      */
-    public function __construct()
+    public function __construct(?string $pluginsPath = null)
     {
+        $this->pluginsPath = $pluginsPath === null
+            ? (defined('PLUGINS_PATH') ? PLUGINS_PATH : __DIR__ . '/../../plugins')
+            : rtrim($pluginsPath, '/');
         $this->loadRoutes();
     }
 
@@ -405,7 +410,7 @@ class Router
         }
 
         // Check common plugin directories that might contain this controller
-        $pluginsDir = \ROOT_PATH . '/plugins';
+        $pluginsDir = $this->pluginsPath;
         if (!is_dir($pluginsDir)) {
             return null;
         }

@@ -30,7 +30,7 @@ class PluginService
             : rtrim($pluginsPath, '/') . '/';
         $this->db = Database::getInstance();
         $this->menuManager = new PluginMenuManager();
-        $this->routesManager = new PluginRoutesManager();
+        $this->routesManager = new PluginRoutesManager($this->pluginsPath);
 
         // Create plugins directory if it doesn't exist
         if (!is_dir($this->pluginsPath)) {
@@ -462,9 +462,20 @@ class PluginService
     public function loadActivePlugins(): void
     {
         $activePlugins = $this->getActivePlugins();
+        $routesChanged = false;
 
         foreach ($activePlugins as $pluginName) {
+            $pluginPath = $this->pluginsPath . $pluginName;
+
+            if (is_dir($pluginPath)) {
+                $routesChanged = $this->routesManager->ensurePluginRoutes($pluginName, $pluginPath) || $routesChanged;
+            }
+
             $this->loadPlugin($pluginName);
+        }
+
+        if ($routesChanged) {
+            $this->routesManager->generateRoutesFile();
         }
     }
 

@@ -13,9 +13,17 @@ class PluginRoutesManager
 {
     private $routesFile;
 
-    public function __construct()
+    private $pluginsPath;
+
+    /**
+     * @param string|null $pluginsPath Plugin directory, defaults to the bundled one
+     */
+    public function __construct(?string $pluginsPath = null)
     {
         $this->routesFile = __DIR__ . '/../core/plugin_routes.php';
+        $this->pluginsPath = $pluginsPath === null
+            ? __DIR__ . '/../../plugins/'
+            : rtrim($pluginsPath, '/') . '/';
     }
 
     /**
@@ -45,6 +53,32 @@ class PluginRoutesManager
             ]);
             return false;
         }
+    }
+
+    /**
+     * Restore the persisted routes for an active plugin when they are missing
+     * (for example after deploying a fresh plugin_routes.php file).
+     *
+     * @return bool Whether the stored routes changed
+     */
+    public function ensurePluginRoutes(string $pluginName, string $pluginPath): bool
+    {
+        if (!$this->hasController($pluginName)) {
+            return false;
+        }
+
+        $routes = $this->generatePluginRoutes($pluginName, $pluginPath);
+        $currentRoutes = $this->loadPluginRoutes();
+
+        if (($currentRoutes[$pluginName] ?? null) === $routes) {
+            return false;
+        }
+
+        if (!$this->registerPluginRoutes($pluginName, $routes)) {
+            throw new \RuntimeException("Unable to restore routes for plugin '$pluginName'");
+        }
+
+        return true;
     }
 
     /**
@@ -124,7 +158,20 @@ class PluginRoutesManager
         ];
 
         // Route comuni
-        $commonActions = ['create', 'edit', 'delete', 'settings', 'download', 'upload', 'schedules', 'list', 'stats'];
+        $commonActions = [
+            'create',
+            'edit',
+            'delete',
+            'settings',
+            'download',
+            'upload',
+            'schedules',
+            'schedule',
+            'list',
+            'stats',
+            'restore',
+            'cleanup',
+        ];
 
         foreach ($commonActions as $action) {
             $routes[] = [
@@ -250,22 +297,24 @@ class PluginRoutesManager
     {
         $controllerName = $this->getControllerName($pluginName);
 
-        // Use absolute path instead of constant in case it's not defined
-        $controllerPath = defined('ADMIN_CONTROLLERS_PATH')
-            ? ADMIN_CONTROLLERS_PATH . "/{$controllerName}Controller.php"
-            : __DIR__ . "/../controllers/admin/{$controllerName}Controller.php";
+        // Both locations the Router already loads a plugin controller from:
+        // the admin controllers directory, and the plugin's own controllers/
+        // folder, which is the layout plugins/README.md documents.
+        $candidates = [
+            // Use absolute path instead of constant in case it's not defined
+            defined('ADMIN_CONTROLLERS_PATH')
+                ? ADMIN_CONTROLLERS_PATH . "/{$controllerName}Controller.php"
+                : __DIR__ . "/../controllers/admin/{$controllerName}Controller.php",
+            $this->pluginsPath . "{$pluginName}/controllers/{$controllerName}Controller.php",
+        ];
 
-        $exists = file_exists($controllerPath);
+        foreach ($candidates as $controllerPath) {
+            if (file_exists($controllerPath)) {
+                return true;
+            }
+        }
 
-        // Debug logging using LogHelper
-        \App\Helpers\LogHelper::info("Plugin controller check", [
-            'plugin' => $pluginName,
-            'controller' => $controllerName,
-            'path' => $controllerPath,
-            'exists' => $exists
-        ]);
-
-        return $exists;
+        return false;
     }
 
     /**

@@ -10,6 +10,7 @@ use PHPUnit\Framework\TestCase;
 class RouterTest extends TestCase
 {
     private $router;
+    private $pluginsPath;
     
     /**
      * Set up the test environment
@@ -24,6 +25,32 @@ class RouterTest extends TestCase
         }
 
         $this->router = new \App\Core\Router();
+        $this->pluginsPath = sys_get_temp_dir() . '/swcms-router-' . uniqid();
+        mkdir($this->pluginsPath . '/example/controllers', 0777, true);
+        file_put_contents(
+            $this->pluginsPath . '/example/controllers/ExampleController.php',
+            "<?php\n"
+        );
+    }
+
+    protected function tearDown(): void
+    {
+        $this->removeDirectory($this->pluginsPath);
+        parent::tearDown();
+    }
+
+    private function removeDirectory(string $path): void
+    {
+        if (!is_dir($path)) {
+            return;
+        }
+
+        foreach (array_diff(scandir($path), ['.', '..']) as $entry) {
+            $fullPath = $path . '/' . $entry;
+            is_dir($fullPath) ? $this->removeDirectory($fullPath) : unlink($fullPath);
+        }
+
+        rmdir($path);
     }
     
     /**
@@ -165,5 +192,18 @@ class RouterTest extends TestCase
         // Test convertToCamelCase
         $result = $camelMethod->invoke($this->router, 'test-string');
         $this->assertEquals('testString', $result);
+    }
+
+    public function testPluginControllerIsLookedUpInTheConfiguredPluginsDirectory()
+    {
+        $router = new \App\Core\Router($this->pluginsPath);
+        $reflection = new \ReflectionClass($router);
+        $findPluginController = $reflection->getMethod('findPluginController');
+        $findPluginController->setAccessible(true);
+
+        $this->assertSame(
+            $this->pluginsPath . '/example/controllers/ExampleController.php',
+            $findPluginController->invoke($router, 'Example', true)
+        );
     }
 }

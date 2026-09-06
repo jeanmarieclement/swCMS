@@ -55,13 +55,13 @@ if (!defined('FRONTEND_CONTROLLERS_PATH')) {
     define('FRONTEND_CONTROLLERS_PATH', CONTROLLERS_PATH . '/Frontend');
 }
 if (!defined('ADMIN_CONTROLLERS_PATH')) {
-    define('ADMIN_CONTROLLERS_PATH', CONTROLLERS_PATH . '/Admin');
+    define('ADMIN_CONTROLLERS_PATH', CONTROLLERS_PATH . '/admin');
 }
 if (!defined('FRONTEND_VIEWS_PATH')) {
-    define('FRONTEND_VIEWS_PATH', VIEWS_PATH . '/Frontend');
+    define('FRONTEND_VIEWS_PATH', VIEWS_PATH . '/frontend');
 }
 if (!defined('ADMIN_VIEWS_PATH')) {
-    define('ADMIN_VIEWS_PATH', VIEWS_PATH . '/Admin');
+    define('ADMIN_VIEWS_PATH', VIEWS_PATH . '/admin');
 }
 
 // Database constants: prefer environment variables (Docker sets these) over defaults
