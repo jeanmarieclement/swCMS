@@ -8,9 +8,10 @@ class Comments extends Model
 {
     protected $table = 'comments';
 
-    public function __construct($params = [])
+    public function __construct(\PDO $pdo = null)
     {
-        parent::__construct($params);
+        $this->db = $pdo ?? \App\Core\Database\Database::getInstance();
+        $this->hookSystem = \App\Core\HookSystem::getInstance();
     }
 
     /**
@@ -19,12 +20,15 @@ class Comments extends Model
     public function getAll($status = null)
     {
         $sql = "SELECT c.*, 
-                       p.title as post_title,
+                       COALESCE(p.title, pg.title) as post_title,
+                       CASE WHEN c.post_id IS NOT NULL THEN 'post'
+                            WHEN c.page_id IS NOT NULL THEN 'page' ELSE 'unresolved' END as content_type,
                        u.username as user_username,
                        u.display_name as user_display_name,
                        u.email as user_email
                 FROM comments c 
                 LEFT JOIN posts p ON c.post_id = p.id
+                LEFT JOIN pages pg ON c.page_id = pg.id
                 LEFT JOIN users u ON c.user_id = u.id";
         if ($status !== null) {
             $sql .= " WHERE c.status = :status";
@@ -47,7 +51,9 @@ class Comments extends Model
     public function getAllHierarchical($status = null)
     {
         $sql = "SELECT c.*, 
-                       p.title as post_title,
+                       COALESCE(p.title, pg.title) as post_title,
+                       CASE WHEN c.post_id IS NOT NULL THEN 'post'
+                            WHEN c.page_id IS NOT NULL THEN 'page' ELSE 'unresolved' END as content_type,
                        u.username as user_username,
                        u.display_name as user_display_name,
                        u.email as user_email,
@@ -55,8 +61,11 @@ class Comments extends Model
                        parent_c.author_name as parent_author_name
                 FROM comments c 
                 LEFT JOIN posts p ON c.post_id = p.id
+                LEFT JOIN pages pg ON c.page_id = pg.id
                 LEFT JOIN users u ON c.user_id = u.id
-                LEFT JOIN comments parent_c ON c.parent_id = parent_c.id";
+                LEFT JOIN comments parent_c ON c.parent_id = parent_c.id
+                    AND ((c.post_id = parent_c.post_id AND c.page_id IS NULL AND parent_c.page_id IS NULL)
+                      OR (c.page_id = parent_c.page_id AND c.post_id IS NULL AND parent_c.post_id IS NULL))";
         if ($status !== null) {
             $sql .= " WHERE c.status = :status";
         }
@@ -71,7 +80,43 @@ class Comments extends Model
         $allComments = $stmt->fetchAll($this->db::FETCH_ASSOC);
 
         // For admin, show all comments in hierarchy but don't limit
-        return $this->buildAdminCommentTree($allComments);
+        return $this->buildAdminCommentTree($this->normalizeAdminParents($allComments));
+    }
+
+    private function normalizeAdminParents(array $comments): array
+    {
+        $byId = array_column($comments, null, 'id');
+        foreach ($comments as &$comment) {
+            $seen = [$comment['id'] => true];
+            $cursor = $comment;
+            while ($cursor['parent_id'] !== null) {
+                $parent = $byId[$cursor['parent_id']] ?? null;
+                if (!$parent || !$this->sameContent($cursor, $parent) || isset($seen[$parent['id']])) {
+                    $comment['parent_id'] = null;
+                    break;
+                }
+                $seen[$parent['id']] = true;
+                $cursor = $parent;
+            }
+        }
+        unset($comment);
+        return $comments;
+    }
+
+    private function sameContent(array $left, array $right): bool
+    {
+        return (!empty($left['post_id']) && $left['post_id'] == $right['post_id']
+                && empty($left['page_id']) && empty($right['page_id']))
+            || (!empty($left['page_id']) && $left['page_id'] == $right['page_id']
+                && empty($left['post_id']) && empty($right['post_id']));
+    }
+
+    private function contentColumn(string $type): string
+    {
+        if (!in_array($type, ['post', 'page'], true)) {
+            throw new \InvalidArgumentException('Invalid comment content type');
+        }
+        return $type . '_id';
     }
 
     /**
@@ -137,6 +182,21 @@ class Comments extends Model
         return $count;
     }
 
+    public function getApprovedForPage($pageId, $limit = 20, $offset = 0)
+    {
+        return $this->getApprovedForPost($pageId, $limit, $offset, 'page');
+    }
+
+    public function getApprovedHierarchicalForPage($pageId, $limit = 20, $offset = 0)
+    {
+        return $this->getApprovedHierarchicalForPost($pageId, $limit, $offset, 'page');
+    }
+
+    public function countApprovedForPage($pageId)
+    {
+        return $this->countApprovedForPost($pageId, 'page');
+    }
+
     /**
      * Get approved comments for a post
      *
@@ -145,13 +205,14 @@ class Comments extends Model
      * @param int $offset Offset for pagination
      * @return array List of comments
      */
-    public function getApprovedForPost($postId, $limit = 20, $offset = 0)
+    public function getApprovedForPost($postId, $limit = 20, $offset = 0, $type = 'post')
     {
+        $column = $this->contentColumn($type);
         $sql = "SELECT c.*, u.display_name as user_display_name, u.username
                 FROM comments c 
                 LEFT JOIN users u ON c.user_id = u.id
-                WHERE c.post_id = :post_id AND c.status = 'approved'
-                ORDER BY c.created_at ASC
+                WHERE c.{$column} = :post_id AND c.status = 'approved'
+                ORDER BY c.created_at ASC, c.id ASC
                 LIMIT :limit OFFSET :offset";
 
         $stmt = $this->db->prepare($sql);
@@ -171,14 +232,15 @@ class Comments extends Model
      * @param int $offset Offset for pagination
      * @return array Hierarchical list of comments with replies
      */
-    public function getApprovedHierarchicalForPost($postId, $limit = 20, $offset = 0)
+    public function getApprovedHierarchicalForPost($postId, $limit = 20, $offset = 0, $type = 'post')
     {
+        $column = $this->contentColumn($type);
         // Get all approved comments for the post
         $sql = "SELECT c.*, u.display_name as user_display_name, u.username
                 FROM comments c 
                 LEFT JOIN users u ON c.user_id = u.id
-                WHERE c.post_id = :post_id AND c.status = 'approved'
-                ORDER BY c.parent_id IS NULL DESC, c.created_at ASC";
+                WHERE c.{$column} = :post_id AND c.status = 'approved'
+                ORDER BY c.parent_id IS NULL DESC, c.created_at ASC, c.id ASC";
 
         $stmt = $this->db->prepare($sql);
         $stmt->bindValue(':post_id', $postId, \PDO::PARAM_INT);
@@ -241,8 +303,11 @@ class Comments extends Model
         $sql = "SELECT c.*, u.display_name as user_display_name, u.username
                 FROM comments c 
                 LEFT JOIN users u ON c.user_id = u.id
+                INNER JOIN comments parent_c ON parent_c.id = c.parent_id
+                    AND ((c.post_id = parent_c.post_id AND c.page_id IS NULL AND parent_c.page_id IS NULL)
+                      OR (c.page_id = parent_c.page_id AND c.post_id IS NULL AND parent_c.post_id IS NULL))
                 WHERE c.parent_id = :parent_id AND c.status = 'approved'
-                ORDER BY c.created_at ASC";
+                ORDER BY c.created_at ASC, c.id ASC";
 
         $stmt = $this->db->prepare($sql);
         $stmt->bindValue(':parent_id', $parentId, \PDO::PARAM_INT);
@@ -289,12 +354,21 @@ class Comments extends Model
 
         // Verify parent comment exists and is approved
         $parentComment = $this->getById($data['parent_id']);
-        if (!$parentComment || $parentComment['status'] !== 'approved') {
+        if (
+            !$parentComment || $parentComment['status'] !== 'approved'
+            || !empty($parentComment['legacy_post_id'])
+        ) {
             return false;
         }
 
-        // Use the same post_id as parent comment
+        // Admin replies can omit the target; public replies must match the submitted target.
+        if (array_key_exists('post_id', $data) || array_key_exists('page_id', $data)) {
+            if (!$this->sameContent($data, $parentComment)) {
+                return false;
+            }
+        }
         $data['post_id'] = $parentComment['post_id'];
+        $data['page_id'] = $parentComment['page_id'];
 
         return $this->createComment($data);
     }
@@ -305,9 +379,10 @@ class Comments extends Model
      * @param int $postId The post ID
      * @return int Number of approved comments
      */
-    public function countApprovedForPost($postId)
+    public function countApprovedForPost($postId, $type = 'post')
     {
-        $sql = "SELECT COUNT(*) FROM comments WHERE post_id = :post_id AND status = 'approved'";
+        $column = $this->contentColumn($type);
+        $sql = "SELECT COUNT(*) FROM comments WHERE {$column} = :post_id AND status = 'approved'";
         $stmt = $this->db->prepare($sql);
         $stmt->bindValue(':post_id', $postId, \PDO::PARAM_INT);
         $stmt->execute();
@@ -323,6 +398,28 @@ class Comments extends Model
      */
     public function createComment($data)
     {
+        $postId = $data['post_id'] ?? null;
+        $pageId = $data['page_id'] ?? null;
+        if (($postId === null) === ($pageId === null) || !empty($data['legacy_post_id'])) {
+            return false;
+        }
+        $id = $postId ?? $pageId;
+        if (filter_var($id, FILTER_VALIDATE_INT) === false || $id < 1) {
+            return false;
+        }
+        $table = $postId !== null ? 'posts' : 'pages';
+        $stmt = $this->db->prepare("SELECT id FROM {$table} WHERE id = :id");
+        $stmt->execute(['id' => $id]);
+        if (!$stmt->fetchColumn()) {
+            return false;
+        }
+        if (!empty($data['parent_id'])) {
+            $parent = $this->getById($data['parent_id']);
+            if (!$parent || $parent['status'] !== 'approved' || !$this->sameContent($data, $parent)) {
+                return false;
+            }
+        }
+
         // Sanitize content - remove HTML tags
         $data['content'] = strip_tags($data['content']);
 
@@ -339,12 +436,50 @@ class Comments extends Model
         return $this->insert($data);
     }
 
+    public function delete($id)
+    {
+        $record = $this->getById($id);
+        if (!$record) {
+            return false;
+        }
+        $this->fireModelHook('before_delete', $record, $id);
+        $allow = $this->hookSystem->applyFilters('model_allow_delete', true, $this->table, $id, $record);
+        $allow = $this->hookSystem->applyFilters('comments_allow_delete', $allow, $id, $record);
+        if (!$allow) {
+            return false;
+        }
+        $ownsTransaction = !$this->db->inTransaction();
+        if ($ownsTransaction) {
+            $this->db->beginTransaction();
+        }
+        try {
+            $this->query('UPDATE comments SET parent_id = NULL WHERE parent_id = :id', [':id' => $id]);
+            $this->query('DELETE FROM comments WHERE id = :id', [':id' => $id]);
+            if ($ownsTransaction) {
+                $this->db->commit();
+            }
+        } catch (\Throwable $e) {
+            if ($ownsTransaction && $this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+            throw $e;
+        }
+        $this->fireModelHook('after_delete', $record, $id);
+        return true;
+    }
+
     /**
      * Update comment status
      */
     public function updateStatus($id, $status)
     {
+        if (!in_array($status, ['approved', 'pending', 'spam', 'trash'], true)) {
+            return false;
+        }
         $sql = "UPDATE comments SET status = :status WHERE id = :id";
+        if ($status === 'approved') {
+            $sql .= " AND legacy_post_id IS NULL";
+        }
         $stmt = $this->db->prepare($sql);
         $stmt->bindValue(':status', $status);
         $stmt->bindValue(':id', $id);
@@ -406,6 +541,6 @@ class Comments extends Model
      */
     protected function getAllowedOrderByColumns()
     {
-        return ['id', 'post_id', 'author_name', 'author_email', 'status', 'parent_id', 'user_id', 'created_at'];
+        return ['id', 'post_id', 'page_id', 'legacy_post_id', 'author_name', 'author_email', 'status', 'parent_id', 'user_id', 'created_at'];
     }
 }

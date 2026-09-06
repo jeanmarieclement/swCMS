@@ -18,6 +18,23 @@ class CommentController extends BaseController
         $this->commentModel = new Comments();
     }
 
+    /** Blank hidden fields are emitted by existing themes; any other invalid value is rejected. */
+    private function parseContentTarget($postId, $pageId): ?array
+    {
+        $target = [];
+        foreach (['post_id' => $postId, 'page_id' => $pageId] as $key => $value) {
+            if ($value === null || $value === '') {
+                continue;
+            }
+            $id = filter_var($value, FILTER_VALIDATE_INT);
+            if ($id === false || $id < 1) {
+                return null;
+            }
+            $target[$key] = $id;
+        }
+        return count($target) === 1 ? $target : null;
+    }
+
     /**
      * Handle comment submission
      */
@@ -39,8 +56,12 @@ class CommentController extends BaseController
             }
 
             // Get and validate input data
-            $postId = filter_input(INPUT_POST, 'post_id', FILTER_VALIDATE_INT);
-            $pageId = filter_input(INPUT_POST, 'page_id', FILTER_VALIDATE_INT);
+            $target = $this->parseContentTarget(
+                filter_input(INPUT_POST, 'post_id'),
+                filter_input(INPUT_POST, 'page_id')
+            );
+            $postId = $target['post_id'] ?? null;
+            $pageId = $target['page_id'] ?? null;
             $parentId = filter_input(INPUT_POST, 'parent_id', FILTER_VALIDATE_INT); // For replies
             $content = trim(htmlspecialchars(filter_input(INPUT_POST, 'content', FILTER_UNSAFE_RAW) ?? '', ENT_QUOTES, 'UTF-8'));
             $authorName = trim(htmlspecialchars(filter_input(INPUT_POST, 'author_name', FILTER_UNSAFE_RAW) ?? '', ENT_QUOTES, 'UTF-8'));
@@ -53,8 +74,8 @@ class CommentController extends BaseController
                 return;
             }
 
-            if (!$postId && !$pageId) {
-                SessionHelper::setFlashMessage('ID post o pagina richiesto', 'error');
+            if ($target === null) {
+                SessionHelper::setFlashMessage('Specificare un solo ID valido di articolo o pagina', 'error');
                 RedirectHelper::redirectLocal($this->getParam('redirect_url', '/', 'POST'));
                 return;
             }
@@ -108,7 +129,7 @@ class CommentController extends BaseController
             if ($postId) {
                 $commentData['post_id'] = $postId;
             } else {
-                $commentData['post_id'] = $pageId; // In this implementation, we use post_id for both posts and pages
+                $commentData['page_id'] = $pageId;
             }
 
             // Set author information
@@ -162,14 +183,18 @@ class CommentController extends BaseController
         header('Content-Type: application/json');
 
         try {
-            $postId = filter_input(INPUT_GET, 'post_id', FILTER_VALIDATE_INT);
-            $pageId = filter_input(INPUT_GET, 'page_id', FILTER_VALIDATE_INT);
-            $page = filter_input(INPUT_GET, 'page', FILTER_VALIDATE_INT) ?: 1;
+            $target = $this->parseContentTarget(
+                filter_input(INPUT_GET, 'post_id'),
+                filter_input(INPUT_GET, 'page_id')
+            );
+            $postId = $target['post_id'] ?? null;
+            $pageId = $target['page_id'] ?? null;
+            $page = max(1, filter_input(INPUT_GET, 'page', FILTER_VALIDATE_INT) ?: 1);
             $limit = 10;
             $offset = ($page - 1) * $limit;
 
-            if (!$postId && !$pageId) {
-                echo json_encode(['error' => 'Post ID or Page ID required']);
+            if ($target === null) {
+                echo json_encode(['error' => 'Exactly one valid Post ID or Page ID is required']);
                 return;
             }
 
@@ -189,8 +214,8 @@ class CommentController extends BaseController
             }
 
             // Get approved comments
-            $comments = $this->commentModel->getApprovedForPost($contentId, $limit, $offset);
-            $totalComments = $this->commentModel->countApprovedForPost($contentId);
+            $comments = $this->commentModel->getApprovedForPost($contentId, $limit, $offset, $postId ? 'post' : 'page');
+            $totalComments = $this->commentModel->countApprovedForPost($contentId, $postId ? 'post' : 'page');
 
             echo json_encode([
                 'comments' => $comments,

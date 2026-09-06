@@ -157,6 +157,8 @@ php database/migrate.php down
 php database/migrate.php up 2025_06_19_000010_create_users_table.php
 ```
 
+For the comment association upgrade (#40), see [migration and legacy data handling](docs/comment-content-migration.md).
+
 ### Plugin Development
 
 swCMS features a powerful plugin system with hooks and filters:
