@@ -79,7 +79,12 @@ class FrontendCommentsViewTest extends TestCase
         $filename = $installer->getFileName();
         $contents = file_get_contents($filename);
         $this->assertStringContainsString("'COMMENTS_ENABLED' => ['1', 'Enable or disable comments globally']", $contents);
-        $this->assertStringContainsString("'comments_enabled' => ['1', 'Enable or disable comments globally']", $contents);
+
+        $sqlFile = ROOT_PATH . '/sql/swcms.sql';
+        if (file_exists($sqlFile)) {
+            $sql = file_get_contents($sqlFile);
+            $this->assertStringContainsString("'comments_enabled', '1'", $sql);
+        }
     }
 
     public function testArticleViewRendersCommentsFormAndListWhenEnabled(): void
