@@ -66,10 +66,12 @@
 </article>
 
 {* Comments Section *}
+{if $comments_enabled}
 <div id="comments" class="comments-section mt-5">
     {include file="partials/comments_list.tpl"}
     {include file="partials/comment_form.tpl"}
 </div>
+{/if}
 
 {* Navigation or related articles could go here *}
 <div class="article-navigation mt-5">

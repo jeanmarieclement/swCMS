@@ -202,36 +202,10 @@
 
     {* Comments Section *}
     {if isset($comments_enabled) && $comments_enabled}
-        <section class="mission-log">
-            <h2 class="section-title">
-                <i class="fas fa-comments"></i>
-                Log della Missione
-            </h2>
+        <section class="mission-log" id="comments">
             <div class="comments-section">
-                {* Comments would be rendered here *}
-                <div class="comment-form">
-                    <h3><i class="fas fa-pencil-alt"></i> Aggiungi al log della missione</h3>
-                    <form class="mars-form" method="post" action="{$settings.SITE_URL}/comments/add">
-                        <input type="hidden" name="article_id" value="{$article.id}">
-                        <div class="form-group">
-                            <label for="comment_author"><i class="fas fa-user"></i> Nome astronauta:</label>
-                            <input type="text" id="comment_author" name="author" required class="form-control">
-                        </div>
-                        <div class="form-group">
-                            <label for="comment_email"><i class="fas fa-envelope"></i> Frequenza radio:</label>
-                            <input type="email" id="comment_email" name="email" required class="form-control">
-                        </div>
-                        <div class="form-group">
-                            <label for="comment_content"><i class="fas fa-comment"></i> Messaggio:</label>
-                            <textarea id="comment_content" name="content" required class="form-control" rows="4" 
-                                    placeholder="Scrivi il tuo contributo alla missione..."></textarea>
-                        </div>
-                        <button type="submit" class="btn mars-btn">
-                            <i class="fas fa-paper-plane"></i>
-                            Invia trasmissione
-                        </button>
-                    </form>
-                </div>
+                {include file="partials/comments_list.tpl"}
+                {include file="partials/comment_form.tpl"}
             </div>
         </section>
     {/if}

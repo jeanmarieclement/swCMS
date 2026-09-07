@@ -21,7 +21,8 @@ class SystemSettingsHelper
         'THEME_ACTIVE' => 'default',
         'ALLOW_REGISTRATION' => true,
         'SESSION_TIMEOUT' => 3600,
-        'DEBUG_MODE' => true
+        'DEBUG_MODE' => true,
+        'COMMENTS_ENABLED' => '1'
     ];
 
     /**

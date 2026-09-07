@@ -15,11 +15,19 @@
     </div>
     
     {* Flash messages *}
-    {if $flash}
-        <div class="alert alert-{$flash.type} alert-dismissible fade show" role="alert">
-            {$flash.message}
+    {if isset($flash) && $flash}
+        <div class="alert alert-{$flash.type|default:'info'} alert-dismissible fade show" role="alert">
+            {$flash.message|escape}
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
+    {/if}
+    {if isset($flash_messages) && $flash_messages}
+        {foreach $flash_messages as $message}
+            <div class="alert alert-{$message.type|default:'info'} alert-dismissible fade show" role="alert">
+                {$message.message|escape}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {/foreach}
     {/if}
     
     <form action="/comments/store" method="POST" class="comment-form">
