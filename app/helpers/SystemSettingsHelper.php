@@ -22,7 +22,8 @@ class SystemSettingsHelper
         'ALLOW_REGISTRATION' => true,
         'SESSION_TIMEOUT' => 3600,
         'DEBUG_MODE' => true,
-        'COMMENTS_ENABLED' => '1'
+        'COMMENTS_ENABLED' => '1',
+        'comments_enabled' => '1'
     ];
 
     /**
@@ -36,6 +37,19 @@ class SystemSettingsHelper
             return self::$cache[$key];
         }
         $settings = new Settings();
+
+        if ($key === 'COMMENTS_ENABLED' || $key === 'comments_enabled') {
+            // Check both uppercase and lowercase keys; prefer explicit value in DB if either is set
+            $val = $settings->get('COMMENTS_ENABLED');
+            if ($val === null) {
+                $val = $settings->get('comments_enabled', '1');
+            }
+            $val = (string)$val;
+            self::$cache['COMMENTS_ENABLED'] = $val;
+            self::$cache['comments_enabled'] = $val;
+            return $val;
+        }
+
         $value = $settings->get($key, self::$defaults[$key] ?? null);
         // Cast automatico per valori booleani e numerici
         if (in_array($key, ['ALLOW_REGISTRATION', 'DEBUG_MODE'])) {
@@ -59,6 +73,16 @@ class SystemSettingsHelper
     public static function set($key, $value, $description = null, $autoload = 1)
     {
         $settings = new Settings();
+        if ($key === 'COMMENTS_ENABLED' || $key === 'comments_enabled') {
+            $val = (string)$value;
+            self::$cache['COMMENTS_ENABLED'] = $val;
+            self::$cache['comments_enabled'] = $val;
+            self::$allCache = null;
+            $desc = $description ?? 'Enable or disable comments globally';
+            $settings->set('COMMENTS_ENABLED', $val, $desc, $autoload);
+            return $settings->set('comments_enabled', $val, $desc, $autoload);
+        }
+
         self::$cache[$key] = $value;
         self::$allCache = null;
         return $settings->set($key, $value, $description, $autoload);

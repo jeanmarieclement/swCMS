@@ -31,10 +31,15 @@ class FrontendCommentsViewTest extends TestCase
             define('VIEWS_PATH', ROOT_PATH . '/app/views');
         }
 
+        $compileDir = sys_get_temp_dir() . '/swcms_test_compiled_' . md5(__DIR__);
+        if (!is_dir($compileDir)) {
+            mkdir($compileDir, 0777, true);
+        }
+
         $this->smarty = new Smarty();
         $this->smarty->setTemplateDir(PUBLIC_PATH . '/themes/default/templates');
-        $this->smarty->setCompileDir(VIEWS_PATH . '/compiled');
-        $this->smarty->setCacheDir(VIEWS_PATH . '/cache');
+        $this->smarty->setCompileDir($compileDir);
+        $this->smarty->setCacheDir(sys_get_temp_dir());
         $this->smarty->caching = Smarty::CACHING_OFF;
     }
 
@@ -292,10 +297,11 @@ class FrontendCommentsViewTest extends TestCase
 
     public function testCoreViewsArticleAndPageRenderComments(): void
     {
+        $compileDir = sys_get_temp_dir() . '/swcms_test_compiled_' . md5(__DIR__);
         $coreSmarty = new Smarty();
         $coreSmarty->setTemplateDir(VIEWS_PATH);
-        $coreSmarty->setCompileDir(VIEWS_PATH . '/compiled');
-        $coreSmarty->setCacheDir(VIEWS_PATH . '/cache');
+        $coreSmarty->setCompileDir($compileDir);
+        $coreSmarty->setCacheDir(sys_get_temp_dir());
         $coreSmarty->caching = Smarty::CACHING_OFF;
 
         $articleData = [
@@ -373,5 +379,55 @@ class FrontendCommentsViewTest extends TestCase
         $this->assertStringContainsString('name="post_id" value=""', $htmlPage);
         $this->assertStringContainsString('name="page_id" value="888"', $htmlPage);
     }
+
+    public function testAdminCommentsSettingsKeySynchronization(): void
+    {
+        // Disabling comments via lowercase key (used by admin settings form)
+        SystemSettingsHelper::set('comments_enabled', '0');
+        $this->assertSame('0', SystemSettingsHelper::get('COMMENTS_ENABLED'));
+        $this->assertSame('0', SystemSettingsHelper::get('comments_enabled'));
+
+        // Enabling comments via uppercase key
+        SystemSettingsHelper::set('COMMENTS_ENABLED', '1');
+        $this->assertSame('1', SystemSettingsHelper::get('COMMENTS_ENABLED'));
+        $this->assertSame('1', SystemSettingsHelper::get('comments_enabled'));
+    }
+
+    public function testVersoMarteAuthorMapping(): void
+    {
+        $marsSmarty = new Smarty();
+        $compileDir = sys_get_temp_dir() . '/swcms_test_compiled_' . md5(__DIR__);
+        $marsSmarty->setTemplateDir(PUBLIC_PATH . '/themes/verso-marte/templates');
+        $marsSmarty->setCompileDir($compileDir);
+        $marsSmarty->setCacheDir(sys_get_temp_dir());
+        $marsSmarty->caching = Smarty::CACHING_OFF;
+
+        $data = [
+            'comments_enabled' => true,
+            'comments' => [
+                [
+                    'id' => 10,
+                    'post_id' => 99,
+                    'parent_id' => null,
+                    'author_name' => 'Comandante Shepard',
+                    'user_display_name' => null,
+                    'content' => 'Rapporto di bordo inviato.',
+                    'created_at' => '2026-09-07 10:00:00',
+                    'replies' => []
+                ]
+            ],
+            'total_comments' => 1
+        ];
+
+        foreach ($data as $k => $v) {
+            $marsSmarty->assign($k, $v);
+        }
+
+        $html = $marsSmarty->fetch('partials/comments_list.tpl');
+        $this->assertStringContainsString('Comandante Shepard', $html);
+        $this->assertStringContainsString('data-parent-id="10"', $html);
+        $this->assertStringContainsString('href="#comment-form"', $html);
+    }
 }
+
 

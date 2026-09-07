@@ -13,14 +13,14 @@
                         <div class="astronaut-info">
                             <div class="astronaut-avatar">
                                 {if isset($comment.avatar) && $comment.avatar}
-                                    <img src="{$comment.avatar}" alt="{$comment.author|escape}" class="avatar-img">
+                                    <img src="{$comment.avatar}" alt="{if isset($comment.user_display_name) && $comment.user_display_name}{$comment.user_display_name|escape}{elseif isset($comment.author_name)}{$comment.author_name|escape}{elseif isset($comment.author)}{$comment.author|escape}{else}Astronauta{/if}" class="avatar-img">
                                 {else}
                                     <i class="fas fa-user-astronaut"></i>
                                 {/if}
                             </div>
                             <div class="astronaut-details">
                                 <h4 class="astronaut-name">
-                                    {$comment.author|escape}
+                                    {if isset($comment.user_display_name) && $comment.user_display_name}{$comment.user_display_name|escape}{elseif isset($comment.author_name)}{$comment.author_name|escape}{elseif isset($comment.author)}{$comment.author|escape}{else}Astronauta{/if}
                                     {if isset($comment.user_role) && $comment.user_role}
                                         <span class="astronaut-rank {$comment.user_role}">{$comment.user_role|capitalize}</span>
                                     {/if}
@@ -47,9 +47,9 @@
                                     <i class="fas fa-trash"></i>
                                 </button>
                             {/if}
-                            <button class="action-btn reply-comment" data-comment-id="{$comment.id}">
+                            <a href="#comment-form" class="action-btn reply-comment reply-link" data-parent-id="{$comment.id}" data-author="{if isset($comment.user_display_name) && $comment.user_display_name}{$comment.user_display_name|escape}{elseif isset($comment.author_name)}{$comment.author_name|escape}{elseif isset($comment.author)}{$comment.author|escape}{else}Astronauta{/if}">
                                 <i class="fas fa-reply"></i>
-                            </button>
+                            </a>
                         </div>
                     </div>
                     
@@ -75,14 +75,14 @@
                                         <div class="astronaut-info">
                                             <div class="astronaut-avatar">
                                                 {if isset($reply.avatar) && $reply.avatar}
-                                                    <img src="{$reply.avatar}" alt="{$reply.author|escape}" class="avatar-img">
+                                                    <img src="{$reply.avatar}" alt="{if isset($reply.user_display_name) && $reply.user_display_name}{$reply.user_display_name|escape}{elseif isset($reply.author_name)}{$reply.author_name|escape}{elseif isset($reply.author)}{$reply.author|escape}{else}Astronauta{/if}" class="avatar-img">
                                                 {else}
                                                     <i class="fas fa-user-astronaut"></i>
                                                 {/if}
                                             </div>
                                             <div class="astronaut-details">
                                                 <h4 class="astronaut-name">
-                                                    {$reply.author|escape}
+                                                    {if isset($reply.user_display_name) && $reply.user_display_name}{$reply.user_display_name|escape}{elseif isset($reply.author_name)}{$reply.author_name|escape}{elseif isset($reply.author)}{$reply.author|escape}{else}Astronauta{/if}
                                                     {if isset($reply.user_role) && $reply.user_role}
                                                         <span class="astronaut-rank {$reply.user_role}">{$reply.user_role|capitalize}</span>
                                                     {/if}
@@ -94,7 +94,7 @@
                                                     </span>
                                                     <span class="reply-indicator">
                                                         <i class="fas fa-reply"></i>
-                                                        In risposta a {$comment.author|escape}
+                                                        In risposta a {if isset($comment.user_display_name) && $comment.user_display_name}{$comment.user_display_name|escape}{elseif isset($comment.author_name)}{$comment.author_name|escape}{elseif isset($comment.author)}{$comment.author|escape}{else}Astronauta{/if}
                                                     </span>
                                                 </div>
                                             </div>
@@ -128,36 +128,6 @@
                             {/foreach}
                         </div>
                     {/if}
-                    
-                    {* Reply form (hidden by default) *}
-                    <div class="reply-form" id="reply-form-{$comment.id}" style="display: none;">
-                        <form class="mars-comment-form" data-parent-id="{$comment.id}">
-                            <div class="form-header">
-                                <h4>
-                                    <i class="fas fa-reply"></i>
-                                    Risposta a {$comment.author|escape}
-                                </h4>
-                            </div>
-                            <div class="form-group">
-                                <label for="reply-content-{$comment.id}">
-                                    <i class="fas fa-comment"></i>
-                                    Messaggio di risposta:
-                                </label>
-                                <textarea id="reply-content-{$comment.id}" name="content" required class="form-control" rows="3" 
-                                        placeholder="Scrivi la tua risposta alla trasmissione..."></textarea>
-                            </div>
-                            <div class="form-actions">
-                                <button type="submit" class="btn mars-btn">
-                                    <i class="fas fa-paper-plane"></i>
-                                    Invia Risposta
-                                </button>
-                                <button type="button" class="btn btn-secondary cancel-reply">
-                                    <i class="fas fa-times"></i>
-                                    Annulla
-                                </button>
-                            </div>
-                        </form>
-                    </div>
                 </article>
             {/foreach}
         </div>
