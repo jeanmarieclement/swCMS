@@ -83,12 +83,16 @@
                                     {/if}
                                     <div class="mb-2">
                                         <p class="mb-1">{$comment.content|escape|nl2br}</p>
-                                        <small class="text-muted">Post: <strong>{$comment.post_title|escape}</strong></small>
+                                        <small class="text-muted">{if $comment.content_type == 'unresolved'}
+                                            <span class="badge bg-warning text-dark">Da verificare — ID originale {$comment.legacy_post_id}</span>
+                                        {else}
+                                            {if $comment.content_type == 'page'}Pagina{else}Articolo{/if}: {$comment.post_title|escape}
+                                        {/if}</small>
                                     </div>
                                 </div>
                                 <div class="col-md-4 text-end">
                                     <div class="btn-group-vertical btn-group-sm" role="group">
-                                        {if $comment.status != 'approved'}
+                                        {if $comment.status != 'approved' && $comment.content_type != 'unresolved'}
                                             <form method="POST" action="/admin/comments/approve" class="d-inline">
                                                 <input type="hidden" name="csrf_token" value="{$csrf_token}">
                                                 <input type="hidden" name="id" value="{$comment.id}">
@@ -106,7 +110,7 @@
                                                 </button>
                                             </form>
                                         {/if}
-                                        {if $comment.status == 'approved'}
+                                        {if $comment.status == 'approved' && $comment.content_type != 'unresolved'}
                                             <a href="/admin/comments/reply?id={$comment.id}" class="btn btn-outline-primary" title="Reply">
                                                 <i class="fa fa-reply"></i> Reply
                                             </a>
@@ -151,7 +155,7 @@
                     <th>Author</th>
                     <th>Email</th>
                     <th>Content</th>
-                    <th>Post</th>
+                    <th>Content</th>
                     <th>Status</th>
                     <th>Date</th>
                     <th>Actions</th>
@@ -201,7 +205,11 @@
                         {/if}
                     </td>
                     <td>{$comment.content|truncate:60|escape}</td>
-                    <td>{$comment.post_title|escape}</td>
+                    <td>{if $comment.content_type == 'unresolved'}
+                                            <span class="badge bg-warning text-dark">Da verificare — ID originale {$comment.legacy_post_id}</span>
+                                        {else}
+                                            {if $comment.content_type == 'page'}Pagina{else}Articolo{/if}: {$comment.post_title|escape}
+                                        {/if}</td>
                     <td>
                         {if $comment.status == 'approved'}<span class="badge bg-success">Approved</span>{/if}
                         {if $comment.status == 'pending'}<span class="badge bg-warning text-dark">Pending</span>{/if}
@@ -209,7 +217,7 @@
                     </td>
                     <td>{$comment.created_at|date_format:"%d/%m/%Y %H:%M"}</td>
                     <td>
-                        {if $comment.status != 'approved'}
+                        {if $comment.status != 'approved' && $comment.content_type != 'unresolved'}
                             <form method="POST" action="/admin/comments/approve" class="d-inline">
                                 <input type="hidden" name="csrf_token" value="{$csrf_token}">
                                 <input type="hidden" name="id" value="{$comment.id}">
@@ -223,7 +231,7 @@
                                 <button type="submit" class="btn btn-sm btn-outline-warning" title="Mark as Spam"><i class="fa fa-flag"></i></button>
                             </form>
                         {/if}
-                        {if $comment.status == 'approved'}
+                        {if $comment.status == 'approved' && $comment.content_type != 'unresolved'}
                             <a href="/admin/comments/reply?id={$comment.id}" class="btn btn-sm btn-outline-primary" title="Reply"><i class="fa fa-reply"></i></a>
                         {/if}
                         <form method="POST" action="/admin/comments/delete" class="d-inline" onsubmit="return confirm('Delete this comment?');">

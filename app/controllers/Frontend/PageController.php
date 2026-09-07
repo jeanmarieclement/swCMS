@@ -70,8 +70,8 @@ class PageController extends BaseController
             $offset = ($currentPage - 1) * $limit;
 
             // Use hierarchical comments for better reply structure
-            $comments = $this->commentModel->getApprovedHierarchicalForPost($page['id'], $limit, $offset);
-            $totalComments = $this->commentModel->countApprovedForPost($page['id']);
+            $comments = $this->commentModel->getApprovedHierarchicalForPage($page['id'], $limit, $offset);
+            $totalComments = $this->commentModel->countApprovedForPage($page['id']);
             $totalPages = ceil($totalComments / $limit);
         }
 
