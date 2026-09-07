@@ -21,7 +21,9 @@ class SystemSettingsHelper
         'THEME_ACTIVE' => 'default',
         'ALLOW_REGISTRATION' => true,
         'SESSION_TIMEOUT' => 3600,
-        'DEBUG_MODE' => true
+        'DEBUG_MODE' => true,
+        'COMMENTS_ENABLED' => '1',
+        'comments_enabled' => '1'
     ];
 
     /**
@@ -34,7 +36,32 @@ class SystemSettingsHelper
         if (isset(self::$cache[$key])) {
             return self::$cache[$key];
         }
-        $settings = new Settings();
+
+        try {
+            $settings = new Settings();
+        } catch (\Throwable $e) {
+            $val = self::$defaults[$key] ?? null;
+            if ($key === 'site_title' && empty($val)) {
+                $val = self::$defaults['SITE_NAME'] ?? 'swCMS';
+            }
+            if ($val !== null) {
+                self::$cache[$key] = $val;
+            }
+            return $val;
+        }
+
+        if ($key === 'COMMENTS_ENABLED' || $key === 'comments_enabled') {
+            // Check both uppercase and lowercase keys; prefer explicit value in DB if either is set
+            $val = $settings->get('COMMENTS_ENABLED');
+            if ($val === null) {
+                $val = $settings->get('comments_enabled', '1');
+            }
+            $val = (string)$val;
+            self::$cache['COMMENTS_ENABLED'] = $val;
+            self::$cache['comments_enabled'] = $val;
+            return $val;
+        }
+
         $value = $settings->get($key, self::$defaults[$key] ?? null);
         // Cast automatico per valori booleani e numerici
         if (in_array($key, ['ALLOW_REGISTRATION', 'DEBUG_MODE'])) {
@@ -48,6 +75,10 @@ class SystemSettingsHelper
             $siteUrl = self::get('SITE_URL');
             $value = $siteUrl ? rtrim($siteUrl, '/') . '/admin' : '/admin';
         }
+        // site_title fallback to SITE_NAME
+        if ($key === 'site_title' && empty($value)) {
+            $value = self::get('SITE_NAME') ?: 'swCMS';
+        }
         self::$cache[$key] = $value;
         return $value;
     }
@@ -58,6 +89,18 @@ class SystemSettingsHelper
     public static function set($key, $value, $description = null, $autoload = 1)
     {
         $settings = new Settings();
+
+        if ($key === 'COMMENTS_ENABLED' || $key === 'comments_enabled') {
+            $val = (string)$value;
+            self::$cache['COMMENTS_ENABLED'] = $val;
+            self::$cache['comments_enabled'] = $val;
+            self::$allCache = null;
+            $desc = $description ?? 'Enable or disable comments globally';
+            $r1 = $settings->set('COMMENTS_ENABLED', $val, $desc, $autoload);
+            $r2 = $settings->set('comments_enabled', $val, $desc, $autoload);
+            return $r1 && $r2;
+        }
+
         self::$cache[$key] = $value;
         self::$allCache = null;
         return $settings->set($key, $value, $description, $autoload);
@@ -71,8 +114,13 @@ class SystemSettingsHelper
         if (self::$allCache !== null) {
             return self::$allCache;
         }
-        $settings = new Settings();
-        $all = $settings->all();
+
+        try {
+            $settings = new Settings();
+            $all = $settings->all();
+        } catch (\Throwable $e) {
+            $all = [];
+        }
         $result = [];
         foreach ($all as $row) {
             $result[$row['key']] = $row['value'];
