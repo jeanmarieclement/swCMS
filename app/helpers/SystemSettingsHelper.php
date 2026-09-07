@@ -16,8 +16,6 @@ class SystemSettingsHelper
     protected static $allCache = null;
     protected static $defaults = [
         'SITE_NAME' => 'swCMS',
-        'site_name' => 'swCMS',
-        'site_title' => 'swCMS',
         'SITE_URL' => '',
         'ADMIN_URL' => '',
         'THEME_ACTIVE' => 'default',
@@ -43,6 +41,9 @@ class SystemSettingsHelper
             $settings = new Settings();
         } catch (\Throwable $e) {
             $val = self::$defaults[$key] ?? null;
+            if ($key === 'site_title' && empty($val)) {
+                $val = self::$defaults['SITE_NAME'] ?? 'swCMS';
+            }
             if ($val !== null) {
                 self::$cache[$key] = $val;
             }
@@ -73,6 +74,10 @@ class SystemSettingsHelper
         if ($key === 'ADMIN_URL' && empty($value)) {
             $siteUrl = self::get('SITE_URL');
             $value = $siteUrl ? rtrim($siteUrl, '/') . '/admin' : '/admin';
+        }
+        // site_title fallback to SITE_NAME
+        if ($key === 'site_title' && empty($value)) {
+            $value = self::get('SITE_NAME') ?: 'swCMS';
         }
         self::$cache[$key] = $value;
         return $value;
