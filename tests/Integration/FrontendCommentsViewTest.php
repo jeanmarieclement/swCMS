@@ -283,12 +283,34 @@ class FrontendCommentsViewTest extends TestCase
                             'user_display_name' => null,
                             'content' => 'Questa è una risposta diretta!',
                             'created_at' => '2026-09-07 10:30:00',
-                            'replies' => []
+                            'replies' => [
+                                [
+                                    'id' => 3,
+                                    'post_id' => 10,
+                                    'parent_id' => 2,
+                                    'author_name' => 'Nipote',
+                                    'user_display_name' => null,
+                                    'content' => 'Risposta di secondo livello!',
+                                    'created_at' => '2026-09-07 10:45:00',
+                                    'replies' => [
+                                        [
+                                            'id' => 4,
+                                            'post_id' => 10,
+                                            'parent_id' => 3,
+                                            'author_name' => 'Pronipote',
+                                            'user_display_name' => null,
+                                            'content' => 'Risposta profonda di terzo livello!',
+                                            'created_at' => '2026-09-07 11:00:00',
+                                            'replies' => []
+                                        ]
+                                    ]
+                                ]
+                            ]
                         ]
                     ]
                 ]
             ],
-            'total_comments' => 2,
+            'total_comments' => 4,
             'current_page' => 1,
             'total_pages' => 1
         ];
@@ -299,9 +321,16 @@ class FrontendCommentsViewTest extends TestCase
 
         $html = $this->smarty->fetch('partials/comments_list.tpl');
 
-        $this->assertStringContainsString('Commenti (2)', $html);
+        $this->assertStringContainsString('Commenti (4)', $html);
         $this->assertStringContainsString('Commento principale di discussione', $html);
         $this->assertStringContainsString('Questa è una risposta diretta!', $html);
+        $this->assertStringContainsString('Risposta di secondo livello!', $html);
+        $this->assertStringContainsString('Risposta profonda di terzo livello!', $html);
+        $this->assertStringContainsString('ms-3', $html);
+        $this->assertStringContainsString('ms-4', $html);
+        $this->assertStringContainsString('ms-5', $html);
+        $this->assertStringNotContainsString('ms-6', $html);
+        $this->assertStringNotContainsString('ms-9', $html);
         $this->assertStringContainsString('Risposta', $html);
         $this->assertStringContainsString('data-parent-id="1"', $html);
     }

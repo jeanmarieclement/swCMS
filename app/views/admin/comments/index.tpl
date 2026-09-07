@@ -40,7 +40,7 @@
         {* Hierarchical View *}
         <div class="comments-hierarchical">
             {function name=displayComment comment=null level=0}
-                <div class="comment-item {if $comment.parent_id}ms-{math equation="x*3" x=$level} border-start border-2{/if} mb-3">
+                <div class="comment-item {if $comment.parent_id}ms-{if $level >= 3}5{elseif $level == 2}4{else}3{/if} border-start border-2{/if} mb-3">
                     <div class="card {if $comment.parent_id}bg-light{/if}">
                         <div class="card-body p-3">
                             <div class="row">

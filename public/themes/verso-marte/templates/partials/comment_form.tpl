@@ -92,7 +92,7 @@
         {* GDPR/Privacy Consent *}
         <div class="form-group consent-group">
             <div class="consent-checkbox">
-                <input type="checkbox" id="privacy_consent" name="privacy_consent" class="form-checkbox">
+                <input type="checkbox" id="privacy_consent" name="privacy_consent" required class="form-checkbox">
                 <label for="privacy_consent" class="checkbox-label">
                     <div class="checkbox-custom">
                         <i class="fas fa-check"></i>
