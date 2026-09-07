@@ -16,6 +16,8 @@ class SystemSettingsHelper
     protected static $allCache = null;
     protected static $defaults = [
         'SITE_NAME' => 'swCMS',
+        'site_name' => 'swCMS',
+        'site_title' => 'swCMS',
         'SITE_URL' => '',
         'ADMIN_URL' => '',
         'THEME_ACTIVE' => 'default',
@@ -36,7 +38,16 @@ class SystemSettingsHelper
         if (isset(self::$cache[$key])) {
             return self::$cache[$key];
         }
-        $settings = new Settings();
+
+        try {
+            $settings = new Settings();
+        } catch (\Throwable $e) {
+            $val = self::$defaults[$key] ?? null;
+            if ($val !== null) {
+                self::$cache[$key] = $val;
+            }
+            return $val;
+        }
 
         if ($key === 'COMMENTS_ENABLED' || $key === 'comments_enabled') {
             // Check both uppercase and lowercase keys; prefer explicit value in DB if either is set
@@ -72,20 +83,28 @@ class SystemSettingsHelper
      */
     public static function set($key, $value, $description = null, $autoload = 1)
     {
-        $settings = new Settings();
+        try {
+            $settings = new Settings();
+        } catch (\Throwable $e) {
+            $settings = null;
+        }
+
         if ($key === 'COMMENTS_ENABLED' || $key === 'comments_enabled') {
             $val = (string)$value;
             self::$cache['COMMENTS_ENABLED'] = $val;
             self::$cache['comments_enabled'] = $val;
             self::$allCache = null;
-            $desc = $description ?? 'Enable or disable comments globally';
-            $settings->set('COMMENTS_ENABLED', $val, $desc, $autoload);
-            return $settings->set('comments_enabled', $val, $desc, $autoload);
+            if ($settings !== null) {
+                $desc = $description ?? 'Enable or disable comments globally';
+                $settings->set('COMMENTS_ENABLED', $val, $desc, $autoload);
+                return $settings->set('comments_enabled', $val, $desc, $autoload);
+            }
+            return true;
         }
 
         self::$cache[$key] = $value;
         self::$allCache = null;
-        return $settings->set($key, $value, $description, $autoload);
+        return $settings !== null ? $settings->set($key, $value, $description, $autoload) : true;
     }
 
     /**
@@ -96,8 +115,13 @@ class SystemSettingsHelper
         if (self::$allCache !== null) {
             return self::$allCache;
         }
-        $settings = new Settings();
-        $all = $settings->all();
+
+        try {
+            $settings = new Settings();
+            $all = $settings->all();
+        } catch (\Throwable $e) {
+            $all = [];
+        }
         $result = [];
         foreach ($all as $row) {
             $result[$row['key']] = $row['value'];

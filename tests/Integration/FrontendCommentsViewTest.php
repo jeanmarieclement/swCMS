@@ -42,8 +42,12 @@ class FrontendCommentsViewTest extends TestCase
 
         $this->defaultSettings = [
             'SITE_NAME' => 'swCMS',
+            'site_name' => 'swCMS',
+            'site_title' => 'swCMS',
             'SITE_URL' => 'http://localhost',
+            'site_url' => 'http://localhost',
             'ADMIN_URL' => 'http://localhost/admin',
+            'admin_url' => 'http://localhost/admin',
             'THEME_ACTIVE' => 'default',
         ];
 
