@@ -3,7 +3,7 @@
     <div class="mission-log-entries">
         <h3 class="log-title">
             <i class="fas fa-comments"></i>
-            Log della Missione ({$comments|@count} trasmissioni)
+            Log della Missione ({if isset($total_comments)}{$total_comments}{else}{$comments|@count}{/if} trasmissioni)
         </h3>
         
         <div class="comments-container">
@@ -131,6 +131,35 @@
                 </article>
             {/foreach}
         </div>
+
+        {* Pagination for comments *}
+        {if isset($total_pages) && $total_pages > 1}
+            <nav aria-label="Paginazione trasmissioni log" class="mission-log-pagination">
+                <ul class="pagination">
+                    {if isset($current_page) && $current_page > 1}
+                        <li class="page-item">
+                            <a class="page-link" href="?comment_page={$current_page - 1}#comments">
+                                <i class="fas fa-chevron-left"></i> Precedente
+                            </a>
+                        </li>
+                    {/if}
+
+                    {for $i=1 to $total_pages}
+                        <li class="page-item {if isset($current_page) && $i == $current_page}active{/if}">
+                            <a class="page-link" href="?comment_page={$i}#comments">{$i}</a>
+                        </li>
+                    {/for}
+
+                    {if isset($current_page) && $current_page < $total_pages}
+                        <li class="page-item">
+                            <a class="page-link" href="?comment_page={$current_page + 1}#comments">
+                                Successivo <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </li>
+                    {/if}
+                </ul>
+            </nav>
+        {/if}
     </div>
 {else}
     <div class="no-comments">
@@ -506,5 +535,37 @@
     .astronaut-avatar i {
         font-size: 1.2rem;
     }
+}
+
+.mission-log-pagination {
+    margin-top: 2rem;
+    display: flex;
+    justify-content: center;
+}
+
+.mission-log-pagination .pagination {
+    display: flex;
+    gap: 0.5rem;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.mission-log-pagination .page-item .page-link {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    background: rgba(30, 58, 138, 0.3);
+    color: var(--starlight, #fff);
+    border: 1px solid rgba(205, 92, 92, 0.4);
+    border-radius: 4px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.mission-log-pagination .page-item.active .page-link,
+.mission-log-pagination .page-item .page-link:hover {
+    background: var(--mars-red, #dc3545);
+    border-color: var(--mars-red, #dc3545);
+    color: #fff;
 }
 </style>

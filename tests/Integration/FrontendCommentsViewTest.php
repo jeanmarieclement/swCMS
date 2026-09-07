@@ -484,7 +484,9 @@ class FrontendCommentsViewTest extends TestCase
                     'replies' => []
                 ]
             ],
-            'total_comments' => 1
+            'total_comments' => 25,
+            'current_page' => 1,
+            'total_pages' => 3
         ];
 
         foreach ($data as $k => $v) {
@@ -493,6 +495,9 @@ class FrontendCommentsViewTest extends TestCase
 
         $html = $marsSmarty->fetch('partials/comments_list.tpl');
         $this->assertStringContainsString('Comandante Shepard', $html);
+        $this->assertStringContainsString('Log della Missione (25 trasmissioni)', $html);
+        $this->assertStringContainsString('Paginazione trasmissioni log', $html);
+        $this->assertStringContainsString('?comment_page=2#comments', $html);
         $this->assertStringContainsString('data-parent-id="10"', $html);
         $this->assertStringContainsString('href="#comment-form"', $html);
     }
