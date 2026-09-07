@@ -443,6 +443,12 @@ class FrontendCommentsViewTest extends TestCase
 
     public function testAdminCommentsSettingsKeySynchronization(): void
     {
+        try {
+            \App\Core\Database\Database::getInstance()->getConnection();
+        } catch (\Throwable $e) {
+            $this->markTestSkipped('Database not available for settings key synchronization test.');
+        }
+
         // Disabling comments via lowercase key (used by admin settings form)
         SystemSettingsHelper::set('comments_enabled', '0');
         $this->assertSame('0', SystemSettingsHelper::get('COMMENTS_ENABLED'));

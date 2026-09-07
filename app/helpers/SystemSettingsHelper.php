@@ -83,28 +83,22 @@ class SystemSettingsHelper
      */
     public static function set($key, $value, $description = null, $autoload = 1)
     {
-        try {
-            $settings = new Settings();
-        } catch (\Throwable $e) {
-            $settings = null;
-        }
+        $settings = new Settings();
 
         if ($key === 'COMMENTS_ENABLED' || $key === 'comments_enabled') {
             $val = (string)$value;
             self::$cache['COMMENTS_ENABLED'] = $val;
             self::$cache['comments_enabled'] = $val;
             self::$allCache = null;
-            if ($settings !== null) {
-                $desc = $description ?? 'Enable or disable comments globally';
-                $settings->set('COMMENTS_ENABLED', $val, $desc, $autoload);
-                return $settings->set('comments_enabled', $val, $desc, $autoload);
-            }
-            return true;
+            $desc = $description ?? 'Enable or disable comments globally';
+            $r1 = $settings->set('COMMENTS_ENABLED', $val, $desc, $autoload);
+            $r2 = $settings->set('comments_enabled', $val, $desc, $autoload);
+            return $r1 && $r2;
         }
 
         self::$cache[$key] = $value;
         self::$allCache = null;
-        return $settings !== null ? $settings->set($key, $value, $description, $autoload) : true;
+        return $settings->set($key, $value, $description, $autoload);
     }
 
     /**
