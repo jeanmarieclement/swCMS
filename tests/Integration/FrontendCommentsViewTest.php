@@ -481,7 +481,29 @@ class FrontendCommentsViewTest extends TestCase
                     'user_display_name' => null,
                     'content' => 'Rapporto di bordo inviato.',
                     'created_at' => '2026-09-07 10:00:00',
-                    'replies' => []
+                    'replies' => [
+                        [
+                            'id' => 11,
+                            'post_id' => 99,
+                            'parent_id' => 10,
+                            'author_name' => 'Figlio Astronauta',
+                            'user_display_name' => null,
+                            'content' => 'Ricevuto forte e chiaro.',
+                            'created_at' => '2026-09-07 10:15:00',
+                            'replies' => [
+                                [
+                                    'id' => 12,
+                                    'post_id' => 99,
+                                    'parent_id' => 11,
+                                    'author_name' => 'Nipote Marziano',
+                                    'user_display_name' => null,
+                                    'content' => 'Risposta profonda di terzo livello sul suolo marziano!',
+                                    'created_at' => '2026-09-07 10:30:00',
+                                    'replies' => []
+                                ]
+                            ]
+                        ]
+                    ]
                 ]
             ],
             'total_comments' => 25,
@@ -495,10 +517,16 @@ class FrontendCommentsViewTest extends TestCase
 
         $html = $marsSmarty->fetch('partials/comments_list.tpl');
         $this->assertStringContainsString('Comandante Shepard', $html);
+        $this->assertStringContainsString('Figlio Astronauta', $html);
+        $this->assertStringContainsString('Nipote Marziano', $html);
+        $this->assertStringContainsString('Risposta profonda di terzo livello sul suolo marziano!', $html);
+        $this->assertStringContainsString('In risposta a Comandante Shepard', $html);
+        $this->assertStringContainsString('In risposta a Figlio Astronauta', $html);
         $this->assertStringContainsString('Log della Missione (25 trasmissioni)', $html);
         $this->assertStringContainsString('Paginazione trasmissioni log', $html);
         $this->assertStringContainsString('?comment_page=2#comments', $html);
         $this->assertStringContainsString('data-parent-id="10"', $html);
+        $this->assertStringContainsString('data-parent-id="12"', $html);
         $this->assertStringContainsString('href="#comment-form"', $html);
     }
 }

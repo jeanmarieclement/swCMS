@@ -7,8 +7,8 @@
         </h3>
         
         <div class="comments-container">
-            {foreach from=$comments item=comment}
-                <article class="comment-entry" data-comment-id="{$comment.id}">
+            {function name=displayMarsComment comment=null level=0 parent_author=''}
+                <article class="comment-entry {if $level > 0}reply{/if}" data-comment-id="{$comment.id}">
                     <div class="comment-header">
                         <div class="astronaut-info">
                             <div class="astronaut-avatar">
@@ -30,10 +30,17 @@
                                         <i class="fas fa-calendar-alt"></i>
                                         Sol {$comment.created_at|date_format:"%j"} - {$comment.created_at|date_format:"%H:%M"}
                                     </span>
-                                    <span class="transmission-id">
-                                        <i class="fas fa-satellite-dish"></i>
-                                        ID#{$comment.id}
-                                    </span>
+                                    {if $level > 0}
+                                        <span class="reply-indicator">
+                                            <i class="fas fa-reply"></i>
+                                            In risposta a {if $parent_author}{$parent_author}{else}Astronauta{/if}
+                                        </span>
+                                    {else}
+                                        <span class="transmission-id">
+                                            <i class="fas fa-satellite-dish"></i>
+                                            ID#{$comment.id}
+                                        </span>
+                                    {/if}
                                 </div>
                             </div>
                         </div>
@@ -66,69 +73,28 @@
                         {/if}
                     </div>
                     
-                    {* Nested replies *}
+                    {* Nested replies recursively *}
                     {if isset($comment.replies) && $comment.replies|@count > 0}
+                        {if isset($comment.user_display_name) && $comment.user_display_name}
+                            {assign var="current_author" value=$comment.user_display_name|escape}
+                        {elseif isset($comment.author_name)}
+                            {assign var="current_author" value=$comment.author_name|escape}
+                        {elseif isset($comment.author)}
+                            {assign var="current_author" value=$comment.author|escape}
+                        {else}
+                            {assign var="current_author" value="Astronauta"}
+                        {/if}
                         <div class="comment-replies">
                             {foreach from=$comment.replies item=reply}
-                                <article class="comment-entry reply" data-comment-id="{$reply.id}">
-                                    <div class="comment-header">
-                                        <div class="astronaut-info">
-                                            <div class="astronaut-avatar">
-                                                {if isset($reply.avatar) && $reply.avatar}
-                                                    <img src="{$reply.avatar}" alt="{if isset($reply.user_display_name) && $reply.user_display_name}{$reply.user_display_name|escape}{elseif isset($reply.author_name)}{$reply.author_name|escape}{elseif isset($reply.author)}{$reply.author|escape}{else}Astronauta{/if}" class="avatar-img">
-                                                {else}
-                                                    <i class="fas fa-user-astronaut"></i>
-                                                {/if}
-                                            </div>
-                                            <div class="astronaut-details">
-                                                <h4 class="astronaut-name">
-                                                    {if isset($reply.user_display_name) && $reply.user_display_name}{$reply.user_display_name|escape}{elseif isset($reply.author_name)}{$reply.author_name|escape}{elseif isset($reply.author)}{$reply.author|escape}{else}Astronauta{/if}
-                                                    {if isset($reply.user_role) && $reply.user_role}
-                                                        <span class="astronaut-rank {$reply.user_role}">{$reply.user_role|capitalize}</span>
-                                                    {/if}
-                                                </h4>
-                                                <div class="transmission-meta">
-                                                    <span class="transmission-date">
-                                                        <i class="fas fa-calendar-alt"></i>
-                                                        Sol {$reply.created_at|date_format:"%j"} - {$reply.created_at|date_format:"%H:%M"}
-                                                    </span>
-                                                    <span class="reply-indicator">
-                                                        <i class="fas fa-reply"></i>
-                                                        In risposta a {if isset($comment.user_display_name) && $comment.user_display_name}{$comment.user_display_name|escape}{elseif isset($comment.author_name)}{$comment.author_name|escape}{elseif isset($comment.author)}{$comment.author|escape}{else}Astronauta{/if}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        
-                                        <div class="comment-actions">
-                                            {if isset($user) && $user && ($user.id == $reply.user_id || $user.role == 'admin')}
-                                                <button class="action-btn edit-comment" data-comment-id="{$reply.id}">
-                                                    <i class="fas fa-edit"></i>
-                                                </button>
-                                                <button class="action-btn delete-comment" data-comment-id="{$reply.id}">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
-                                            {/if}
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="comment-body">
-                                        <div class="transmission-content">
-                                            {$reply.content|nl2br}
-                                        </div>
-                                        
-                                        {if isset($reply.edited_at) && $reply.edited_at}
-                                            <div class="edit-indicator">
-                                                <i class="fas fa-edit"></i>
-                                                <span>Trasmissione modificata il {$reply.edited_at|date_format:"%d/%m/%Y alle %H:%M"}</span>
-                                            </div>
-                                        {/if}
-                                    </div>
-                                </article>
+                                {call displayMarsComment comment=$reply level=$level+1 parent_author=$current_author}
                             {/foreach}
                         </div>
                     {/if}
                 </article>
+            {/function}
+
+            {foreach from=$comments item=comment}
+                {call displayMarsComment comment=$comment level=0}
             {/foreach}
         </div>
 
