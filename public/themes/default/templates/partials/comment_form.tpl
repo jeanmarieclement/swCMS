@@ -35,7 +35,7 @@
         <input type="hidden" name="post_id" value="{$post.id|default:''}">
         <input type="hidden" name="page_id" value="{$page.id|default:''}">
         <input type="hidden" name="parent_id" id="parent_id" value="">
-        <input type="hidden" name="redirect_url" value="{$smarty.server.REQUEST_URI}">
+        <input type="hidden" name="redirect_url" value="{$smarty.server.REQUEST_URI|default:''}">
         
         {* If user is not logged in, show name and email fields *}
         {if !$user_id}

@@ -13,10 +13,14 @@ use Smarty\Smarty;
 class FrontendCommentsViewTest extends TestCase
 {
     private $smarty;
+    private $defaultSettings;
 
     protected function setUp(): void
     {
         parent::setUp();
+
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $_SERVER['REQUEST_URI'] = '/';
 
         if (!defined('ROOT_PATH')) {
             define('ROOT_PATH', dirname(__DIR__, 2));
@@ -36,11 +40,27 @@ class FrontendCommentsViewTest extends TestCase
             mkdir($compileDir, 0777, true);
         }
 
+        $this->defaultSettings = [
+            'SITE_NAME' => 'swCMS',
+            'SITE_URL' => 'http://localhost',
+            'ADMIN_URL' => 'http://localhost/admin',
+            'THEME_ACTIVE' => 'default',
+        ];
+
         $this->smarty = new Smarty();
         $this->smarty->setTemplateDir(PUBLIC_PATH . '/themes/default/templates');
         $this->smarty->setCompileDir($compileDir);
         $this->smarty->setCacheDir(sys_get_temp_dir());
         $this->smarty->caching = Smarty::CACHING_OFF;
+        $this->assignGlobals($this->smarty);
+    }
+
+    private function assignGlobals(Smarty $smarty): void
+    {
+        $smarty->assign('settings', $this->defaultSettings);
+        $smarty->assign('site_name', 'swCMS');
+        $smarty->assign('site_url', 'http://localhost');
+        $smarty->assign('admin_url', 'http://localhost/admin');
     }
 
     public function testCommentsEnabledDefaultSetting(): void
@@ -55,6 +75,7 @@ class FrontendCommentsViewTest extends TestCase
         $filename = $installer->getFileName();
         $contents = file_get_contents($filename);
         $this->assertStringContainsString("'COMMENTS_ENABLED' => ['1', 'Enable or disable comments globally']", $contents);
+        $this->assertStringContainsString("'comments_enabled' => ['1', 'Enable or disable comments globally']", $contents);
     }
 
     public function testArticleViewRendersCommentsFormAndListWhenEnabled(): void
@@ -303,6 +324,7 @@ class FrontendCommentsViewTest extends TestCase
         $coreSmarty->setCompileDir($compileDir);
         $coreSmarty->setCacheDir(sys_get_temp_dir());
         $coreSmarty->caching = Smarty::CACHING_OFF;
+        $this->assignGlobals($coreSmarty);
 
         $articleData = [
             'article' => [
@@ -330,6 +352,7 @@ class FrontendCommentsViewTest extends TestCase
         $this->assertStringContainsString('name="post_id" value="301"', $html);
 
         $coreSmarty->clearAllAssign();
+        $this->assignGlobals($coreSmarty);
 
         // Page core template
         $pageData = [
@@ -401,6 +424,7 @@ class FrontendCommentsViewTest extends TestCase
         $marsSmarty->setCompileDir($compileDir);
         $marsSmarty->setCacheDir(sys_get_temp_dir());
         $marsSmarty->caching = Smarty::CACHING_OFF;
+        $this->assignGlobals($marsSmarty);
 
         $data = [
             'comments_enabled' => true,

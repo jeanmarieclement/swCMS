@@ -15,7 +15,7 @@
         <input type="hidden" name="post_id" value="{if isset($article)}{$article.id}{elseif isset($post)}{$post.id}{/if}">
         <input type="hidden" name="page_id" value="{if isset($page)}{$page.id}{/if}">
         <input type="hidden" name="parent_id" value="" id="parent_id">
-        <input type="hidden" name="redirect_url" value="{$smarty.server.REQUEST_URI}">
+        <input type="hidden" name="redirect_url" value="{$smarty.server.REQUEST_URI|default:''}">
         
         <div class="form-row">
             <div class="form-group">
