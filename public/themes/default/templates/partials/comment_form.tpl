@@ -15,11 +15,19 @@
     </div>
     
     {* Flash messages *}
-    {if $flash}
-        <div class="alert alert-{$flash.type} alert-dismissible fade show" role="alert">
-            {$flash.message}
+    {if isset($flash) && $flash}
+        <div class="alert alert-{$flash.type|default:'info'} alert-dismissible fade show" role="alert">
+            {$flash.message|escape}
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
+    {/if}
+    {if isset($flash_messages) && $flash_messages}
+        {foreach $flash_messages as $message}
+            <div class="alert alert-{$message.type|default:'info'} alert-dismissible fade show" role="alert">
+                {$message.message|escape}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {/foreach}
     {/if}
     
     <form action="/comments/store" method="POST" class="comment-form">
@@ -27,7 +35,7 @@
         <input type="hidden" name="post_id" value="{$post.id|default:''}">
         <input type="hidden" name="page_id" value="{$page.id|default:''}">
         <input type="hidden" name="parent_id" id="parent_id" value="">
-        <input type="hidden" name="redirect_url" value="{$smarty.server.REQUEST_URI}">
+        <input type="hidden" name="redirect_url" value="{$smarty.server.REQUEST_URI|default:''}">
         
         {* If user is not logged in, show name and email fields *}
         {if !$user_id}

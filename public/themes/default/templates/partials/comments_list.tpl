@@ -5,7 +5,7 @@
     
     <div class="comments-list">
         {function name=displayFrontendComment comment=null level=0}
-            <div class="comment mb-4 {if $comment.parent_id}ms-{math equation="x*3" x=$level} reply-comment{/if}">
+            <div class="comment mb-4 {if $comment.parent_id}ms-{if $level >= 3}5{elseif $level == 2}4{else}3{/if} reply-comment{/if}">
                 <div class="comment-wrapper p-3 border rounded {if $comment.parent_id}border-start border-3 border-primary bg-light{/if}">
                     <div class="comment-meta mb-2">
                         <strong class="comment-author">

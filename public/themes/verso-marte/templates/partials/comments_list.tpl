@@ -3,24 +3,24 @@
     <div class="mission-log-entries">
         <h3 class="log-title">
             <i class="fas fa-comments"></i>
-            Log della Missione ({$comments|@count} trasmissioni)
+            Log della Missione ({if isset($total_comments)}{$total_comments}{else}{$comments|@count}{/if} trasmissioni)
         </h3>
         
         <div class="comments-container">
-            {foreach from=$comments item=comment}
-                <article class="comment-entry" data-comment-id="{$comment.id}">
+            {function name=displayMarsComment comment=null level=0 parent_author=''}
+                <article class="comment-entry {if $level > 0}reply{/if}" data-comment-id="{$comment.id}">
                     <div class="comment-header">
                         <div class="astronaut-info">
                             <div class="astronaut-avatar">
                                 {if isset($comment.avatar) && $comment.avatar}
-                                    <img src="{$comment.avatar}" alt="{$comment.author|escape}" class="avatar-img">
+                                    <img src="{$comment.avatar}" alt="{if isset($comment.user_display_name) && $comment.user_display_name}{$comment.user_display_name|escape}{elseif isset($comment.author_name)}{$comment.author_name|escape}{elseif isset($comment.author)}{$comment.author|escape}{else}Astronauta{/if}" class="avatar-img">
                                 {else}
                                     <i class="fas fa-user-astronaut"></i>
                                 {/if}
                             </div>
                             <div class="astronaut-details">
                                 <h4 class="astronaut-name">
-                                    {$comment.author|escape}
+                                    {if isset($comment.user_display_name) && $comment.user_display_name}{$comment.user_display_name|escape}{elseif isset($comment.author_name)}{$comment.author_name|escape}{elseif isset($comment.author)}{$comment.author|escape}{else}Astronauta{/if}
                                     {if isset($comment.user_role) && $comment.user_role}
                                         <span class="astronaut-rank {$comment.user_role}">{$comment.user_role|capitalize}</span>
                                     {/if}
@@ -30,10 +30,17 @@
                                         <i class="fas fa-calendar-alt"></i>
                                         Sol {$comment.created_at|date_format:"%j"} - {$comment.created_at|date_format:"%H:%M"}
                                     </span>
-                                    <span class="transmission-id">
-                                        <i class="fas fa-satellite-dish"></i>
-                                        ID#{$comment.id}
-                                    </span>
+                                    {if $level > 0}
+                                        <span class="reply-indicator">
+                                            <i class="fas fa-reply"></i>
+                                            In risposta a {if $parent_author}{$parent_author}{else}Astronauta{/if}
+                                        </span>
+                                    {else}
+                                        <span class="transmission-id">
+                                            <i class="fas fa-satellite-dish"></i>
+                                            ID#{$comment.id}
+                                        </span>
+                                    {/if}
                                 </div>
                             </div>
                         </div>
@@ -47,9 +54,9 @@
                                     <i class="fas fa-trash"></i>
                                 </button>
                             {/if}
-                            <button class="action-btn reply-comment" data-comment-id="{$comment.id}">
+                            <a href="#comment-form" class="action-btn reply-comment reply-link" data-parent-id="{$comment.id}" data-author="{if isset($comment.user_display_name) && $comment.user_display_name}{$comment.user_display_name|escape}{elseif isset($comment.author_name)}{$comment.author_name|escape}{elseif isset($comment.author)}{$comment.author|escape}{else}Astronauta{/if}">
                                 <i class="fas fa-reply"></i>
-                            </button>
+                            </a>
                         </div>
                     </div>
                     
@@ -66,101 +73,59 @@
                         {/if}
                     </div>
                     
-                    {* Nested replies *}
+                    {* Nested replies recursively *}
                     {if isset($comment.replies) && $comment.replies|@count > 0}
+                        {if isset($comment.user_display_name) && $comment.user_display_name}
+                            {assign var="current_author" value=$comment.user_display_name|escape}
+                        {elseif isset($comment.author_name)}
+                            {assign var="current_author" value=$comment.author_name|escape}
+                        {elseif isset($comment.author)}
+                            {assign var="current_author" value=$comment.author|escape}
+                        {else}
+                            {assign var="current_author" value="Astronauta"}
+                        {/if}
                         <div class="comment-replies">
                             {foreach from=$comment.replies item=reply}
-                                <article class="comment-entry reply" data-comment-id="{$reply.id}">
-                                    <div class="comment-header">
-                                        <div class="astronaut-info">
-                                            <div class="astronaut-avatar">
-                                                {if isset($reply.avatar) && $reply.avatar}
-                                                    <img src="{$reply.avatar}" alt="{$reply.author|escape}" class="avatar-img">
-                                                {else}
-                                                    <i class="fas fa-user-astronaut"></i>
-                                                {/if}
-                                            </div>
-                                            <div class="astronaut-details">
-                                                <h4 class="astronaut-name">
-                                                    {$reply.author|escape}
-                                                    {if isset($reply.user_role) && $reply.user_role}
-                                                        <span class="astronaut-rank {$reply.user_role}">{$reply.user_role|capitalize}</span>
-                                                    {/if}
-                                                </h4>
-                                                <div class="transmission-meta">
-                                                    <span class="transmission-date">
-                                                        <i class="fas fa-calendar-alt"></i>
-                                                        Sol {$reply.created_at|date_format:"%j"} - {$reply.created_at|date_format:"%H:%M"}
-                                                    </span>
-                                                    <span class="reply-indicator">
-                                                        <i class="fas fa-reply"></i>
-                                                        In risposta a {$comment.author|escape}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        
-                                        <div class="comment-actions">
-                                            {if isset($user) && $user && ($user.id == $reply.user_id || $user.role == 'admin')}
-                                                <button class="action-btn edit-comment" data-comment-id="{$reply.id}">
-                                                    <i class="fas fa-edit"></i>
-                                                </button>
-                                                <button class="action-btn delete-comment" data-comment-id="{$reply.id}">
-                                                    <i class="fas fa-trash"></i>
-                                                </button>
-                                            {/if}
-                                        </div>
-                                    </div>
-                                    
-                                    <div class="comment-body">
-                                        <div class="transmission-content">
-                                            {$reply.content|nl2br}
-                                        </div>
-                                        
-                                        {if isset($reply.edited_at) && $reply.edited_at}
-                                            <div class="edit-indicator">
-                                                <i class="fas fa-edit"></i>
-                                                <span>Trasmissione modificata il {$reply.edited_at|date_format:"%d/%m/%Y alle %H:%M"}</span>
-                                            </div>
-                                        {/if}
-                                    </div>
-                                </article>
+                                {call displayMarsComment comment=$reply level=$level+1 parent_author=$current_author}
                             {/foreach}
                         </div>
                     {/if}
-                    
-                    {* Reply form (hidden by default) *}
-                    <div class="reply-form" id="reply-form-{$comment.id}" style="display: none;">
-                        <form class="mars-comment-form" data-parent-id="{$comment.id}">
-                            <div class="form-header">
-                                <h4>
-                                    <i class="fas fa-reply"></i>
-                                    Risposta a {$comment.author|escape}
-                                </h4>
-                            </div>
-                            <div class="form-group">
-                                <label for="reply-content-{$comment.id}">
-                                    <i class="fas fa-comment"></i>
-                                    Messaggio di risposta:
-                                </label>
-                                <textarea id="reply-content-{$comment.id}" name="content" required class="form-control" rows="3" 
-                                        placeholder="Scrivi la tua risposta alla trasmissione..."></textarea>
-                            </div>
-                            <div class="form-actions">
-                                <button type="submit" class="btn mars-btn">
-                                    <i class="fas fa-paper-plane"></i>
-                                    Invia Risposta
-                                </button>
-                                <button type="button" class="btn btn-secondary cancel-reply">
-                                    <i class="fas fa-times"></i>
-                                    Annulla
-                                </button>
-                            </div>
-                        </form>
-                    </div>
                 </article>
+            {/function}
+
+            {foreach from=$comments item=comment}
+                {call displayMarsComment comment=$comment level=0}
             {/foreach}
         </div>
+
+        {* Pagination for comments *}
+        {if isset($total_pages) && $total_pages > 1}
+            <nav aria-label="Paginazione trasmissioni log" class="mission-log-pagination">
+                <ul class="pagination">
+                    {if isset($current_page) && $current_page > 1}
+                        <li class="page-item">
+                            <a class="page-link" href="?comment_page={$current_page - 1}#comments">
+                                <i class="fas fa-chevron-left"></i> Precedente
+                            </a>
+                        </li>
+                    {/if}
+
+                    {for $i=1 to $total_pages}
+                        <li class="page-item {if isset($current_page) && $i == $current_page}active{/if}">
+                            <a class="page-link" href="?comment_page={$i}#comments">{$i}</a>
+                        </li>
+                    {/for}
+
+                    {if isset($current_page) && $current_page < $total_pages}
+                        <li class="page-item">
+                            <a class="page-link" href="?comment_page={$current_page + 1}#comments">
+                                Successivo <i class="fas fa-chevron-right"></i>
+                            </a>
+                        </li>
+                    {/if}
+                </ul>
+            </nav>
+        {/if}
     </div>
 {else}
     <div class="no-comments">
@@ -536,5 +501,37 @@
     .astronaut-avatar i {
         font-size: 1.2rem;
     }
+}
+
+.mission-log-pagination {
+    margin-top: 2rem;
+    display: flex;
+    justify-content: center;
+}
+
+.mission-log-pagination .pagination {
+    display: flex;
+    gap: 0.5rem;
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.mission-log-pagination .page-item .page-link {
+    display: inline-block;
+    padding: 0.5rem 1rem;
+    background: rgba(30, 58, 138, 0.3);
+    color: var(--starlight, #fff);
+    border: 1px solid rgba(205, 92, 92, 0.4);
+    border-radius: 4px;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.mission-log-pagination .page-item.active .page-link,
+.mission-log-pagination .page-item .page-link:hover {
+    background: var(--mars-red, #dc3545);
+    border-color: var(--mars-red, #dc3545);
+    color: #fff;
 }
 </style>

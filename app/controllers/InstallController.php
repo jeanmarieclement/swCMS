@@ -705,6 +705,7 @@ class InstallController
             'ALLOW_REGISTRATION' => ['1', 'Allow new user registration'],
             'DEBUG_MODE' => ['0', 'Enable debug mode (production should be 0)'],
             'SESSION_TIMEOUT' => ['3600', 'Session timeout in seconds'],
+            'COMMENTS_ENABLED' => ['1', 'Enable or disable comments globally'],
             'INSTALLATION_DATE' => [date('Y-m-d H:i:s'), 'Date when CMS was installed'],
             'CMS_VERSION' => [\App\Core\Version::current(), 'Current CMS version'],
         ];

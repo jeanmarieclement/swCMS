@@ -42,10 +42,12 @@
 </div>
 
 {* Comments Section *}
+{if $comments_enabled}
 <div id="comments" class="comments-section mt-5">
     {include file="partials/comments_list.tpl"}
     {include file="partials/comment_form.tpl"}
 </div>
+{/if}
 
 {* Navigation could go here *}
 <div class="page-navigation mt-5">

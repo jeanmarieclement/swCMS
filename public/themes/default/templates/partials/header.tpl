@@ -5,9 +5,9 @@
       {* Logo on the left *}
       <a class="navbar-brand" href="/">
         {if isset($settings.site_logo) && $settings.site_logo}
-          <img src="{$settings.site_logo}" alt="{$settings.site_title|escape}" height="30" class="d-inline-block align-text-top me-2">
+          <img src="{$settings.site_logo}" alt="{if isset($settings.site_title)}{$settings.site_title|escape}{elseif isset($settings.SITE_NAME)}{$settings.SITE_NAME|escape}{else}swCMS{/if}" height="30" class="d-inline-block align-text-top me-2">
         {/if}
-        {$settings.site_title|escape}
+        {if isset($settings.site_title)}{$settings.site_title|escape}{elseif isset($settings.SITE_NAME)}{$settings.SITE_NAME|escape}{else}swCMS{/if}
       </a>
       
       {* Mobile toggle button *}

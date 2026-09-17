@@ -21,7 +21,7 @@ class SettingsController extends AdminController
         'SITE_NAME', 'SITE_URL', 'ADMIN_URL', 'THEME_ACTIVE',
         'homepage_mode', 'homepage_page',
         'meta_description', 'meta_keywords',
-        'posts_per_page', 'comments_enabled', 'ALLOW_REGISTRATION',
+        'posts_per_page', 'comments_enabled', 'COMMENTS_ENABLED', 'ALLOW_REGISTRATION',
         'MAIL_FROM', 'MAIL_FROM_NAME', 'SMTP_HOST', 'SMTP_PORT', 'SMTP_USER', 'SMTP_PASS',
         'SESSION_TIMEOUT', 'DEBUG_MODE', 'TIMEZONE', 'LANGUAGE',
     ];
@@ -69,6 +69,9 @@ class SettingsController extends AdminController
             $this->requireCsrf($this->settings['ADMIN_URL'] . '/settings', 'settings save');
 
             $submitted = RequestHelper::all('post')['settings'] ?? [];
+            if (isset($submitted['comments_enabled'])) {
+                $submitted['COMMENTS_ENABLED'] = (string)$submitted['comments_enabled'];
+            }
             foreach ($submitted as $key => $value) {
                 if (!in_array($key, self::ALLOWED_KEYS, true) || is_array($value)) {
                     LogHelper::warning('Settings save: skipped disallowed key "' . $key . '"');

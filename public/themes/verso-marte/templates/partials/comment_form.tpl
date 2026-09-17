@@ -15,7 +15,7 @@
         <input type="hidden" name="post_id" value="{if isset($article)}{$article.id}{elseif isset($post)}{$post.id}{/if}">
         <input type="hidden" name="page_id" value="{if isset($page)}{$page.id}{/if}">
         <input type="hidden" name="parent_id" value="" id="parent_id">
-        <input type="hidden" name="redirect_url" value="{$smarty.server.REQUEST_URI}">
+        <input type="hidden" name="redirect_url" value="{$smarty.server.REQUEST_URI|default:''}">
         
         <div class="form-row">
             <div class="form-group">
@@ -110,7 +110,7 @@
 
         {* Anti-spam measures *}
         <div class="form-group security-group">
-            <label for="security_check" class="form-label required">
+            <label for="security_check" class="form-label">
                 <i class="fas fa-shield-alt"></i>
                 Verifica Sicurezza
             </label>
@@ -119,7 +119,6 @@
                 <input type="text" 
                        id="security_check" 
                        name="security_answer" 
-                       required 
                        class="form-control security-input"
                        placeholder="Scrivi il nome del pianeta rosso...">
                 <div class="field-help">
@@ -687,41 +686,25 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Form submission
-    if (commentForm) {
-        commentForm.addEventListener('submit', function(e) {
+    // Handle reply buttons across the page
+    const replyButtons = document.querySelectorAll('.reply-comment, .reply-link');
+    const parentIdInput = document.getElementById('parent_id');
+    replyButtons.forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
             e.preventDefault();
-            
-            // Show loading state
-            const btnText = submitBtn.querySelector('.btn-text');
-            const btnLoading = submitBtn.querySelector('.btn-loading');
-            
-            btnText.style.display = 'none';
-            btnLoading.style.display = 'flex';
-            submitBtn.disabled = true;
-            
-            // Simulate form submission (replace with actual AJAX)
-            setTimeout(function() {
-                btnText.style.display = 'flex';
-                btnLoading.style.display = 'none';
-                submitBtn.disabled = false;
-                
-                // Show success message
-                formStatus.style.display = 'block';
-                formStatus.querySelector('.status-success').style.display = 'block';
-                formStatus.querySelector('.status-error').style.display = 'none';
-                
-                // Reset form
-                commentForm.reset();
-                if (charCount) charCount.textContent = '0';
-                
-                // Hide success message after 5 seconds
-                setTimeout(function() {
-                    formStatus.style.display = 'none';
-                }, 5000);
-                
-            }, 2000);
+            const parentId = this.dataset.parentId || this.getAttribute('data-comment-id');
+            const author = this.dataset.author || '';
+            if (parentId && parentIdInput) {
+                parentIdInput.value = parentId;
+            }
+            if (messageTextarea) {
+                if (author) {
+                    messageTextarea.placeholder = 'Rispondendo a ' + author + '... Scrivi qui la tua risposta.';
+                }
+                commentForm.scrollIntoView({ behavior: 'smooth' });
+                messageTextarea.focus();
+            }
         });
-    }
+    });
 });
 </script>

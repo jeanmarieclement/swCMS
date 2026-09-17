@@ -144,6 +144,16 @@
             </div>
         </section>
     {/if}
+    
+    {* Comments Section *}
+    {if isset($comments_enabled) && $comments_enabled}
+        <section class="mission-log" id="comments">
+            <div class="comments-section">
+                {include file="partials/comments_list.tpl"}
+                {include file="partials/comment_form.tpl"}
+            </div>
+        </section>
+    {/if}
 {/block}
 
 {block name="head_extra"}
