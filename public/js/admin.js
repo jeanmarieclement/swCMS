@@ -174,4 +174,122 @@ document.addEventListener("DOMContentLoaded", function () {
       });
     });
   }
+
+  // Admin Sidebar Menu: active link, collapsible groups, and accessibility
+  const sidebarMenu = document.getElementById('sidebarMenu');
+  if (sidebarMenu) {
+    const currentPath = window.location.pathname;
+    const navLinks = sidebarMenu.querySelectorAll('.nav-link');
+    let bestMatch = null;
+    let bestMatchLength = 0;
+
+    navLinks.forEach(link => {
+      const href = link.getAttribute('href');
+      if (!href || href === '#' || href.startsWith('javascript:')) {
+        return;
+      }
+      let linkPath = href;
+      try {
+        const parsed = new URL(href, window.location.origin);
+        linkPath = parsed.pathname;
+      } catch (e) {
+        // fallback to href
+      }
+
+      if (linkPath === currentPath) {
+        bestMatch = link;
+        bestMatchLength = 9999;
+      } else if (bestMatchLength < 9999 && currentPath.startsWith(linkPath) && linkPath !== '/admin' && linkPath !== '/admin/') {
+        if (linkPath.length > bestMatchLength) {
+          bestMatch = link;
+          bestMatchLength = linkPath.length;
+        }
+      }
+    });
+
+    // Default to /admin/dashboard if on /admin or /admin/
+    if (!bestMatch && (currentPath === '/admin' || currentPath === '/admin/')) {
+      bestMatch = sidebarMenu.querySelector('a[href$="/admin/dashboard"]');
+    }
+
+    let activeGroupId = null;
+    if (bestMatch) {
+      bestMatch.classList.add('active');
+      bestMatch.setAttribute('aria-current', 'page');
+
+      // Find parent group and ensure it's open
+      const parentCollapse = bestMatch.closest('.sidebar-group-collapse');
+      if (parentCollapse) {
+        activeGroupId = parentCollapse.getAttribute('id');
+        parentCollapse.classList.add('show');
+        const triggerBtn = document.querySelector(`[data-bs-target="#${activeGroupId}"]`);
+        if (triggerBtn) {
+          triggerBtn.classList.remove('collapsed');
+          triggerBtn.setAttribute('aria-expanded', 'true');
+        }
+      }
+
+      // Ensure active item is visible in the scrollable sidebar container
+      setTimeout(() => {
+        bestMatch.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      }, 100);
+    }
+
+    // Apply saved collapse states from localStorage
+    const storageKey = 'swcms_admin_sidebar_collapsed';
+    let collapsedGroups = [];
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) {
+        collapsedGroups = JSON.parse(saved);
+      }
+    } catch (e) {
+      collapsedGroups = [];
+    }
+
+    if (Array.isArray(collapsedGroups)) {
+      collapsedGroups.forEach(id => {
+        // Never collapse the group containing the currently active page!
+        if (id !== activeGroupId) {
+          const collapseEl = document.getElementById(id);
+          const triggerBtn = document.querySelector(`[data-bs-target="#${id}"]`);
+          if (collapseEl && triggerBtn) {
+            collapseEl.classList.remove('show');
+            triggerBtn.classList.add('collapsed');
+            triggerBtn.setAttribute('aria-expanded', 'false');
+          }
+        }
+      });
+    }
+
+    // Listen to collapse events to persist user preferences
+    const groupCollapses = sidebarMenu.querySelectorAll('.sidebar-group-collapse');
+    groupCollapses.forEach(collapseEl => {
+      collapseEl.addEventListener('hidden.bs.collapse', function () {
+        const id = this.getAttribute('id');
+        let list = [];
+        try {
+          list = JSON.parse(localStorage.getItem(storageKey)) || [];
+        } catch (e) {}
+        if (!list.includes(id)) {
+          list.push(id);
+        }
+        try {
+          localStorage.setItem(storageKey, JSON.stringify(list));
+        } catch (e) {}
+      });
+
+      collapseEl.addEventListener('shown.bs.collapse', function () {
+        const id = this.getAttribute('id');
+        let list = [];
+        try {
+          list = JSON.parse(localStorage.getItem(storageKey)) || [];
+        } catch (e) {}
+        list = list.filter(item => item !== id);
+        try {
+          localStorage.setItem(storageKey, JSON.stringify(list));
+        } catch (e) {}
+      });
+    });
+  }
 });

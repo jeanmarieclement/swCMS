@@ -134,20 +134,5 @@
     
     <!-- Custom scripts -->
     {block name="scripts"}{/block}
-    
-    <script>
-        // Set active menu item based on current URL
-        document.addEventListener('DOMContentLoaded', function() {
-            const currentPath = window.location.pathname;
-            const navLinks = document.querySelectorAll('.nav-link');
-            
-            navLinks.forEach(link => {
-                const href = link.getAttribute('href');
-                if (href && href === '{$site_url}' + currentPath) {
-                    link.classList.add('active');
-                }
-            });
-        });
-    </script>
 </body>
 </html>

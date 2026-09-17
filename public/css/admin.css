@@ -18,11 +18,15 @@ body {
     z-index: 100; /* Behind the navbar */
     padding: 48px 0 0; /* Height of navbar */
     box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
+    overflow: hidden;
 }
 
 @media (max-width: 767.98px) {
     .sidebar {
-        top: 5rem;
+        top: 3.5rem;
+        z-index: 1020;
+        background-color: #f8f9fa;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, .15);
     }
 }
 
@@ -31,22 +35,97 @@ body {
     top: 0;
     height: calc(100vh - 48px);
     padding-top: .5rem;
+    padding-bottom: 1.5rem;
     overflow-x: hidden;
     overflow-y: auto; /* Scrollable contents if viewport is shorter than content. */
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 0, 0, .2) transparent;
+}
+
+@media (max-width: 767.98px) {
+    .sidebar-sticky {
+        height: calc(100vh - 3.5rem);
+        max-height: calc(100vh - 3.5rem);
+    }
+}
+
+.sidebar-sticky::-webkit-scrollbar {
+    width: 6px;
+}
+
+.sidebar-sticky::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.sidebar-sticky::-webkit-scrollbar-thumb {
+    background-color: rgba(0, 0, 0, .2);
+    border-radius: 3px;
+}
+
+.sidebar-sticky::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(0, 0, 0, .35);
+}
+
+.sidebar-group {
+    border-bottom: 1px solid rgba(0, 0, 0, .04);
+    padding-bottom: .25rem;
+}
+
+.sidebar-group:last-child {
+    border-bottom: none;
+}
+
+.sidebar-group-toggle {
+    font-size: .72rem;
+    letter-spacing: .06em;
+    color: #6c757d;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: color .15s ease, background-color .15s ease;
+}
+
+.sidebar-group-toggle:hover,
+.sidebar-group-toggle:focus {
+    color: #0d6efd !important;
+    background-color: rgba(13, 110, 253, .07);
+}
+
+.sidebar-group-toggle:focus-visible {
+    outline: 2px solid #0d6efd;
+    outline-offset: 1px;
+}
+
+.sidebar-group-icon {
+    font-size: .65rem;
+    transition: transform .2s ease;
+}
+
+.sidebar-group-toggle.collapsed .sidebar-group-icon {
+    transform: rotate(-90deg);
+}
+
+.sidebar-group-collapse .nav-link {
+    padding-left: 1.25rem;
 }
 
 .sidebar .nav-link {
     font-weight: 500;
     color: #333;
     padding: .5rem 1rem;
+    border-radius: 4px;
+    transition: background-color .15s ease, color .15s ease;
 }
 
 .sidebar .nav-link:hover {
     color: #0d6efd;
+    background-color: rgba(13, 110, 253, .05);
 }
 
 .sidebar .nav-link.active {
     color: #0d6efd;
+    background-color: rgba(13, 110, 253, .1);
+    font-weight: 600;
 }
 
 .sidebar .nav-link i {
