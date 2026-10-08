@@ -23,7 +23,12 @@ class SeoHelper
      */
     public static function metaDescription($content, int $limit = 150): string
     {
-        $text = trim((string) preg_replace('/\s+/', ' ', strip_tags((string) $content)));
+        // Separate block elements, keeping inline formatting inside words intact.
+        $html = preg_replace('~<(script|style)\b[^>]*>.*?</\1\s*>~is', ' ', (string) $content);
+        $html = preg_replace('~</?(?:address|article|aside|blockquote|br|caption|dd|div|dl|dt|figcaption|figure|footer|h[1-6]|header|hr|li|main|nav|ol|p|pre|section|table|tbody|td|th|thead|tr|ul)\b[^>]*>~i', ' ', $html);
+        // Strip before decoding: escaped HTML examples must remain text.
+        $text = html_entity_decode(strip_tags($html), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+        $text = trim((string) preg_replace('/[\s\p{Z}]+/u', ' ', $text));
 
         if ($text === '' || mb_strlen($text) <= $limit) {
             return $text;
@@ -33,7 +38,8 @@ class SeoHelper
         $truncated = mb_substr($text, 0, $limit);
         $lastSpace = mb_strrpos($truncated, ' ');
 
-        if ($lastSpace !== false && $lastSpace > 0) {
+        // Keep a complete final word if the next character is already a space.
+        if (mb_substr($text, $limit, 1) !== ' ' && $lastSpace !== false && $lastSpace > 0) {
             $truncated = mb_substr($truncated, 0, $lastSpace);
         }
 
