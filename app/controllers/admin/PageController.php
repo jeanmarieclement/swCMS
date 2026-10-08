@@ -131,7 +131,7 @@ class PageController extends AdminController
         $this->requireCsrf($this->settings['ADMIN_URL'] . '/pages/create', 'page creation');
 
         // Validate required fields
-        $title = RequestHelper::post('title', '');
+        $title = RequestHelper::post('title', '', 'text');
         if (empty($title)) {
             SessionHelper::setFlashMessage('Title is required', 'error');
             return;
@@ -275,7 +275,7 @@ class PageController extends AdminController
         $this->requireCsrf($this->settings['ADMIN_URL'] . '/pages/edit/' . $id, 'page update');
 
         // Validate required fields
-        $title = RequestHelper::post('title', '');
+        $title = RequestHelper::post('title', '', 'text');
         if (empty($title)) {
             SessionHelper::setFlashMessage('Title is required', 'error');
             RedirectHelper::redirect($this->settings['ADMIN_URL'] . '/pages/edit/' . $id);

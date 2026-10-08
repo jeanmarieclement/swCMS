@@ -14,6 +14,20 @@ use App\Helpers\RequestHelper;
  */
 class RequestHelperTest extends TestCase
 {
+    public function testTextFilterPreservesPunctuationAndLiteralEntities(): void
+    {
+        $_POST['title'] = '  L\'AI & "PHP": &amp; spiegato  ';
+        $this->assertSame('L\'AI & "PHP": &amp; spiegato', RequestHelper::post('title', '', 'text'));
+    }
+
+    public function testTextFilterStripsMarkupAndRejectsArrayInput(): void
+    {
+        $_POST['title'] = '<b>Titolo</b> con accenti à';
+        $this->assertSame('Titolo con accenti à', RequestHelper::post('title', '', 'text'));
+        $_POST['title'] = ['unexpected'];
+        $this->assertSame('fallback', RequestHelper::post('title', 'fallback', 'text'));
+    }
+
     protected function setUp(): void
     {
         parent::setUp();

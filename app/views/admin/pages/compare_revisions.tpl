@@ -1,6 +1,6 @@
 {extends file="admin/layout.tpl"}
 
-{block name="title"}Compare Revisions - {$page.title}{/block}
+{block name="title"}Compare Revisions - {$page.title|escape}{/block}
 
 {block name="head"}
 <style>
@@ -104,10 +104,10 @@
             <table class="diff-table">
                 <tr>
                     <td width="50%">
-                        <h4>{$oldRevision.title}</h4>
+                        <h4>{$oldRevision.title|escape}</h4>
                     </td>
                     <td width="50%">
-                        <h4>{$newRevision.title}</h4>
+                        <h4>{$newRevision.title|escape}</h4>
                     </td>
                 </tr>
             </table>

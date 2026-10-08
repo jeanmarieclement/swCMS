@@ -24,7 +24,7 @@
     <input type="hidden" name="csrf_token" value="{$smarty.session.csrf_token}">
 
     <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
-        <h1 class="h2">Edit Page: {$page.title|default:'Untitled'}</h1>
+        <h1 class="h2">Edit Page: {$page.title|default:'Untitled'|escape}</h1>
         <div class="btn-toolbar mb-2 mb-md-0">
             <a href="{$admin_url}/pages" class="btn btn-sm btn-outline-secondary me-2">
                 <i class="fas fa-arrow-left me-1"></i> Back to Pages

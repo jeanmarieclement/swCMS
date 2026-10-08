@@ -176,7 +176,7 @@
                             {if isset($recent_content) && $recent_content|@count > 0}
                                 {foreach from=$recent_content item=content}
                                     <tr>
-                                        <td>{$content.title}</td>
+                                        <td>{$content.title|escape}</td>
                                         <td>{$content.type}</td>
                                         <td>{$content.date}</td>
                                         <td>
@@ -213,7 +213,7 @@
                         {foreach from=$recent_activity item=activity}
                             <a href="#" class="list-group-item list-group-item-action">
                                 <div class="d-flex w-100 justify-content-between">
-                                    <h5 class="mb-1">{$activity.title}</h5>
+                                    <h5 class="mb-1">{$activity.title|escape}</h5>
                                     <small>{$activity.time_ago}</small>
                                 </div>
                                 <p class="mb-1">{$activity.description}</p>

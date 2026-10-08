@@ -66,7 +66,7 @@
                     <select class="form-select" name="settings[homepage_page]">
                         <option value="">-- Select Page --</option>
                         {foreach $pages as $page}
-                            <option value="{$page.id}" {if $settings.homepage_page == $page.id}selected{/if}>{$page.title}</option>
+                            <option value="{$page.id}" {if $settings.homepage_page == $page.id}selected{/if}>{$page.title|escape}</option>
                         {/foreach}
                     </select>
                 </div>

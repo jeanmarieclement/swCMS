@@ -1,10 +1,10 @@
 {extends file="admin/layout.tpl"}
 
-{block name="title"}Page Revisions - {$page.title}{/block}
+{block name="title"}Page Revisions - {$page.title|escape}{/block}
 
 {block name="content"}
 <div class="container-fluid px-4">
-    <h1 class="mt-4">Revision History: {$page.title}</h1>
+    <h1 class="mt-4">Revision History: {$page.title|escape}</h1>
     
     <ol class="breadcrumb mb-4">
         <li class="breadcrumb-item"><a href="{$admin_url}/dashboard">Dashboard</a></li>
