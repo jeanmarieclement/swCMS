@@ -4,7 +4,7 @@
 
     <div class="mb-3">
         <label for="title" class="form-label">Title</label>
-        <input type="text" class="form-control" id="title" name="title" value="{$article.title|default:''}" required>
+        <input type="text" class="form-control" id="title" name="title" value="{$article.title|default:''|escape}" required>
     </div>
     
     <div class="mb-3">
@@ -18,7 +18,7 @@
     
     <div class="mb-3">
         <label for="excerpt" class="form-label">Excerpt</label>
-        <textarea class="form-control" id="excerpt" name="excerpt" rows="3" aria-describedby="excerptHelp">{$article.excerpt|default:''}</textarea>
+        <textarea class="form-control" id="excerpt" name="excerpt" rows="3" aria-describedby="excerptHelp">{$article.excerpt|default:''|escape}</textarea>
         <div id="excerptHelp" class="form-text">A short summary of the article. If left empty, it will be generated from the content.</div>
     </div>
     

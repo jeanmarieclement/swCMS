@@ -11,7 +11,7 @@
                 {if isset($pages)}
                     {foreach from=$pages item=p}
                         {if !isset($page.id) || $p.id != $page.id}
-                            <option value="{$p.id}" {if isset($page.parent_id) && $page.parent_id == $p.id}selected{/if}>{$p.title}</option>
+                            <option value="{$p.id}" {if isset($page.parent_id) && $page.parent_id == $p.id}selected{/if}>{$p.title|escape}</option>
                         {/if}
                     {/foreach}
                 {/if}

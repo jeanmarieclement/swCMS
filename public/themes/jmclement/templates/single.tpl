@@ -1,7 +1,7 @@
 {extends file="header.tpl"}
 {block name="content"}
     <article class="single-article">
-        <h1>{$article.title}</h1>
+        <h1>{$article.title|escape}</h1>
         <div class="meta">
             Pubblicato il {$article.date|date_format:"%d/%m/%Y"}
         </div>

@@ -1,7 +1,7 @@
 {* Admin Page Preview Template *}
 {extends file="admin/layout.tpl"}
 
-{block name="title"}Preview: {$page.title}{/block}
+{block name="title"}Preview: {$page.title|escape}{/block}
 
 {block name="content"}
 <div class="container-fluid px-4">
@@ -17,7 +17,7 @@
         <div class="card-header d-flex justify-content-between align-items-center">
             <div>
                 <i class="fas fa-eye me-1"></i>
-                Preview: {$page.title}
+                Preview: {$page.title|escape}
             </div>
             <div>
                 <span class="badge bg-{if $page.status == 'published'}success{elseif $page.status == 'draft'}warning{else}secondary{/if} me-2">
@@ -31,7 +31,7 @@
         <div class="card-body">
             <div class="preview-container">
                 <div class="preview-header mb-4">
-                    <h1 class="preview-title">{$page.title}</h1>
+                    <h1 class="preview-title">{$page.title|escape}</h1>
                     {if $page.created_at}
                         <div class="preview-meta text-muted">
                             <small>Created on {$page.created_at|date_format:"%B %e, %Y"}</small>

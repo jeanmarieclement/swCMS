@@ -175,10 +175,10 @@ class ArticleController extends AdminController
     {
         // Collect form data
         $data = [
-            'title' => RequestHelper::post('title', ''),
+            'title' => RequestHelper::post('title', '', 'text'),
             'slug' => RequestHelper::post('slug', ''),
             'content' => RequestHelper::post('content', '', 'raw'),
-            'excerpt' => RequestHelper::post('excerpt', ''),
+            'excerpt' => RequestHelper::post('excerpt', '', 'text'),
             'status' => RequestHelper::post('status', 'draft'),
             'featured_image' => RequestHelper::post('featured_image'),
             'comment_status' => RequestHelper::post('comment_status', 'open'),

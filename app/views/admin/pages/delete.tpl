@@ -20,14 +20,14 @@
         <div class="card-body">
             <div class="alert alert-warning">
                 <h4 class="alert-heading">Are you sure you want to delete this page?</h4>
-                <p>You are about to delete the page "<strong>{$page.title}</strong>". This action cannot be undone.</p>
+                <p>You are about to delete the page "<strong>{$page.title|escape}</strong>". This action cannot be undone.</p>
                 
                 {if $children}
                     <hr>
                     <p class="mb-0"><strong>Warning:</strong> This page has {$children|@count} child pages that will be affected:</p>
                     <ul>
                         {foreach $children as $child}
-                            <li>{$child.title}</li>
+                            <li>{$child.title|escape}</li>
                         {/foreach}
                     </ul>
                     <p>If you delete this page, all child pages will have their parent set to none.</p>
@@ -42,7 +42,7 @@
                             <table class="table">
                                 <tr>
                                     <th>Title:</th>
-                                    <td>{$page.title}</td>
+                                    <td>{$page.title|escape}</td>
                                 </tr>
                                 <tr>
                                     <th>Slug:</th>

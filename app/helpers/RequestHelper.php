@@ -17,6 +17,7 @@ class RequestHelper
      */
     private const FILTERS = [
         'string' => 'string', // Custom sanitization
+        'text' => 'text', // Plain text for storage; escape in the output context
         'int' => FILTER_VALIDATE_INT,
         'float' => FILTER_VALIDATE_FLOAT,
         'email' => FILTER_VALIDATE_EMAIL,
@@ -182,6 +183,13 @@ class RequestHelper
         // Non-scalar values cannot be sanitized as a string
         if (!is_scalar($value) && $value !== null) {
             return null;
+        }
+
+        // Explicit opt-in for plain-text storage. Keep literal entities intact:
+        // decoding here would change a title discussing e.g. "&amp;".
+        // Array inputs are rejected by getFromSource before reaching this code.
+        if ($filter === 'text') {
+            return trim(strip_tags((string) $value));
         }
 
         // String filter - use htmlspecialchars for XSS protection (PHP 8.1+ compatible)

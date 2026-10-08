@@ -1,7 +1,7 @@
 {extends file="header.tpl"}
 {block name="content"}
     <article class="single-article">
-        <h1>{$page.title}</h1>
+        <h1>{$page.title|escape}</h1>
         <div class="content">
             {$page.content nofilter}
         </div>

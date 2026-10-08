@@ -82,7 +82,7 @@
                         {foreach $pages as $page}
                             <tr>
                                 <td>
-                                    <a href="{$admin_url}/pages/edit/{$page.id}" class="fw-bold">{$page.title}</a>
+                                    <a href="{$admin_url}/pages/edit/{$page.id}" class="fw-bold">{$page.title|escape}</a>
                                     {if $page.parent_id > 0}
                                         <span class="badge bg-secondary ms-1">Child</span>
                                     {/if}
@@ -104,14 +104,14 @@
                                             <i class="fas fa-eye"></i>
                                         </a>
                                         {if $page.status != 'trash'}
-                                            <button type="button" class="btn btn-sm btn-outline-danger delete-page-btn" data-id="{$page.id}" data-title="{$page.title}" title="Move to Trash">
+                                            <button type="button" class="btn btn-sm btn-outline-danger delete-page-btn" data-id="{$page.id}" data-title="{$page.title|escape}" title="Move to Trash">
                                                 <i class="fas fa-trash"></i>
                                             </button>
                                         {else}
                                             <button type="button" class="btn btn-sm btn-outline-success restore-page" data-id="{$page.id}" title="Restore">
                                                 <i class="fas fa-trash-restore"></i>
                                             </button>
-                                            <button type="button" class="btn btn-sm btn-outline-danger delete-page-btn" data-id="{$page.id}" data-title="{$page.title}" title="Delete Permanently">
+                                            <button type="button" class="btn btn-sm btn-outline-danger delete-page-btn" data-id="{$page.id}" data-title="{$page.title|escape}" title="Delete Permanently">
                                                 <i class="fas fa-times"></i>
                                             </button>
                                         {/if}

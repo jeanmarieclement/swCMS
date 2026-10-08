@@ -16,7 +16,7 @@
                 {foreach from=$latest_posts item=post}
                     <div class="card mb-4">
                         {if $post.featured_image}
-                            <img src="{$post.featured_image}" class="card-img-top" alt="{$post.title}">
+                            <img src="{$post.featured_image}" class="card-img-top" alt="{$post.title|escape}">
                         {/if}
                         <div class="card-body">
                             <h2 class="card-title">

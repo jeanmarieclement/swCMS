@@ -1,6 +1,6 @@
 {extends file="admin/layout.tpl"}
 
-{block name="title"}View Revision - {$revision.title}{/block}
+{block name="title"}View Revision - {$revision.title|escape}{/block}
 
 {block name="content"}
 <div class="container-fluid px-4">
@@ -53,7 +53,7 @@
             Title
         </div>
         <div class="card-body">
-            <h2>{$revision.title}</h2>
+            <h2>{$revision.title|escape}</h2>
         </div>
     </div>
     
