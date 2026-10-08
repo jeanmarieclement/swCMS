@@ -193,8 +193,9 @@ class Post extends Model
      */
     public function updatePost($id, $data)
     {
-        // Generate slug if not provided
-        if ((empty($data['slug']) && !empty($data['title'])) || $this->getBySlug($data['slug']) !== false) {
+        // A post owns its current slug: editing metadata must not regenerate it.
+        $slugOwner = !empty($data['slug']) ? $this->getBySlug($data['slug']) : false;
+        if ((empty($data['slug']) && !empty($data['title'])) || ($slugOwner && (int) $slugOwner['id'] !== (int) $id)) {
             $data['slug'] = $this->generateSlug($data['title'], $id);
         }
 
