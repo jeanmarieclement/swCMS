@@ -85,7 +85,7 @@ class ArticleController extends BaseController
             'article' => $article,
             'post' => $article, // alias for comment form
             'page_title' => $article['title'],
-            'meta_description' => substr(strip_tags($article['content']), 0, 150),
+            'meta_description' => \App\Helpers\SeoHelper::metaDescription($article['content'] ?? '', 150),
             'comments_enabled' => $commentsEnabled,
             'comments' => $comments,
             'total_comments' => $totalComments,
