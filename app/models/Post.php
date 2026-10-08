@@ -206,6 +206,10 @@ class Post extends Model
             }
         }
 
+        // SQLite does not provide MySQL's ON UPDATE timestamp behaviour.
+        // Keep modification dates reliable for structured data and sitemaps.
+        $data['updated_at'] = date('Y-m-d H:i:s');
+
         return $this->update($id, $data);
     }
 
